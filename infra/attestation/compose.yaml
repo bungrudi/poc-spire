@@ -1,0 +1,28 @@
+name: ${POC_PROJECT:?run through the attestation harness}
+x-fixture: &fixture
+  image: ${POC_IMAGE:?}
+  user: "${POC_UID:?}:${POC_GID:?}"
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  volumes:
+    - ${POC_SOCKET_DIR:?}:/workload:ro
+  networks: [proof]
+  command: ["-listen", ":8443"]
+services:
+  trusted:
+    <<: *fixture
+    labels:
+      poc-spire.attestation.role: approved
+  unidentified:
+    <<: *fixture
+    entrypoint: [/probe]
+    labels:
+      poc-spire.attestation.role: unidentified
+  wrong-deployment:
+    <<: *fixture
+    labels:
+      poc-spire.attestation.role: wrong-deployment
+networks:
+  proof:
+    internal: true

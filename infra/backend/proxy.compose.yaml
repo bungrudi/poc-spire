@@ -1,0 +1,12 @@
+# Test-only overlay: raw TCP forwarding on the existing internal network.
+# No keys, Workload API/admin sockets, host networking, caps, or published ports.
+services:
+  proxy:
+    image: ${POC_IMAGE:?}
+    user: "1000:1000"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    entrypoint: [/backend-proxy]
+    command: [-upstream, money:8443]
+    networks: [money]

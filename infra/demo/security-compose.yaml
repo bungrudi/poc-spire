@@ -1,0 +1,36 @@
+name: ${POC_PROJECT:?}
+x-client: &client
+  image: ${POC_IMAGE:?}
+  user: "1000:1000"
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  volumes:
+    - ${POC_SOCKET_DIR:?}:/workload:ro
+  networks: [money]
+  command: [-idle]
+services:
+  money:
+    <<: *client
+    entrypoint: [/money]
+    command: [-listen, ":8443"]
+    labels: {poc-spire.role: money}
+  trusted-probe:
+    <<: *client
+    labels: {poc-spire.role: trusted-probe}
+  observer-probe:
+    <<: *client
+    labels: {poc-spire.role: observer-probe}
+  wrong-id:
+    <<: *client
+    labels: {poc-spire.role: wrong-id}
+  unidentified:
+    <<: *client
+    labels: {poc-spire.role: unidentified}
+  impostor:
+    <<: *client
+    command: [-impostor, -listen, ":8443"]
+    labels: {poc-spire.role: impostor}
+networks:
+  money:
+    internal: true

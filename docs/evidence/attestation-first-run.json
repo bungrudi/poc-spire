@@ -1,0 +1,40 @@
+{
+  "phase": "P1",
+  "status": "failed",
+  "tests": [],
+  "versions": {
+    "spire": "1.14.0",
+    "spire_archive_sha256": "dd5238274a6f4c52610b008efe67464f22bf30ac9841ab57d07a7a1087904fac",
+    "go": "go version go1.24.2 linux/amd64",
+    "docker": "29.1.3",
+    "compose": "Docker Compose version v5.0.0",
+    "kernel": "Linux 6.14.0-37-generic x86_64 GNU/Linux",
+    "sdk": "v2.6.0"
+  },
+  "limitations": [
+    "Network target is a test-only TCP sentinel, not an implemented money API",
+    "Host-user agent and caller UID 1000 are a feasibility layout; application UID 10001/containerized agent remain unverified",
+    "No proof of continuous runtime integrity or resistance to host/authorized-process compromise"
+  ],
+  "binary_sha256": {
+    "approved": "60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+    "probe": "a2c863d041e148a4e04da1f3f267c78ba6d2203c0beb76c824aca09e0b5451cd",
+    "approved-v2": "11ce4f62b65a38c2ed3048fbe39b5a1bd646e62b10482ba17a2b11ce695c921f"
+  },
+  "image_config_digest": "sha256:4e138558f0fc42320234ffb1e0973eb89d35bb318ff90235224b04704258d31f",
+  "registration": {
+    "parent": "spiffe://poc.internal/agent/attestation-test",
+    "identity": "spiffe://poc.internal/caller/trusted",
+    "selectors": [
+      "unix:uid:1000",
+      "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+      "docker:label:poc-spire.attestation.role:approved",
+      "docker:image_config_digest:sha256:4e138558f0fc42320234ffb1e0973eb89d35bb318ff90235224b04704258d31f"
+    ]
+  },
+  "failure": "docker compose failed (exit 1)",
+  "cleanup": {
+    "compose_exit_code": 0,
+    "private_runtime_removed": true
+  }
+}

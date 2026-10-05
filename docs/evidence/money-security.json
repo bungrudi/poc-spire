@@ -1,0 +1,336 @@
+{
+  "phase": "M3",
+  "status": "passed",
+  "tests": [
+    {
+      "case": "no-cert-forged-identity-headers",
+      "result": {
+        "outcome": "tls_client_rejected",
+        "server_verified": true
+      },
+      "ledger_unchanged": true
+    },
+    {
+      "case": "self-signed-allowed-uri",
+      "result": {
+        "outcome": "tls_client_rejected",
+        "server_verified": true
+      },
+      "ledger_unchanged": true
+    },
+    {
+      "case": "valid-wrong-id",
+      "result": {
+        "outcome": "money_http_response",
+        "money_http_status": 403,
+        "server_verified": true,
+        "body": {
+          "error": "forbidden"
+        }
+      },
+      "ledger_unchanged": true
+    },
+    {
+      "case": "observer-cannot-transfer",
+      "result": {
+        "outcome": "money_http_response",
+        "money_http_status": 403,
+        "server_verified": true,
+        "body": {
+          "error": "forbidden"
+        }
+      },
+      "ledger_unchanged": true
+    },
+    {
+      "case": "wrong-server-identity",
+      "result": {
+        "outcome": "server_identity_mismatch",
+        "server_verified": false
+      },
+      "ledger_unchanged": true
+    },
+    {
+      "case": "concurrent-duplicates",
+      "requests": 16,
+      "ledger_version": 1
+    },
+    {
+      "case": "lost-response-conflict-invalid-input",
+      "ledger_unchanged": true
+    },
+    {
+      "case": "rotation-expiry-and-connection-reuse",
+      "result": {
+        "outcome": "rotation_expiry_and_reuse_passed",
+        "server_verified": true,
+        "checks": {
+          "current_credential_accepted": true,
+          "expired_credential_rejected": true,
+          "fresh_nonresumed_0": true,
+          "fresh_nonresumed_1": true,
+          "server_verified": true,
+          "source_rotated": true
+        }
+      }
+    }
+  ],
+  "persistent_identity_state_retained": true,
+  "binary_sha256": {
+    "money": "8d79946f4d5bbd395455e1aff85049c384df8ecacd741a9eb4c6e1b7b999577a",
+    "security-client": "34148219d3e18b59190ed9c1d6952dcb7b060be81bf7c85e07bc5ddec07fe481"
+  },
+  "image_config_digest": "sha256:bbbf32b0eed31e1e35a51126a692caace7773e18cc3ea474afaafe43c926965d",
+  "final_ledger": {
+    "balances": {
+      "demo-a": 99700,
+      "demo-b": 100300
+    },
+    "version": 3
+  },
+  "money_audit": [
+    {
+      "event": "money_request",
+      "method": "GET",
+      "path": "/balances",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/ui"
+    },
+    {
+      "event": "money_request",
+      "method": "GET",
+      "path": "/balances",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/ui"
+    },
+    {
+      "event": "money_request",
+      "method": "GET",
+      "path": "/balances",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/ui"
+    },
+    {
+      "event": "money_request",
+      "method": "GET",
+      "path": "/balances",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/ui"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 403,
+      "verified_peer": "spiffe://poc.internal/test/wrong-id"
+    },
+    {
+      "event": "money_request",
+      "method": "GET",
+      "path": "/balances",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/ui"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 403,
+      "verified_peer": "spiffe://poc.internal/ui"
+    },
+    {
+      "event": "money_request",
+      "method": "GET",
+      "path": "/balances",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/ui"
+    },
+    {
+      "event": "money_request",
+      "method": "GET",
+      "path": "/balances",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/ui"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "GET",
+      "path": "/balances",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/ui"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 409,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 400,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "GET",
+      "path": "/balances",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/ui"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "POST",
+      "path": "/transfer",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "event": "money_request",
+      "method": "GET",
+      "path": "/balances",
+      "status": 200,
+      "verified_peer": "spiffe://poc.internal/ui"
+    }
+  ],
+  "cleanup": {
+    "compose_exit_code": 0,
+    "image_exit_code": 0,
+    "new_test_registrations_removed": true
+  }
+}

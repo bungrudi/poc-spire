@@ -1,0 +1,109 @@
+{
+  "phase": "M4",
+  "status": "passed",
+  "tests": [
+    {
+      "case": "trusted-caller",
+      "result": {
+        "request_id": "logical-transfer",
+        "stage": "money_http",
+        "outcome": "transfer_succeeded",
+        "money_http_status": 200,
+        "server_verified": true,
+        "money_result": {
+          "request_id": "logical-transfer",
+          "transfer_id": "ea8945eb90131f1f1407fa4845243eba1dff3ccad18a83f5239831e74c0437c8",
+          "verified_caller_id": "spiffe://poc.internal/caller/trusted",
+          "amount_minor": 100,
+          "currency": "USD",
+          "balances": {
+            "demo-a": 99900,
+            "demo-b": 100100
+          },
+          "version": 1,
+          "replay": false
+        }
+      }
+    },
+    {
+      "case": "stable-caller-retry",
+      "replay": true
+    },
+    {
+      "case": "unidentified-caller",
+      "result": {
+        "request_id": "unidentified-attempt",
+        "stage": "client_authentication",
+        "outcome": "tls_rejected",
+        "identity_eligibility": "no_matching_identity",
+        "server_verified": true
+      },
+      "ledger_unchanged": true
+    },
+    {
+      "case": "cross-caller-control-isolation",
+      "result": {
+        "outcome": "control_unreachable"
+      }
+    },
+    {
+      "case": "kernel-peer-uid-enforcement",
+      "control_status": 403
+    },
+    {
+      "case": "bounded-fixed-control-protocol",
+      "control_status": 400
+    }
+  ],
+  "persistent_identity_state_retained": true,
+  "runtime": {
+    "trusted-caller": {
+      "user": "1000:1000",
+      "published_ports": {},
+      "mount_destinations": [
+        "/workload",
+        "/control"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "uid_map": "0          0 4294967295"
+    },
+    "untrusted-caller": {
+      "user": "1000:1000",
+      "published_ports": {},
+      "mount_destinations": [
+        "/workload",
+        "/control"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "uid_map": "0          0 4294967295"
+    },
+    "harness": {
+      "user": "10002:10002",
+      "published_ports": {},
+      "mount_destinations": [
+        "/untrusted-control",
+        "/trusted-control"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "uid_map": "0          0 4294967295"
+    }
+  },
+  "final_ledger": {
+    "balances": {
+      "demo-a": 99900,
+      "demo-b": 100100
+    },
+    "version": 1
+  },
+  "cleanup": {
+    "compose_exit_code": 0,
+    "image_exit_code": 0,
+    "new_test_registrations_removed": true
+  }
+}

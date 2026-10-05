@@ -1,0 +1,18 @@
+{
+  "phase": "M5-prerequisite",
+  "ui_uid": 10002,
+  "agent_uid": 1000,
+  "workload_api_outcome": {
+    "role": "approved",
+    "uid": 10002,
+    "gid": 10002,
+    "socket_reachable": true,
+    "network_reachable": true,
+    "grpc_code": "PermissionDenied",
+    "result": "no_matching_identity"
+  },
+  "unix_attestor_errors": [
+    "workload attestor \"unix\" failed: rpc error: code = Internal desc = workloadattestor(unix): path lookup: readlink /proc/4046684/exe: permission denied"
+  ],
+  "different_uid_executable_measurement_blocked": true
+}

@@ -1,0 +1,239 @@
+{
+  "phase": "backend-lifecycle",
+  "status": "passed",
+  "spire_version": "1.14.0",
+  "ca_ttl_seconds": 120,
+  "test_identity_state": "ephemeral",
+  "tests": [
+    {
+      "case": "T18-wrong-bundle-missing-bundle-and-socket",
+      "unrelated_ca_bundle_roots": 1,
+      "wrong_bundle": {
+        "request_id": "backend-fixed",
+        "stage": "server_verification",
+        "outcome": "server_trust_failure",
+        "server_verified": false
+      },
+      "missing_bundle": {
+        "request_id": "backend-fixed",
+        "stage": "server_trust_bundle",
+        "outcome": "infrastructure_failure",
+        "identity_eligibility": "no_matching_identity",
+        "server_verified": false
+      },
+      "missing_socket": {
+        "request_id": "backend-fixed",
+        "stage": "workload_api",
+        "outcome": "infrastructure_failure",
+        "server_verified": false
+      },
+      "ledger_unchanged": true
+    },
+    {
+      "case": "T16-real-post-commit-connection-drop",
+      "unknown_outcome": {
+        "request_id": "lost-response",
+        "stage": "transfer_response",
+        "outcome": "unknown_commit",
+        "server_verified": true
+      },
+      "retry": {
+        "request_id": "lost-response",
+        "stage": "money_http",
+        "outcome": "transfer_succeeded",
+        "money_http_status": 200,
+        "server_verified": true,
+        "money_result": {
+          "request_id": "lost-response",
+          "transfer_id": "42f02f1e9fdf74cb4b610ff6ab66474b87f39d8801980face196d33b372bb3e0",
+          "verified_caller_id": "spiffe://poc.internal/caller/trusted",
+          "amount_minor": 100,
+          "currency": "USD",
+          "balances": {
+            "demo-a": 99900,
+            "demo-b": 100100
+          },
+          "version": 1,
+          "replay": true
+        }
+      },
+      "ledger_version": 1,
+      "drop_point": "Money fixture closes TLS connection after real handler commit before response"
+    },
+    {
+      "case": "registration-removal-and-cached-expiry",
+      "fresh_workload_api": {
+        "request_id": "",
+        "stage": "workload_api",
+        "outcome": "no_matching_identity",
+        "server_verified": false,
+        "grpc_code": "PermissionDenied"
+      },
+      "expired_attempt": {
+        "request_id": "removed-registration",
+        "stage": "client_authentication",
+        "outcome": "tls_rejected",
+        "server_verified": true
+      },
+      "ledger_unchanged": true,
+      "instant_revocation_claimed": false
+    },
+    {
+      "case": "real-ca-rollover-and-public-bundle-refresh",
+      "initial_source": {
+        "request_id": "",
+        "stage": "workload_api",
+        "outcome": "source_ready",
+        "server_verified": false,
+        "expires_at": 1791177039,
+        "serial": "122624304791975431927936825207226556392",
+        "authority_key_id": "707fa696a5bbfa6630e62a00178823c40b0b60e9",
+        "bundle_sha256": "7f854e2d06e692641c539df6b690b62378336c6f64b5e73737119236b070b491",
+        "bundle_roots": 1,
+        "build_marker": "v1",
+        "bundle_authority_ids": [
+          "707fa696a5bbfa6630e62a00178823c40b0b60e9"
+        ]
+      },
+      "rotated": {
+        "source": {
+          "request_id": "",
+          "stage": "workload_api",
+          "outcome": "source_ready",
+          "server_verified": false,
+          "expires_at": 1791177099,
+          "serial": "131135275940960653761458820183492299763",
+          "authority_key_id": "8a85bb7e8d3094772aeb9c3c9b186f47b2ec6f60",
+          "bundle_sha256": "b0f8bf5b042f67bcdca9d7482d579ee400fe47105efdaa49e993100abb25c05c",
+          "bundle_roots": 2,
+          "build_marker": "v1",
+          "bundle_authority_ids": [
+            "707fa696a5bbfa6630e62a00178823c40b0b60e9",
+            "8a85bb7e8d3094772aeb9c3c9b186f47b2ec6f60"
+          ]
+        },
+        "server_authority_key_id": "8a85bb7e8d3094772aeb9c3c9b186f47b2ec6f60",
+        "public_bundle_sha256": "cfec87a599cfc451ed191dc80ef046aa41e91d731a722c91a58c4acdd849ee03"
+      },
+      "money_tls_verified": true,
+      "public_no_cert_probe": {
+        "request_id": "backend-fixed",
+        "stage": "client_authentication",
+        "outcome": "tls_rejected",
+        "identity_eligibility": "no_matching_identity",
+        "server_verified": true
+      },
+      "atomic_public_file_mode": "0o444",
+      "old_root_pruning_tested": false
+    },
+    {
+      "case": "T22-money-restart-process-lifetime-only-history",
+      "fresh_ledger": {
+        "balances": {
+          "demo-a": 100000,
+          "demo-b": 100000
+        },
+        "version": 0
+      },
+      "prior_key_is_new_after_restart": true,
+      "spire_state_reset": false
+    },
+    {
+      "case": "T18-server-outage-valid-cache-then-expiry",
+      "valid_cached_attempt": {
+        "request_id": "outage-valid",
+        "stage": "money_http",
+        "outcome": "transfer_succeeded",
+        "money_http_status": 200,
+        "server_verified": true,
+        "money_result": {
+          "request_id": "outage-valid",
+          "transfer_id": "a51891f4421d64b9a55aea4ddff8f2d84029434ce4ae302ad098d6c2025b3755",
+          "verified_caller_id": "spiffe://poc.internal/caller/trusted",
+          "amount_minor": 100,
+          "currency": "USD",
+          "balances": {
+            "demo-a": 99800,
+            "demo-b": 100200
+          },
+          "version": 2,
+          "replay": false
+        }
+      },
+      "expired_attempt": {
+        "request_id": "outage-expired",
+        "stage": "client_authentication",
+        "outcome": "tls_rejected",
+        "server_verified": true
+      },
+      "ledger_unchanged_after_expiry": true,
+      "last_verified_bundle_preserved": true
+    },
+    {
+      "case": "T18-agent-outage-is-infrastructure-failure",
+      "result": {
+        "request_id": "backend-fixed",
+        "stage": "workload_api",
+        "outcome": "infrastructure_failure",
+        "server_verified": false
+      },
+      "ledger_unchanged": true
+    }
+  ],
+  "started_at": "2026-10-05T05:08:30.305254+00:00",
+  "binary_sha256": {
+    "backend-money": "f98033f3d7c4a8fec416a77e00d78937dd5d977fb353f475f73aab614ee8d657",
+    "backend-client": "5a9ed89a3323c58761608692d1a972084b21aa3260af82d2e95fa81eb1efc5b3"
+  },
+  "image_config_digest": "sha256:6b4e16313810179c11d54a1f84f6ff5ad24f0519ea7bc91a71b4e98e5a272855",
+  "versions": {
+    "go": "go version go1.24.2 linux/amd64",
+    "go_spiffe_sdk": "github.com/spiffe/go-spiffe/v2 v2.6.0",
+    "docker_engine": "29.1.3",
+    "compose": "5.0.0"
+  },
+  "compose_sha256": "330d803ccbb885f3b2e0eb3d9bc78f698171912b855e26111e35d24e44dfb57a",
+  "registration_policy": [
+    {
+      "identity": "spiffe://poc.internal/money",
+      "uid": 1000,
+      "binary_sha256": "f98033f3d7c4a8fec416a77e00d78937dd5d977fb353f475f73aab614ee8d657",
+      "image_config_digest": "sha256:6b4e16313810179c11d54a1f84f6ff5ad24f0519ea7bc91a71b4e98e5a272855",
+      "deployment_role": "backend-money",
+      "ttl_seconds": 90,
+      "parent": "exact attested parent (redacted)"
+    },
+    {
+      "identity": "spiffe://poc.internal/caller/trusted",
+      "uid": 1000,
+      "binary_sha256": "5a9ed89a3323c58761608692d1a972084b21aa3260af82d2e95fa81eb1efc5b3",
+      "image_config_digest": "sha256:6b4e16313810179c11d54a1f84f6ff5ad24f0519ea7bc91a71b4e98e5a272855",
+      "deployment_role": "backend-trusted",
+      "ttl_seconds": 30,
+      "parent": "exact attested parent (redacted)"
+    },
+    {
+      "identity": "spiffe://poc.internal/ui",
+      "uid": 1000,
+      "binary_sha256": "5a9ed89a3323c58761608692d1a972084b21aa3260af82d2e95fa81eb1efc5b3",
+      "image_config_digest": "sha256:6b4e16313810179c11d54a1f84f6ff5ad24f0519ea7bc91a71b4e98e5a272855",
+      "deployment_role": "backend-observer",
+      "ttl_seconds": 120,
+      "parent": "exact attested parent (redacted)"
+    }
+  ],
+  "final_ledger": {
+    "balances": {
+      "demo-a": 99800,
+      "demo-b": 100200
+    },
+    "version": 2
+  },
+  "retained_ca_agent_state_unchanged": true,
+  "cleanup": {
+    "compose_exit_code": 0,
+    "image_exit_code": 0,
+    "ephemeral_identity_state_removed": true
+  },
+  "finished_at": "2026-10-05T05:10:54.909431+00:00"
+}

@@ -1,0 +1,40 @@
+{
+  "phase": "P1",
+  "status": "failed",
+  "tests": [],
+  "versions": {
+    "spire": "1.14.0",
+    "spire_archive_sha256": "dd5238274a6f4c52610b008efe67464f22bf30ac9841ab57d07a7a1087904fac",
+    "go": "go version go1.24.2 linux/amd64",
+    "docker": "29.1.3",
+    "compose": "Docker Compose version v5.0.0",
+    "kernel": "Linux 6.14.0-37-generic x86_64 GNU/Linux",
+    "sdk": "v2.6.0"
+  },
+  "limitations": [
+    "Network target is a test-only TCP sentinel, not an implemented money API",
+    "Host-user agent and caller UID 1000 are a feasibility layout; application UID 10001/containerized agent remain unverified",
+    "No proof of continuous runtime integrity or resistance to host/authorized-process compromise"
+  ],
+  "binary_sha256": {
+    "approved": "60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+    "probe": "a2c863d041e148a4e04da1f3f267c78ba6d2203c0beb76c824aca09e0b5451cd",
+    "approved-v2": "11ce4f62b65a38c2ed3048fbe39b5a1bd646e62b10482ba17a2b11ce695c921f"
+  },
+  "image_config_digest": "sha256:b21a9a2dfac8c8d198ac717127b22e3f6791ad2964f96ded8d83b497af60c3ce",
+  "registration": {
+    "parent": "spiffe://poc.internal/agent/attestation-test",
+    "identity": "spiffe://poc.internal/caller/trusted",
+    "selectors": [
+      "unix:uid:1000",
+      "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+      "docker:label:poc-spire.attestation.role:approved",
+      "docker:image_config_digest:sha256:b21a9a2dfac8c8d198ac717127b22e3f6791ad2964f96ded8d83b497af60c3ce"
+    ]
+  },
+  "failure": "docker compose failed (exit 1): Network poc-spire-proof-obfkld3d_proof Creating \n Network poc-spire-proof-obfkld3d_proof Created \n Container poc-spire-proof-obfkld3d-trusted-1 Creating \n Container poc-spire-proof-obfkld3d-unidentified-1 Creating \n Container poc-spire-proof-obfkld3d-wrong-deployment-1 Creating \n Container poc-spire-proof-obfkld3d-trusted-1 Created \n Container poc-spire-proof-obfkld3d-wrong-deployment-1 Created \n Container poc-spire-proof-obfkld3d-unidentified-1 Created \n Container poc-spire-proof-obfkld3d-trusted-1 Starting \n Container poc-spire-proof-obfkld3d-unidentified-1 Starting \n Container poc-spire-proof-obfkld3d-wrong-deployment-1 Starting \nError response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"/approved\": permission denied",
+  "cleanup": {
+    "compose_exit_code": 0,
+    "private_runtime_removed": true
+  }
+}

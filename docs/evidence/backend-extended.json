@@ -1,0 +1,176 @@
+{
+  "phase": "backend-extended",
+  "status": "passed",
+  "spire_version": "1.14.0",
+  "ca_ttl_seconds": 600,
+  "started_at": "2026-10-05T05:00:26.582726+00:00",
+  "test_identity_state": "ephemeral",
+  "tests": [
+    {
+      "case": "T21-explicit-digest-update-and-no-silent-lifetime-reuse",
+      "old_policy_rebuild_denied": {
+        "request_id": "",
+        "stage": "workload_api",
+        "outcome": "no_matching_identity",
+        "server_verified": false,
+        "grpc_code": "PermissionDenied"
+      },
+      "policy_guard_read_only": true,
+      "reviewed_update_preserves_other_selectors_parent_ttl": true,
+      "old_executable_fresh_issuance_denied": true,
+      "new_executable_verified_transfer": {
+        "request_id": "reviewed-rebuild",
+        "stage": "money_http",
+        "outcome": "transfer_succeeded",
+        "money_http_status": 200,
+        "server_verified": true,
+        "money_result": {
+          "request_id": "reviewed-rebuild",
+          "transfer_id": "57091638540c10f700981a1b6350993a74cce2e30c4b0bf1bb94448a3f98536d",
+          "verified_caller_id": "spiffe://poc.internal/caller/trusted",
+          "amount_minor": 100,
+          "currency": "USD",
+          "balances": {
+            "demo-a": 99900,
+            "demo-b": 100100
+          },
+          "version": 1,
+          "replay": false
+        }
+      },
+      "instant_cached_certificate_revocation_claimed": false
+    },
+    {
+      "case": "old-root-taint-rotation-and-revocation-propagation",
+      "active_root_operations_refused": true,
+      "captured_credential": {
+        "request_id": "",
+        "stage": "workload_api",
+        "outcome": "source_ready",
+        "server_verified": false,
+        "expires_at": 1791176538,
+        "serial": "24905746479345998268675052492875348229",
+        "authority_key_id": "6ad59a040f797f0609195d41db18a9292c61ff33",
+        "bundle_sha256": "237f1feec8fa4b89adb876cee4a353674e498d769bd79ac2bb8e4fdc03a939ce",
+        "bundle_roots": 1,
+        "build_marker": "v2",
+        "bundle_authority_ids": [
+          "6ad59a040f797f0609195d41db18a9292c61ff33"
+        ]
+      },
+      "rotated_workload": {
+        "source": {
+          "request_id": "",
+          "stage": "workload_api",
+          "outcome": "source_ready",
+          "server_verified": false,
+          "expires_at": 1791176548,
+          "serial": "184529694638921328028279718089269670446",
+          "authority_key_id": "807db1464a6e81c3b39d85162224d6678bdceb3e",
+          "bundle_sha256": "642f46df74bbff369f5d0d2d6a8b1c2adb45bbbbe754a27bd98cbab7682decab",
+          "bundle_roots": 2,
+          "build_marker": "v2",
+          "bundle_authority_ids": [
+            "6ad59a040f797f0609195d41db18a9292c61ff33",
+            "807db1464a6e81c3b39d85162224d6678bdceb3e"
+          ]
+        },
+        "server_authority_key_id": "807db1464a6e81c3b39d85162224d6678bdceb3e"
+      },
+      "taint_alone_does_not_revoke": true,
+      "root_removed_from_sdk_and_atomic_public_file": true,
+      "still_valid_old_root_peer_rejected": {
+        "request_id": "old-root-after-revoke",
+        "stage": "client_authentication",
+        "outcome": "tls_rejected",
+        "server_verified": true,
+        "server_authority_key_id": "807db1464a6e81c3b39d85162224d6678bdceb3e"
+      },
+      "ledger_unchanged_after_removal": true,
+      "automatic_expired_root_pruning_tested": false
+    },
+    {
+      "case": "extended-outage-expires-node-and-workload-no-automatic-reenrollment",
+      "outage_seconds": 97,
+      "expired_attempt": {
+        "request_id": "long-outage-rejected",
+        "stage": "connect",
+        "outcome": "infrastructure_failure",
+        "server_verified": false
+      },
+      "fresh_attempt_before_reenrollment": {
+        "request_id": "",
+        "stage": "workload_api",
+        "outcome": "infrastructure_failure",
+        "server_verified": false,
+        "grpc_code": "Unavailable"
+      },
+      "normal_restart_failed_closed": true,
+      "new_join_token_automatically_created": false,
+      "ca_keys_unchanged": true
+    },
+    {
+      "case": "explicit-ephemeral-node-reenrollment-and-live-source-recovery",
+      "same_ca_and_bundle_preserved": true,
+      "new_parent_exactly_applied_to_all_existing_entries": true,
+      "one_use_token_removed": true,
+      "live_sources_recovered_without_app_restart": true,
+      "money_ledger_and_history_preserved": true,
+      "retry": {
+        "request_id": "reviewed-rebuild",
+        "stage": "money_http",
+        "outcome": "transfer_succeeded",
+        "money_http_status": 200,
+        "server_verified": true,
+        "money_result": {
+          "request_id": "reviewed-rebuild",
+          "transfer_id": "57091638540c10f700981a1b6350993a74cce2e30c4b0bf1bb94448a3f98536d",
+          "verified_caller_id": "spiffe://poc.internal/caller/trusted",
+          "amount_minor": 100,
+          "currency": "USD",
+          "balances": {
+            "demo-a": 99900,
+            "demo-b": 100100
+          },
+          "version": 1,
+          "replay": true
+        }
+      },
+      "only_fixture_agent_state_replaced": true
+    }
+  ],
+  "unrun": [
+    "automatic expired-root sweep: 24-hour post-expiry safety threshold and six-hour timer",
+    "production 24-hour CA rollover duration",
+    "arbitrary packet-loss injection",
+    "upstream-authority and federated/multi-agent layouts",
+    "UI/full T01\u2013T23 acceptance"
+  ],
+  "binary_sha256": {
+    "backend-money": "f98033f3d7c4a8fec416a77e00d78937dd5d977fb353f475f73aab614ee8d657",
+    "backend-client": "5a9ed89a3323c58761608692d1a972084b21aa3260af82d2e95fa81eb1efc5b3",
+    "backend-client-v2": "924ba3b2eabbedea7491ca5923c37b25a8fdb5b0d292e217c49b4fa98e755aea"
+  },
+  "image_config_digest": "sha256:11923fe3d82e7515b4c0a9dc88c3dbef387d900442100b3e06a7fe6e31704fa4",
+  "compose_sha256": "330d803ccbb885f3b2e0eb3d9bc78f698171912b855e26111e35d24e44dfb57a",
+  "versions": {
+    "go": "go version go1.24.2 linux/amd64",
+    "go_spiffe_sdk": "github.com/spiffe/go-spiffe/v2 v2.6.0",
+    "docker_engine": "29.1.3",
+    "compose": "5.0.0"
+  },
+  "final_ledger": {
+    "balances": {
+      "demo-a": 99800,
+      "demo-b": 100200
+    },
+    "version": 2
+  },
+  "retained_ca_agent_state_unchanged": true,
+  "cleanup": {
+    "compose_exit_code": 0,
+    "image_exit_code": 0,
+    "ephemeral_identity_state_removed": true
+  },
+  "finished_at": "2026-10-05T05:03:50.472334+00:00"
+}

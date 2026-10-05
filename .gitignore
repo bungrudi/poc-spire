@@ -1,0 +1,26 @@
+.runtime/
+.cache/
+bin/
+*.pem
+*.key
+.env
+__pycache__/
+._*
+
+# Credential/config variants, private identity state and diagnostic data
+.env.*
+*.env
+*.p12
+*.pfx
+*.jks
+*.keystore
+*credentials*.json
+client_secret*.json
+*secrets*.json
+*.db
+*.db-*
+*.sqlite*
+*.log
+logs/
+*.py[cod]
+.DS_Store

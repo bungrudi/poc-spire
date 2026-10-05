@@ -1,0 +1,327 @@
+{
+  "phase": "P1",
+  "status": "passed",
+  "tests": [
+    {
+      "case": "approved",
+      "exit_code": 0,
+      "outcome": {
+        "role": "approved",
+        "uid": 1000,
+        "gid": 1000,
+        "socket_reachable": true,
+        "network_reachable": true,
+        "identities": [
+          "spiffe://poc.internal/caller/trusted"
+        ],
+        "result": "expected_identity_issued"
+      },
+      "observations": [
+        {
+          "pid": 3949359,
+          "selectors": [
+            "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+            "docker:label:poc-spire.attestation.role:approved",
+            "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+            "unix:uid:1000"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "unidentified",
+      "exit_code": 0,
+      "outcome": {
+        "role": "unidentified",
+        "uid": 1000,
+        "gid": 1000,
+        "socket_reachable": true,
+        "network_reachable": true,
+        "grpc_code": "PermissionDenied",
+        "result": "no_matching_identity"
+      },
+      "observations": [
+        {
+          "pid": 3949412,
+          "selectors": [
+            "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+            "docker:label:poc-spire.attestation.role:unidentified",
+            "unix:sha256:a2c863d041e148a4e04da1f3f267c78ba6d2203c0beb76c824aca09e0b5451cd",
+            "unix:uid:1000"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "wrong-executable-same-deployment",
+      "exit_code": 0,
+      "outcome": {
+        "role": "unidentified",
+        "uid": 1000,
+        "gid": 1000,
+        "socket_reachable": true,
+        "network_reachable": true,
+        "grpc_code": "PermissionDenied",
+        "result": "no_matching_identity"
+      },
+      "observations": [
+        {
+          "pid": 3949466,
+          "selectors": [
+            "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+            "docker:label:poc-spire.attestation.role:approved",
+            "unix:sha256:a2c863d041e148a4e04da1f3f267c78ba6d2203c0beb76c824aca09e0b5451cd",
+            "unix:uid:1000"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "approved-wrong-deployment",
+      "exit_code": 0,
+      "outcome": {
+        "role": "approved",
+        "uid": 1000,
+        "gid": 1000,
+        "socket_reachable": true,
+        "network_reachable": true,
+        "grpc_code": "PermissionDenied",
+        "result": "no_matching_identity"
+      },
+      "observations": [
+        {
+          "pid": 3949519,
+          "selectors": [
+            "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+            "docker:label:poc-spire.attestation.role:wrong-deployment",
+            "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+            "unix:uid:1000"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "rebuilt-executable-old-registration",
+      "exit_code": 0,
+      "outcome": {
+        "role": "approved-rebuild",
+        "uid": 1000,
+        "gid": 1000,
+        "socket_reachable": true,
+        "network_reachable": true,
+        "grpc_code": "PermissionDenied",
+        "result": "no_matching_identity"
+      },
+      "observations": [
+        {
+          "pid": 3949569,
+          "selectors": [
+            "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+            "docker:label:poc-spire.attestation.role:approved",
+            "unix:sha256:11ce4f62b65a38c2ed3048fbe39b5a1bd646e62b10482ba17a2b11ce695c921f",
+            "unix:uid:1000"
+          ]
+        }
+      ]
+    }
+  ],
+  "versions": {
+    "spire": "1.14.0",
+    "spire_archive_sha256": "dd5238274a6f4c52610b008efe67464f22bf30ac9841ab57d07a7a1087904fac",
+    "go": "go version go1.24.2 linux/amd64",
+    "docker": "29.1.3",
+    "compose": "Docker Compose version v5.0.0",
+    "kernel": "Linux 6.14.0-37-generic x86_64 GNU/Linux",
+    "sdk": "v2.6.0"
+  },
+  "started_at": "2026-10-05T02:58:17.209254+00:00",
+  "limitations": [
+    "Network target is a test-only TCP sentinel, not an implemented money API",
+    "Host-user agent and caller UID 1000 are a feasibility layout; application UID 10001/containerized agent remain unverified",
+    "No proof of continuous runtime integrity or resistance to host/authorized-process compromise"
+  ],
+  "binary_sha256": {
+    "approved": "60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+    "probe": "a2c863d041e148a4e04da1f3f267c78ba6d2203c0beb76c824aca09e0b5451cd",
+    "approved-v2": "11ce4f62b65a38c2ed3048fbe39b5a1bd646e62b10482ba17a2b11ce695c921f"
+  },
+  "image_config_digest": "sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+  "registration": {
+    "parent": "spiffe://poc.internal/spire/agent/join_token/[redacted]",
+    "identity": "spiffe://poc.internal/caller/trusted",
+    "selectors": [
+      "unix:uid:1000",
+      "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+      "docker:label:poc-spire.attestation.role:approved",
+      "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0"
+    ]
+  },
+  "canonical_parent_matches_server_agent": true,
+  "runtime_users": {
+    "trusted": {
+      "user": "1000:1000",
+      "uid_map": "0          0 4294967295",
+      "host_uid": "1000\t1000\t1000\t1000",
+      "published_ports": {},
+      "cap_drop": [
+        "ALL"
+      ],
+      "read_only": true
+    },
+    "unidentified": {
+      "user": "1000:1000",
+      "uid_map": "0          0 4294967295",
+      "host_uid": "1000\t1000\t1000\t1000",
+      "published_ports": {},
+      "cap_drop": [
+        "ALL"
+      ],
+      "read_only": true
+    },
+    "wrong-deployment": {
+      "user": "1000:1000",
+      "uid_map": "0          0 4294967295",
+      "host_uid": "1000\t1000\t1000\t1000",
+      "published_ports": {},
+      "cap_drop": [
+        "ALL"
+      ],
+      "read_only": true
+    }
+  },
+  "readiness_attempts": 9,
+  "observed_selectors": [
+    {
+      "pid": 3948771,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:approved",
+        "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+        "unix:uid:1000"
+      ]
+    },
+    {
+      "pid": 3948834,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:approved",
+        "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+        "unix:uid:1000"
+      ]
+    },
+    {
+      "pid": 3948886,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:approved",
+        "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+        "unix:uid:1000"
+      ]
+    },
+    {
+      "pid": 3948971,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:approved",
+        "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+        "unix:uid:1000"
+      ]
+    },
+    {
+      "pid": 3949043,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:approved",
+        "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+        "unix:uid:1000"
+      ]
+    },
+    {
+      "pid": 3949116,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:approved",
+        "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+        "unix:uid:1000"
+      ]
+    },
+    {
+      "pid": 3949191,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:approved",
+        "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+        "unix:uid:1000"
+      ]
+    },
+    {
+      "pid": 3949243,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:approved",
+        "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+        "unix:uid:1000"
+      ]
+    },
+    {
+      "pid": 3949295,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:approved",
+        "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+        "unix:uid:1000"
+      ]
+    },
+    {
+      "pid": 3949359,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:approved",
+        "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+        "unix:uid:1000"
+      ]
+    },
+    {
+      "pid": 3949412,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:unidentified",
+        "unix:sha256:a2c863d041e148a4e04da1f3f267c78ba6d2203c0beb76c824aca09e0b5451cd",
+        "unix:uid:1000"
+      ]
+    },
+    {
+      "pid": 3949466,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:approved",
+        "unix:sha256:a2c863d041e148a4e04da1f3f267c78ba6d2203c0beb76c824aca09e0b5451cd",
+        "unix:uid:1000"
+      ]
+    },
+    {
+      "pid": 3949519,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:wrong-deployment",
+        "unix:sha256:60d756749408a1cfedafc781add3b2b6bd2e3a46c8913b437147d593437a12de",
+        "unix:uid:1000"
+      ]
+    },
+    {
+      "pid": 3949569,
+      "selectors": [
+        "docker:image_config_digest:sha256:4ee0c44e21742072206a21d2ea4e66ec888b152b5f4a69d439bfee79c0d9ebb0",
+        "docker:label:poc-spire.attestation.role:approved",
+        "unix:sha256:11ce4f62b65a38c2ed3048fbe39b5a1bd646e62b10482ba17a2b11ce695c921f",
+        "unix:uid:1000"
+      ]
+    }
+  ],
+  "cleanup": {
+    "compose_exit_code": 0,
+    "image_exit_code": 0,
+    "private_runtime_removed": true
+  },
+  "finished_at": "2026-10-05T02:58:33.190923+00:00"
+}

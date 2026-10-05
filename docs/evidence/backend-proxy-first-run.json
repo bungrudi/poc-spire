@@ -1,0 +1,176 @@
+{
+  "phase": "backend-proxy-loss",
+  "status": "failed",
+  "spire_version": "1.14.0",
+  "started_at": "2026-10-05T05:25:50.450454+00:00",
+  "tests": [
+    {
+      "case": "opaque-pass-through-preserves-money-mtls",
+      "positive": {
+        "request_id": "proxy-positive",
+        "stage": "money_http",
+        "outcome": "transfer_succeeded",
+        "money_http_status": 200,
+        "server_verified": true,
+        "money_result": {
+          "request_id": "proxy-positive",
+          "transfer_id": "d8ac5c8a19a9a4aa724a82479173954ed742bd4f066d2f0ab3fb15e94557c155",
+          "verified_caller_id": "spiffe://poc.internal/caller/trusted",
+          "amount_minor": 100,
+          "currency": "USD",
+          "balances": {
+            "demo-a": 99900,
+            "demo-b": 100100
+          },
+          "version": 1,
+          "replay": false
+        }
+      },
+      "unidentified": {
+        "request_id": "proxy-no-cert",
+        "stage": "client_authentication",
+        "outcome": "tls_rejected",
+        "identity_eligibility": "no_matching_identity",
+        "server_verified": true
+      },
+      "ledger_unchanged_after_no_cert": true
+    },
+    {
+      "case": "discard-client-handshake-loss",
+      "fault": {
+        "request_id": "proxy-discard-client",
+        "stage": "connect",
+        "outcome": "infrastructure_failure",
+        "server_verified": false
+      },
+      "discarded_tls_records_observed": true,
+      "fault_ledger_unchanged": true,
+      "restored_same_key_retry": {
+        "request_id": "proxy-discard-client",
+        "stage": "money_http",
+        "outcome": "transfer_succeeded",
+        "money_http_status": 200,
+        "server_verified": true,
+        "money_result": {
+          "request_id": "proxy-discard-client",
+          "transfer_id": "f743d5e022d5d8347fbada572419362d55e41f08d8183ef19f40041b75c1631b",
+          "verified_caller_id": "spiffe://poc.internal/caller/trusted",
+          "amount_minor": 100,
+          "currency": "USD",
+          "balances": {
+            "demo-a": 99800,
+            "demo-b": 100200
+          },
+          "version": 2,
+          "replay": false
+        }
+      },
+      "stable_replay": true
+    },
+    {
+      "case": "discard-server-handshake-loss",
+      "fault": {
+        "request_id": "proxy-discard-server",
+        "stage": "connect",
+        "outcome": "infrastructure_failure",
+        "server_verified": false
+      },
+      "discarded_tls_records_observed": true,
+      "fault_ledger_unchanged": true,
+      "restored_same_key_retry": {
+        "request_id": "proxy-discard-server",
+        "stage": "money_http",
+        "outcome": "transfer_succeeded",
+        "money_http_status": 200,
+        "server_verified": true,
+        "money_result": {
+          "request_id": "proxy-discard-server",
+          "transfer_id": "4335069a73596e09b3065cd21a058469ed7be85c88fa9725f0d094fb92f20f32",
+          "verified_caller_id": "spiffe://poc.internal/caller/trusted",
+          "amount_minor": 100,
+          "currency": "USD",
+          "balances": {
+            "demo-a": 99700,
+            "demo-b": 100300
+          },
+          "version": 3,
+          "replay": false
+        }
+      },
+      "stable_replay": true
+    }
+  ],
+  "fault_scope": "opaque TLS-record loss inside an application TCP proxy",
+  "kernel_ip_packet_loss_tested": false,
+  "test_identity_state": "ephemeral",
+  "automatic_expired_root_sweep": {
+    "status": "unrun",
+    "reason": "SPIRE 1.14.0 fixes 24-hour post-expiry grace and six-hour sweep independently of CA TTL; no supported accelerated configuration",
+    "source": "https://github.com/spiffe/spire/blob/v1.14.0/pkg/server/ca/manager/manager.go",
+    "timer_source": "https://github.com/spiffe/spire/blob/v1.14.0/pkg/server/ca/rotator/rotator.go"
+  },
+  "binary_sha256": {
+    "backend-money": "f98033f3d7c4a8fec416a77e00d78937dd5d977fb353f475f73aab614ee8d657",
+    "backend-client": "5a9ed89a3323c58761608692d1a972084b21aa3260af82d2e95fa81eb1efc5b3",
+    "backend-proxy": "d563212cd51f1a2cccdc33aa9ceec3fed40eeb3f13ede118f48787cc9b3c26de"
+  },
+  "image_config_digest": "sha256:2d5e58faf6625b17d5f7e15f472e4795b68edaaac6eb74b686e83d5a218c6d65",
+  "compose_sha256": {
+    "compose.yaml": "330d803ccbb885f3b2e0eb3d9bc78f698171912b855e26111e35d24e44dfb57a",
+    "proxy.compose.yaml": "b656721da1a56045e9242a7458114b0dd9fea5081a0513d1812b97b0752d41d6"
+  },
+  "versions": {
+    "go": "go version go1.24.2 linux/amd64",
+    "go_spiffe_sdk": "github.com/spiffe/go-spiffe/v2 v2.6.0",
+    "docker_engine": "29.1.3",
+    "compose": "5.0.0"
+  },
+  "registration_policy": [
+    {
+      "identity": "spiffe://poc.internal/money",
+      "uid": 1000,
+      "binary_sha256": "f98033f3d7c4a8fec416a77e00d78937dd5d977fb353f475f73aab614ee8d657",
+      "image_config_digest": "sha256:2d5e58faf6625b17d5f7e15f472e4795b68edaaac6eb74b686e83d5a218c6d65",
+      "deployment_role": "backend-money",
+      "ttl_seconds": 90,
+      "parent": "exact attested parent (redacted)"
+    },
+    {
+      "identity": "spiffe://poc.internal/caller/trusted",
+      "uid": 1000,
+      "binary_sha256": "5a9ed89a3323c58761608692d1a972084b21aa3260af82d2e95fa81eb1efc5b3",
+      "image_config_digest": "sha256:2d5e58faf6625b17d5f7e15f472e4795b68edaaac6eb74b686e83d5a218c6d65",
+      "deployment_role": "backend-trusted",
+      "ttl_seconds": 90,
+      "parent": "exact attested parent (redacted)"
+    },
+    {
+      "identity": "spiffe://poc.internal/ui",
+      "uid": 1000,
+      "binary_sha256": "5a9ed89a3323c58761608692d1a972084b21aa3260af82d2e95fa81eb1efc5b3",
+      "image_config_digest": "sha256:2d5e58faf6625b17d5f7e15f472e4795b68edaaac6eb74b686e83d5a218c6d65",
+      "deployment_role": "backend-observer",
+      "ttl_seconds": 90,
+      "parent": "exact attested parent (redacted)"
+    }
+  ],
+  "proxy_boundaries": {
+    "workload_or_admin_socket_mounts": false,
+    "published_ports": false,
+    "privileged": false,
+    "capabilities_added": false,
+    "read_only": true,
+    "uid": 1000,
+    "tls_terminated": false,
+    "maximum_connections": 16,
+    "connection_deadline_seconds": 12
+  },
+  "failure": "Opaque response-record loss did not preserve server verification/unknown commit",
+  "retained_ca_agent_state_unchanged": true,
+  "cleanup": {
+    "compose_exit_code": 0,
+    "image_exit_code": 0,
+    "ephemeral_identity_state_removed": true
+  },
+  "finished_at": "2026-10-05T05:26:17.716892+00:00"
+}

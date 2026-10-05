@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "phase": "M2",
+  "checks": {
+    "issuance_before_and_after_restart": true,
+    "ca_bundle_unchanged": true,
+    "agent_identity_unchanged": true,
+    "one_use_join_token_removed": true,
+    "no_public_listener": true,
+    "test_registration_removed": true,
+    "private_state_permissions": true
+  },
+  "private_state_retained": true
+}

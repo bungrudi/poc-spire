@@ -1,0 +1,32 @@
+name: ${POC_PROJECT:?}
+x-client: &client
+  image: ${POC_IMAGE:?}
+  user: "1000:1000"
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  volumes:
+    - ${POC_SOCKET_DIR:?}:/workload:ro
+  networks: [money]
+  # The stdin instrumentation is started only by the suite's exec commands.
+  entrypoint: [/backend-client]
+  command: [-unidentified]
+  stdin_open: true
+services:
+  money:
+    <<: *client
+    entrypoint: [/backend-money]
+    command: [-listen, ":8443"]
+    labels: {poc-spire.role: backend-money}
+  trusted:
+    <<: *client
+    labels: {poc-spire.role: backend-trusted}
+  observer:
+    <<: *client
+    labels: {poc-spire.role: backend-observer}
+  unidentified:
+    <<: *client
+    labels: {poc-spire.role: backend-unidentified}
+networks:
+  money:
+    internal: true

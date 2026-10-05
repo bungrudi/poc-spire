@@ -1,0 +1,75 @@
+{
+  "phase": "backend-final-validation",
+  "status": "passed",
+  "project_path": "/home/ubuntu/Workspace/poc-spire",
+  "host": "personal-vps",
+  "finished_at": "2026-10-05T05:34:35.897658+00:00",
+  "checks": {
+    "go_format": "passed",
+    "go_test": "passed",
+    "go_race": "passed",
+    "go_vet": "passed",
+    "python_syntax": "passed",
+    "python_unit_tests": {
+      "status": "passed",
+      "count": 7
+    }
+  },
+  "integration_reports": {
+    "money-security": {
+      "status": "passed",
+      "evidence_sha256": "5c9fbdd06124723e82e96dcabb30a4b73d8672cb54564b77c72c1073873e7d4c",
+      "rerun_this_increment": true
+    },
+    "callers-control": {
+      "status": "passed",
+      "evidence_sha256": "b66b47dd0fb17bcf5bf89e44ac91932c4aed78fddf729e32f9499b60e283b0d5",
+      "rerun_this_increment": true
+    },
+    "identity-restart": {
+      "status": "passed",
+      "evidence_sha256": "c47f00be2782f60620297bb1e5fa14f85e0f9f287f1039b42fa9eaf4aeeeed1d",
+      "rerun_this_increment": true
+    },
+    "backend-lifecycle": {
+      "status": "passed",
+      "evidence_sha256": "ed6954ca7947ef7cea4d89efa37219ef6ac123d2e39410189774cc104650eca0",
+      "rerun_this_increment": false
+    },
+    "backend-extended": {
+      "status": "passed",
+      "evidence_sha256": "4823ed48d876c042223a44e2722cd070668b6800adfb581011e157a22af49abe",
+      "rerun_this_increment": false
+    },
+    "backend-proxy": {
+      "status": "passed",
+      "evidence_sha256": "6a89b9f55f30702f8832115af86da075c7f35abd2c94742cb3db426e6b04337f",
+      "rerun_this_increment": true
+    }
+  },
+  "cleanup": {
+    "containers": 0,
+    "images": 0,
+    "networks": 0,
+    "backend_temporary_directories": 0,
+    "spire_process_counts": {
+      "spire-server": 0,
+      "spire-agent": 0
+    }
+  },
+  "retained_state_permissions_protected": true,
+  "proxy_fixture_retained_ca_agent_state_unchanged": true,
+  "whole_poc_complete": false,
+  "m5_ui_security_complete": false,
+  "unrun": [
+    "automatic expired-root sweep (fixed 24h grace/6h timer; no supported bounded acceleration)",
+    "production-duration CA rollover",
+    "TCP/IP retransmission/arbitrary packet loss",
+    "remote UI/full owner acceptance"
+  ],
+  "pending_decisions": [
+    "UI UID/agent privilege layout",
+    "hostname/exposure/browser TLS and OIDC/operator configuration",
+    "explicit retained-node recovery after expiry"
+  ]
+}

@@ -1,0 +1,70 @@
+name: ${POC_PROJECT:?}
+x-app: &app
+  image: ${POC_IMAGE:?}
+  user: "1000:1000"
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  volumes:
+    - ${POC_SOCKET_DIR:?}:/workload:ro
+  networks: [money]
+services:
+  control-init:
+    image: ${POC_IMAGE:?}
+    user: "0:0"
+    entrypoint: [/control-init]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER, FSETID]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - trusted-control:/trusted-control
+      - untrusted-control:/untrusted-control
+  money:
+    <<: *app
+    entrypoint: [/money]
+    command: [-listen, ":8443"]
+    labels: {poc-spire.role: money}
+  trusted-caller:
+    <<: *app
+    entrypoint: [/trusted-caller]
+    labels: {poc-spire.role: trusted-caller}
+    volumes:
+      - ${POC_SOCKET_DIR:?}:/workload:ro
+      - trusted-control:/control
+    depends_on:
+      control-init: {condition: service_completed_successfully}
+  untrusted-caller:
+    <<: *app
+    entrypoint: [/untrusted-caller]
+    labels: {poc-spire.role: untrusted-caller}
+    volumes:
+      - ${POC_SOCKET_DIR:?}:/workload:ro
+      - untrusted-control:/control
+    depends_on:
+      control-init: {condition: service_completed_successfully}
+  harness:
+    image: ${POC_IMAGE:?}
+    user: "10002:10002"
+    entrypoint: [/control-client]
+    command: [-idle]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    network_mode: none
+    volumes:
+      - trusted-control:/trusted-control:ro
+      - untrusted-control:/untrusted-control:ro
+    depends_on:
+      control-init: {condition: service_completed_successfully}
+  observer:
+    <<: *app
+    entrypoint: [/security-client]
+    command: [-idle]
+    labels: {poc-spire.role: observer-probe}
+networks:
+  money: {internal: true}
+volumes:
+  trusted-control:
+  untrusted-control:
