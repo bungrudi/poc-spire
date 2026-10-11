@@ -24,6 +24,13 @@ boundaries and certificate hook continuity now pass; see [public evidence](evide
 
 The earlier checkpoints below record their original scope and results.
 
+## Historical checkpoint body — 5 October 2026
+
+The remainder preserves the pre-public-demo checkpoint, including its then-open
+M5/OIDC decisions. It is not today's blocker or acceptance list. Use
+[the current baseline index](spec-baseline.md) and [remote runbook](remote-demo.md)
+for active scope; original evidence below has not been rewritten or rerun.
+
 
 Project: `/home/ubuntu/Workspace/poc-spire` on `personal-vps`. Rudi authorized
 implementation and specifically approved retaining PoC CA/database and agent

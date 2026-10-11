@@ -50,6 +50,11 @@ The demo targets forged workload identities and ineligible same-UID executables.
 
 Only the remote browser HTTPS edge is published. Public access without verified human authentication is the owner-requested simplified scope. The previous localhost-only assumption is superseded by the remote-access requirement.
 
-## Next step
+## Future changes
+
+Use [current OpenSpec contracts](../openspec/specs/) and
+[the baseline/evidence index](spec-baseline.md) to establish existing behavior.
+Follow [the workflow](spec-workflow.md): a spec delta and short design/plan need
+Rudi's explicit approval before any future behavior-changing code/apply.
 
 Implementation is authorized. See [P1 evidence](attestation-feasibility.md); M2 retention is approved and tested. The UI uses an isolated UID-1000 container with the measured native agent. The owner-approved public installation is live and verified; see [the deployment runbook](remote-demo.md). See [TODO.md](../TODO.md) for acceptance gates and [plan.md](plan.md) for sequencing.

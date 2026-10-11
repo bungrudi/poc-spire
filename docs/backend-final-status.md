@@ -16,6 +16,13 @@ changes are installed and verified at `https://spire.adianto.dev/`.
 
 The earlier checkpoints below record their original scope and results.
 
+## Historical backend checkpoint body — 5 October 2026
+
+The remaining pre-UI coverage map and M5 statements preserve that day's scope.
+They are not current public-demo blockers. [The baseline index](spec-baseline.md)
+adds the subsequent assumed-operator UI/public evidence and distinguishes current
+unit/source coverage from recorded integration results. Original evidence stays intact.
+
 
 Existing project: `/home/ubuntu/Workspace/poc-spire` on `personal-vps`.
 M1–M4 internal backend behavior is implemented and measured. The remote UI,

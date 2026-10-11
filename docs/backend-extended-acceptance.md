@@ -1,5 +1,10 @@
 # Extended backend lifecycle checkpoint — 5 October 2026
 
+This is historical evidence from before the public assumed-operator demo.
+Then-pending UI/exposure decisions are not today's blockers. See
+[the current baseline index](spec-baseline.md) and [remote runbook](remote-demo.md).
+The recorded results below were not rerun during OpenSpec adoption.
+
 Project: `/home/ubuntu/Workspace/poc-spire` on `personal-vps`. This increment
 covers additional T18/T21 lifecycle behavior using the existing single native
 UID-1000 join-token agent model. UI/exposure/privilege decisions remain pending.

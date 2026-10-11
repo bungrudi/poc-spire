@@ -1,0 +1,19 @@
+{
+  "name": "poc-spire-specs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Project-local OpenSpec development tooling for the SPIRE learning demo",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "spec": "node scripts/openspec.mjs",
+    "spec:setup": "node scripts/openspec.mjs setup",
+    "spec:version": "node scripts/openspec.mjs --version",
+    "spec:list": "node scripts/openspec.mjs list --specs",
+    "spec:validate": "node scripts/openspec.mjs validate --all --strict --no-interactive"
+  },
+  "devDependencies": {
+    "@fission-ai/openspec": "1.14.1"
+  }
+}

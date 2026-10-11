@@ -21,6 +21,14 @@ or claims about this public demo.
 - **Related:** [workspace brief](../../WORKSPACE.md), [TODO list](../../TODO.md), [delivery plan](../plan.md)
 - **Supersedes:** earlier localhost-only UI assumption
 
+Current source-derived feature contracts and exact source/test/evidence mappings
+are in [OpenSpec specs](../../openspec/specs/) and
+[the baseline index](../spec-baseline.md). This RFC owns architecture/security
+rationale and the original T01–T23 identifiers. Keep its current sections aligned
+with approved behavioral changes; retain explicitly historical decisions as
+history. Follow [the workflow](../spec-workflow.md) for owner review of each spec
+delta and short plan before future behavior-changing implementation.
+
 ## 1. Summary
 
 Build a remote HTTPS learning demo with an assumed operator with two buttons: **Transfer as trusted process** and **Transfer as unidentified process**. Each button tells the selected Go process to initiate its own direct connection to a money service. The money service requires SPIFFE mTLS and authorizes the exact caller SPIFFE ID in Go. It does not trust browser-supplied identities, network location, or a sidecar's forwarded identity headers.
@@ -70,7 +78,10 @@ The owner intentionally assumes the **human operator** for this learning demo. W
 | D7 | UI has a separate, read-only workload identity for balance display; it cannot invoke the transfer API directly. |
 | D8 | Fixed fake transfers, integer minor units, atomic ledger mutation, and in-memory idempotency. |
 
-These are design recommendations. Implementation was authorized on 5 October 2026; formal owner acceptance and unresolved deployment choices remain open. See [P1 evidence](../attestation-feasibility.md).
+The current simplified profile implements these decisions in the measured
+UID-1000/native-agent layout. Specific deployment was authorized and verified on
+11 October 2026; original verified-human/full acceptance is not claimed. See
+[P1 evidence](../attestation-feasibility.md) and [the current coverage index](../spec-baseline.md).
 
 ## 4. Architecture and trust boundaries
 
@@ -110,14 +121,16 @@ SPIRE server <--- node attestation / issuance ---> SPIRE agent
 | Money service | Terminate workload mTLS, exact-ID authorization, ledger | Its own SVID/private key, balances |
 | Trusted caller | Receive a bounded trigger, obtain its SVID, call money directly | Its own SVID/private key |
 | Unidentified caller | Try identity acquisition, then demonstrate a no-client-certificate rejection | No authorized SVID; public server trust bundle only |
-| UI/control service | HTTPS, OIDC/session/roles/CSRF, trigger dispatch, read-only balances | OIDC client/session secrets, browser TLS key, its own SVID |
-| OIDC provider | Authenticate humans; supply validated identity/role claims | Operator accounts, signing keys |
+| UI/control service | HTTPS, assumed-operator session/CSRF, trigger dispatch, read-only balances | Browser TLS key, ephemeral session/CSRF values, its own SVID |
+
+The optional local preview uses an OS-owner login socket. OIDC/provider roles
+belong to the retired original verified-human proposal, not the public profile.
 
 ### Network and volume layout
 
 - Publish only the browser HTTPS port on the Compose host. Firewall policy may further restrict it to an operator network/VPN. Remote access must still work; localhost binding is no longer the design.
 - Money listens only on the Compose application network. Trusted caller, unidentified caller, and UI all reach it. Identity checks must hold even if an attacker also joins or reaches this network.
-- SPIRE server and agent communicate on a separate infrastructure network; no public SPIRE administration or Workload API TCP proxy.
+- The measured native SPIRE server/agent communicate over a loopback server listener; no public SPIRE administration or Workload API TCP proxy. A separate infrastructure network was an original containerized-agent proposal, not the measured layout.
 - Callers have **no network trigger port**. Mount `trusted-control` only into UI + trusted caller, and `untrusted-control` only into UI + unidentified caller. Use separate volumes, not two directories under a broadly shared mount.
 - Money, UI, and both callers can connect to the agent Workload API socket. Agent owns the socket directory; applications cannot replace the socket. Socket permissions must permit the test UID(s) without using arbitrary host-wide writable directories.
 - Applications do not receive the Docker socket, SPIRE server admin socket, server state, or another workload's private keys.
@@ -142,7 +155,12 @@ Use exact parsed ID comparisons, not suffix/prefix matching or 'any identity in 
 
 ### 5.2 Same user, different executable: recommendation
 
-Run both caller containers as UID `10001`, with the same host mapping where user namespaces are involved. Each has its own PID/mount namespaces, no capabilities, no privilege escalation, no writable application binary, and no access to the other's control volume or memory.
+The measured current layout runs both caller containers and the separate UI as
+UID/GID `1000`, with equal caller mappings and an unprivileged native agent. The
+original UID `10001`/containerized-agent proposal is unverified. Each application
+has separate PID/mount namespaces, dropped capabilities, no privilege escalation,
+read-only binaries and no access to another caller's control mount. Same UID
+does not protect against every memory/key attack after an isolation compromise.
 
 Running both processes in one container is a weaker practical boundary: depending on kernel configuration, same-user code can inspect processes, signal them, exploit shared writable files, or steal credentials. A hash selector does not solve those problems. Use co-location only as a controlled **attestation test**, not the default deployment or a claim of isolation after compromise.
 
@@ -160,7 +178,12 @@ AND optional expected UID as defense in depth
 
 This is policy pseudocode, **not SPIRE configuration or verified selector syntax**. Avoid a second, broader registration entry that accidentally grants the same SPIFFE ID without all restrictions. Verify how selectors from multiple attestors combine in the pinned SPIRE release.
 
-Evaluate the built-in Unix workload attestor's executable hashing capabilities together with the Docker workload attestor. Verify exact plugin options, selectors, platform support, caching behavior, and PID namespace handling from release-specific documentation/source. Previous planning could not retrieve web documentation; no plugin configuration has been validated here.
+The original planning stage had not retrieved plugin documentation. P1
+subsequently verified SPIRE 1.14.0 Unix/Docker options, selectors, conjunction,
+platform behavior and actual configuration; see [feasibility evidence](../attestation-feasibility.md).
+The logical policy above remains rationale, not executable selector syntax.
+Reverify hashing, caching and PID namespace behavior against release-specific
+documentation/source when changing the pinned release or measured layout.
 
 A digest must be derived by the agent from the authenticated Unix peer's kernel-observed process, not from request parameters, environment variables, a claimed PID, or a file path supplied by the workload. Verify the agent measures the actual running executable through a trusted process/filesystem view and handles process exit/PID reuse and binary replacement safely. Use static Go binaries without interpreters or dynamically loaded application plugins for the initial proof. The digest does not cover mutable configuration, all memory, or arbitrary runtime inputs.
 
@@ -179,6 +202,11 @@ If built-in support is insufficient, stop for review. A custom attestor would ex
 The fixture test proves issuance filtering, not safety against an attacker already able to read the trusted process's key or control its execution.
 
 ### 5.5 Node bootstrap and lifecycle
+
+The retained substrate guidance below is distinct from the supervised remote
+demo's temporary trust lifecycle; see [IC-04](../../openspec/specs/identity-certificate-lifecycle/spec.md)
+and [the current runbook](../remote-demo.md). Full demo restart recreates its own
+trust/fake state without resetting the approved retained CA/agent.
 
 - One SPIRE server and one attested agent on the Compose host are enough. A controlled one-time join-token bootstrap is acceptable for this PoC; node identity and parent binding must be explicit.
 - Bootstrap/admin operations run through a trusted setup path, never through the public UI. Do not put join tokens in committed files, logs, images, or long-lived app environment variables.
@@ -251,7 +279,11 @@ Missing or invalid browser TLS configuration fails startup.
 
 Each caller exposes a small HTTP-over-UDS control endpoint to the UI. The UI is the only other container with that volume. Have the caller own the socket directory and allow the UI group to connect but not replace the socket. The measured demo uses a separate UID-1000 UI container; kernel peer checks enforce that UID, while separate mounts provide cross-caller isolation. Test permissions at startup. No world-writable socket directory.
 
-The trigger message contains a server-created attempt ID and bounded correlation metadata. It does **not** accept an arbitrary upstream URL, arbitrary headers, SPIFFE ID, command line, shell command, or account/amount selection. Target money address and transfer parameters are fixed deployment configuration. This prevents the control API becoming a general HTTP proxy or command runner.
+The trigger message contains only a bounded `request_id` derived by the UI.
+It rejects unknown fields, including arbitrary upstream URLs, headers, SPIFFE
+IDs, command lines or account/amount selections. Target Money address and
+transfer parameters are fixed deployment configuration. This prevents the
+control API becoming a general HTTP proxy or command runner.
 
 The UI can reach both control sockets. The unidentified caller cannot reach the trusted caller's control socket even though the callers share a UID. Socket permissions alone are not the distinguishing mechanism here; separate mount visibility is essential. The private control boundary is distinct from the deliberately shared Workload API socket used for attestation tests.
 
@@ -296,7 +328,10 @@ If the response is lost after commit, report the result as unknown until retryin
 
 ## 9. Proposed API and data contracts
 
-Money and private caller contracts are implemented and tested; simplified assumed-operator browser contracts are implemented. See [implementation checkpoint](../implementation-status.md) for measured coverage.
+Money, private caller and simplified assumed-operator browser contracts are
+implemented. See [the baseline index](../spec-baseline.md) for exact current
+source/unit/recorded evidence and [the checkpoint](../implementation-status.md)
+for historical implementation observations.
 
 ### 9.1 Browser-facing routes
 
@@ -305,7 +340,7 @@ Money and private caller contracts are implemented and tested; simplified assume
 | `GET /` | Public assumed operator | Issue/renew demo session; buttons, balances, evidence explanation |
 | `POST /auth/logout` | Session + CSRF | Invalidate local session |
 | `POST /api/attempts` | Operator + CSRF + idempotency key | Accept only `trusted` or `unidentified`; create bounded attempt |
-| `GET /api/attempts/{id}` | Authorized session | Read sanitized result; restrict to owner unless explicitly granted broader access |
+| `GET /api/attempts/{id}` | Demo session | Read principal-bound result; all public sessions share the same assumed principal, not per-human privacy |
 | `GET /api/balances` | Viewer/operator | UI reads money with its own read-only SVID |
 | `GET /healthz` | Public | Minimal status only |
 
@@ -341,13 +376,16 @@ Caller diagnostics and money audit events have separate provenance. A caller's s
 
 ### Trusted computing base
 
-Linux kernel/host administrator, Docker daemon and deployment authority, SPIRE server/agent/attestors and registration authority, approved images/configuration, OIDC provider, UI/control service, trusted caller, and money service. Their secrets and runtime integrity are assumed intact for the primary claim.
+Linux kernel/host administrator, Docker daemon and deployment authority, SPIRE
+server/agent/attestors and registration authority, approved images/configuration,
+UI/control service, trusted caller and Money. Their secrets and runtime integrity
+are assumed intact. An OIDC provider belonged only to the retired verified-human proposal.
 
 ### Adversaries and controls
 
 | Capability or attack | Required control/outcome |
 | --- | --- |
-| Send arbitrary traffic to the remote UI | HTTPS, validated session, default-deny role, CSRF, limits; no trigger for unauthenticated/unauthorized user |
+| Send arbitrary traffic to the remote UI | Anyone can obtain an assumed-operator session; HTTPS, session/CSRF/origin/Host controls and limits remain, with no verified-human restriction |
 | Send arbitrary traffic to money from a reachable network | Mandatory client SVID verification, then exact-ID authorization |
 | Spoof SPIFFE/forwarded headers, source IP, DNS, or JSON identity | Ignore as authentication evidence |
 | Self-sign a certificate with the desired SPIFFE URI | Reject untrusted issuer/invalid SVID during TLS |
@@ -355,8 +393,8 @@ Linux kernel/host administrator, Docker daemon and deployment authority, SPIRE s
 | Run the unidentified binary under the same UID with socket access | No matching attestation registration; no authorized SVID |
 | Execute a different binary under the approved deployment selectors in a controlled test | Executable selector fails; no trusted issuance |
 | Copy the approved executable into an unauthorized deployment | Deployment selectors fail |
-| Forge or reach a caller trigger over the transfer network | No network listener; separate control volumes; UI authenticates real operator actions |
-| CSRF a logged-in operator or replay a captured request | CSRF/origin checks, session protections, TLS; same logical request ID cannot duplicate a transfer |
+| Forge or reach a caller trigger over the transfer network | No network listener; separate control mounts and kernel peer checking; UI binds CSRF to an assumed-operator session |
+| CSRF a demo session or repeat its logical request | CSRF/origin checks, session protections, TLS; same Money request ID cannot duplicate a transfer within the Money process lifetime |
 | Substitute a different server or intercept traffic | Exact server SPIFFE ID verification and TLS encryption/integrity |
 | Duplicate/reorder requests or lose responses | Atomic ledger + identity-bound idempotency; unknown result resolved with same ID |
 
@@ -372,23 +410,30 @@ Linux kernel/host administrator, Docker daemon and deployment authority, SPIRE s
 ## 11. Runtime hardening and operations
 
 - Native Linux Docker Engine is the baseline. Explicitly validate host PID/procfs access for attestation; do not assume Docker Desktop, user namespaces, or rootless mode behaves identically.
-- Non-root application UIDs; same UID for callers, different UID for UI. Drop application capabilities, use `no-new-privileges`, default restrictive seccomp, separate PID namespaces, and no application host PID mode.
+- Current applications use UID/GID 1000 in separate containers with the measured native agent. Drop application capabilities, use `no-new-privileges`, restrictive seccomp, separate PID namespaces and no application host PID mode. A different-UID UI was an original unverified proposal, superseded for this profile.
 - Prefer minimal, digest-pinned images with static Go binaries, read-only root filesystems, and only required writable tmpfs/socket directories. No Docker CLI/daemon socket in application images/containers.
 - Give the agent only measured permissions required by supported attestors; record any elevated permissions and why. Keep server/admin paths inaccessible to workloads.
 - Secrets supplied through protected runtime files/secret mounts; Compose secret mounts are not automatically an encrypted secret manager. Protect host files and backups. No secrets in build arguments, URLs, committed `.env`, or screenshots.
 - Readiness requires correct dependencies/configuration. `depends_on` alone is not proof of SPIRE readiness or eligible identity. Apply deadlines and distinguish not-ready from policy denial.
 - On errors, fail closed. The assumed-human remote mode must be explicit and disclosed; never enable it as an error fallback. No identity-header mode, blanket trust-domain transfer permission, or certificate-verification bypass.
-- Restarting UI invalidates sessions; restarting money resets balances and idempotency; SPIRE state persists unless explicitly reset. Document these independently.
-- Provide structured audit events for verified identities, human action subjects, results, and correlation IDs. Do not log SVID PEM, private keys, OIDC tokens, cookie values, join tokens, or CSRF tokens.
+- Restarting UI invalidates sessions while Money keeps its ledger/history. Restarting Money resets balances and idempotency together. The approved retained SPIRE substrate preserves its CA/agent on normal restart; the separate supervised remote demo creates temporary trust and a full restart recreates it with fake state. Document these profiles independently.
+- Provide structured audit events for verified workload identities, results and correlation IDs. Label demo subjects as assumed. Do not log SVID PEM, private keys, token material, cookie values, join tokens or CSRF tokens.
 - Keep result history bounded and redact UI-facing internal details. An attacker-controlled error string must never become executable HTML.
 
 ## 12. Verification matrix
 
-The full application matrix remains **planned**. Measured M1–M4 and backend lifecycle subsets now pass; see [implementation checkpoint](../implementation-status.md) and [backend coverage](../backend-acceptance.md) for exact limits. The [final backend coverage map](../backend-final-status.md) reconciles T01–T23, including measured lifecycle/proxy cases and exact remaining limits. UI authentication/session/CSRF and full owner acceptance remain open. Integration tests must use real SPIRE issuance and direct Go TLS connections, not only mocked identity headers.
+The original full verified-human matrix was not passed and is not claimed for
+the owner-approved simplified profile. Backend, HTTPS UI and public demo have
+recorded bounded passing evidence. [The current baseline index](../spec-baseline.md)
+maps each active behavior to source, unit tests and exact recorded integration
+cases, with unrun limits; [the backend map](../backend-final-status.md) preserves
+the historical pre-UI checkpoint. T10/OIDC portions of T19 are retired; current
+session/CSRF checks do not prove human authentication. Integration proof requires
+real SPIRE issuance and direct Go TLS, not only handler fixtures.
 
 | ID | Scenario | Required observation |
 | --- | --- | --- |
-| T01 | Authorized operator clicks trusted | Caller obtains expected SVID; money records verified trusted ID; balances move once |
+| T01 | Assumed demo operator clicks trusted | Caller obtains expected SVID; Money records verified trusted ID; balances move once |
 | T02 | Operator clicks unidentified | Workload API reachable, no eligible SVID; no-cert TLS probe rejected; no ledger change |
 | T03 | Compare runtime users | Same numeric caller UID and intended mapping; both reach socket and money |
 | T04 | Different executable in trusted fixture | Deployment selectors still match; executable selector prevents trusted issuance |
@@ -406,22 +451,26 @@ The full application matrix remains **planned**. Measured M1–M4 and backend li
 | T16 | Response lost after money commit | Retry same ID resolves result without second debit |
 | T17 | SVID rotation/expiry and attempted connection reuse | Fresh handshakes use current credentials; expired peer cannot transfer; baseline disables reuse/resumption |
 | T18 | SPIRE down, socket missing, wrong server bundle | Fail closed; UI labels infrastructure failure, not proven identity rejection |
-| T19 | Original OIDC claims / session expiry | OIDC retired; demo session expiry and renewed-session retry tested |
+| T19 | Original OIDC claims / session expiry | OIDC retired; session expiry has deterministic/source coverage; renewed-session/UI-restart retry has recorded integration evidence |
 | T20 | Host ports, volumes, image configs, logs inspected | Only intended remote edge exposed; no credential leaks or cross-caller control mount |
 | T21 | Rebuild changes binary digest | Old registration fails closed; explicit reviewed registration update needed |
-| T22 | Restart and reset | UI-only restart preserves deterministic transfer IDs on retry; money restart resets ledger/history; SPIRE state persists unless explicitly reset |
+| T22 | Restart and reset | UI-only restart preserves deterministic transfer IDs on retry and leaves Money alive; Money restart resets ledger/history; retained identity-substrate SPIRE state persists unless explicitly reset; a full supervised-demo restart recreates temporary trust and fake state |
 | T23 | Request limits/history capacity reached | Bounded rejection; no unauthorized operation or duplicate due to key eviction |
 
 For each run, save versions/config digests, command/scenario, expected outcome, actual outcome, sanitized logs, and ledger snapshots. Do not attach credentials. A TLS failure caused only by bad routing or server trust is not a passing no-client-identity test.
 
-## 13. Implementation sequencing and gates
+## 13. Original implementation sequence and future change gates
 
-1. **Documentation approval and explicit coding authorization.** No code changes before this separate instruction.
+M1–M5 simplified-profile work has recorded evidence. Future behavior changes
+must first follow [the owner-reviewed spec/short-plan workflow](../spec-workflow.md).
+The original dependency order remains useful within approved work:
+
+1. **Documentation and coding authorization.** Originally obtained on 5 October; future behavior changes require review of their own spec delta and short plan.
 2. **Attestation feasibility.** Pin release/runtime; prove same-UID, wrong-executable, and wrong-deployment cases before building the UI.
 3. **Identity substrate.** Compose bootstrap, registrations, Workload API consumers, rotation, direct mutual verification.
 4. **Money API and ledger.** Exact route authorization, atomicity, idempotency, tests.
 5. **Caller/control path.** Private sockets, trusted call, intentional no-SVID probe, structured outcomes.
-6. **Remote security and UI.** HTTPS/OIDC/roles/CSRF before any remote exposure; read-only balance identity and result display.
+6. **Remote security and UI.** HTTPS, disclosed assumed operator, sessions/CSRF before approved public exposure; read-only balance identity and result display. OIDC/verified-human gates are historical.
 7. **Security verification and runbook.** Entire matrix, evidence, reset/diagnostics, limitations.
 
 See [TODO.md](../../TODO.md) for checkable tasks. If executable-bound attestation cannot be demonstrated, stop. A container-only demo may be useful but is a different deliverable requiring an explicit scope change.
@@ -437,7 +486,7 @@ See [TODO.md](../../TODO.md) for checkable tasks. If executable-bound attestatio
 | Sidecar/mesh authenticates then forwards identity | Violates direct in-process validation requirement; adds header trust boundary |
 | JWT-SVID bearer tokens for transfers | Adds token replay/audience handling; direct X.509 mTLS better fits this connection-authentication PoC |
 | Network allowlist as primary control | Reachable/compromised network peer can spoof requests; not workload identity |
-| Public unauthenticated demo buttons | Lets outsiders use the trusted caller as a deputy; defeats the stated security goal |
+| Public assumed-operator demo buttons | Originally rejected under the verified-human goal; explicitly selected by the owner on 11 October to focus on workload identity. Any visitor can exercise the trusted caller's fixed fake-transfer capability. |
 | TLS optional client certificates to produce `403` | Weakens anonymous-client boundary unnecessarily; show TLS failure in the UI instead |
 | UI calls money with the trusted caller identity | Fails the requirement that the selected caller process originates the transfer |
 
@@ -445,4 +494,9 @@ See [TODO.md](../../TODO.md) for checkable tasks. If executable-bound attestatio
 
 Before implementation, select the pinned SPIRE/Go/SDK versions and verify the built-in attestors against their release-specific documentation and source. P1 verifies built-in selector behavior in the measured UID-1000/native-agent layout. Other agent namespaces/UIDs, automatic expired-root sweeping and production-duration rollover remain unverified. Real SVID/short-TTL CA rotation, administrative old-root taint/removal and temporary node-expiring recovery now pass. The final backend coverage map records pinned source and actual observations; short fixture CA TTLs cannot accelerate the fixed pruning grace/timer. Relevant sources to consult are the selected SPIRE release's Unix and Docker workload-attestor docs, SPIFFE Workload API/X.509-SVID specifications, and the selected Go SPIFFE SDK's TLS/source documentation.
 
-Before remote deployment, choose the DNS name, certificate provisioning, host/runtime, network exposure, OIDC issuer/client, and operator mapping. Exact endpoints and configuration defaults must be reviewed with those choices. No unanswered configuration item permits a security bypass.
+The named DNS, browser certificate provisioning, native host layout and public
+exposure were explicitly approved and installed; see [the deployment runbook](../remote-demo.md).
+OIDC issuer/client and verified-human operator mapping are retired for this
+profile, not unresolved blockers. Any future deployment/access change still
+needs applicable owner authorization; no unknown configuration permits a
+workload or browser TLS bypass.

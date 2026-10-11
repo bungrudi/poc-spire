@@ -1,5 +1,10 @@
 # Backend acceptance checkpoint — 5 October 2026
 
+This is historical backend evidence from before the public demo. Its UI/exposure
+statements describe that checkpoint, not current authorization or blockers. See
+[the current baseline index](spec-baseline.md) and [remote runbook](remote-demo.md).
+The recorded results below were not rerun during OpenSpec adoption.
+
 Project: `/home/ubuntu/Workspace/poc-spire` on `personal-vps`. This bounded
 increment follows the existing RFC's backend matrix. UI, exposure and agent
 privilege decisions are unchanged. Nothing was deployed or publicly exposed.

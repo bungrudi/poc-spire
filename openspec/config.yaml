@@ -1,0 +1,40 @@
+schema: spec-driven
+
+context: |
+  This is a Go/Docker Compose SPIRE learning demo, not production payments.
+  Read AGENTS.md and docs/spec-workflow.md before writing or applying a change.
+  openspec/specs documents current behavior; docs/spec-baseline.md maps evidence,
+  limitations and source. RFC 0001 owns architecture/security rationale.
+  The public profile assumes the human operator; OIDC/verified-human plans are
+  historical. Preserve direct mandatory Money mTLS, exact SPIFFE-ID permissions,
+  executable AND deployment attestation, private caller controls and safe retries.
+  Every future behavior change needs a spec delta and short design.md reviewed
+  and explicitly approved by Rudi before code/apply. An agent-written review,
+  passing validation or commit/push permission is not owner approval.
+  Use npm run spec -- <arguments> for all CLI calls, including stock skill examples;
+  this runs the locked local tool with isolated configuration. Never use a global
+  OpenSpec install. Do not publish secrets, credentials or runtime state.
+
+rules:
+  proposal:
+    - Keep the proposal concise; state the current behavior, requested change, scope and affected capabilities.
+    - Cite relevant existing requirements, RFC tests and owner decisions; do not revive retired OIDC requirements.
+  specs:
+    - Include normal and negative scenarios and links to the relevant traceability rows, tests and evidence.
+    - Preserve stable requirement names; use full MODIFIED blocks, and explain REMOVED requirements and migration.
+    - Separate required behavior from recorded evidence; list unrun or partial coverage honestly.
+  design:
+    - For every behavior change, write a short design.md even if the stock schema makes design optional; aim for 500 words or fewer.
+    - State the approach, affected boundaries, compatibility, relevant checks, rollout/reset implications and unresolved questions; resolve behavior-changing questions before approval.
+  tasks:
+    - Record the actual owner approval reference and approved artifact revision in review.md before any implementation task is started; pending approval is not a completed task.
+    - Each implementation task names its verification and updates affected contracts/docs; keep project milestone status in TODO.md.
+    - Run required deterministic checks; establish isolation before real-SPIRE suites, run those suites serially, and distinguish TLS rejection, HTTP denial and infrastructure failure.
+
+operations:
+  apply:
+    guidance:
+      - Read AGENTS.md and docs/spec-workflow.md; verify explicit Rudi approval of the spec delta and short plan before changing behavior. Stop before code if approval is absent or the scope has changed.
+  archive:
+    guidance:
+      - Reconcile current contracts, RFC references and evidence; report unrun checks and remaining gaps. A completed task list or agent verification report does not establish owner acceptance.

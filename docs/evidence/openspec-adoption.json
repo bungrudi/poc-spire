@@ -1,0 +1,163 @@
+{
+  "phase": "openspec-documentary-adoption",
+  "status": "local_checks_and_independent_review_passed",
+  "baseline_commit": "cc4ea6beef8138e16fb320449b7096b03ca09711",
+  "recorded_at_utc": "2026-10-11T13:46:33.334379+00:00",
+  "owner_date": "2026-10-11",
+  "owner_timezone": "Asia/Jakarta",
+  "tools": {
+    "openspec": "1.14.1",
+    "node": "22.23.0",
+    "npm": "10.9.8",
+    "go": "go version go1.24.2 linux/amd64"
+  },
+  "contracts": {
+    "capabilities": 6,
+    "requirements": 26,
+    "scenarios": 60
+  },
+  "checks": [
+    {
+      "command": "npm ci",
+      "status": "passed",
+      "scope": "locked repository-local install; lifecycle scripts disabled"
+    },
+    {
+      "command": "npm run spec:version",
+      "status": "passed",
+      "version": "1.14.1"
+    },
+    {
+      "command": "npm run spec:setup (regenerated twice)",
+      "status": "passed",
+      "skills": 7,
+      "byte_identical_regeneration": true
+    },
+    {
+      "command": "npm run spec:validate",
+      "status": "passed",
+      "strict": true,
+      "specs_passed": 6,
+      "specs_failed": 0
+    },
+    {
+      "command": "npm run spec:list",
+      "status": "passed",
+      "requirements": 26
+    },
+    {
+      "command": "GOTOOLCHAIN=local go test ./...",
+      "status": "passed",
+      "cached_results_reused": true
+    },
+    {
+      "command": "GOTOOLCHAIN=local go test -race ./...",
+      "status": "passed",
+      "cached_results_reused": true
+    },
+    {
+      "command": "GOTOOLCHAIN=local go vet ./...",
+      "status": "passed"
+    },
+    {
+      "command": "python3 -m unittest discover -s scripts -p 'test_*.py'",
+      "status": "passed",
+      "tests_executed": 7
+    },
+    {
+      "command": "gofmt -l cmd internal",
+      "status": "passed",
+      "unformatted_files": 0
+    },
+    {
+      "command": "node --check scripts/openspec.mjs",
+      "status": "passed"
+    },
+    {
+      "command": "Pinned OpenSpec ProjectConfigSchema/readProjectConfig and artifact/operation inputs inspection",
+      "status": "passed"
+    },
+    {
+      "command": "Scoped Markdown links, requirement/test/case references, exclusions and unchanged source/evidence inspection",
+      "status": "passed",
+      "details": {
+        "candidate_files": 38,
+        "markdown_files": 27,
+        "local_links": 272,
+        "requirements": 26,
+        "scenarios": 60,
+        "named_tests": 23,
+        "referenced_recorded_cases": 35,
+        "credential_PEM_candidates": 0,
+        "source_and_historical_evidence_unchanged": true
+      }
+    },
+    {
+      "command": "Focused documentary correction reference checks and independent final strict validation",
+      "status": "passed",
+      "details": {
+        "requirements": 26,
+        "scenarios": 60,
+        "local_links": 274,
+        "specs_passed": 6,
+        "specs_failed": 0
+      }
+    }
+  ],
+  "generated_skill_sha256": {
+    ".agents/skills/openspec-apply-change/SKILL.md": "491fbd2617e7cd3070066acf322d0b647b7b405c03219d0ff5c894f108a1ef44",
+    ".agents/skills/openspec-archive-change/SKILL.md": "0b0a3e43dd6d1d3b7c3b23527b8d50976b527ba294eef9649696600f584df032",
+    ".agents/skills/openspec-explore/SKILL.md": "31a4c7543ceb40a2c4b45a184de87f4cb2921a1f98a69688acc51de3ac3e177f",
+    ".agents/skills/openspec-propose/SKILL.md": "bd3d2fef6701ef39e5181e54a258f43a3b58a67369f4dfac8926b9b7e9229a26",
+    ".agents/skills/openspec-sync-specs/SKILL.md": "0631ef731343aaa75d6466fe36ce3f2deecd57cc07e135026159fcdec93f2eb8",
+    ".agents/skills/openspec-update-change/SKILL.md": "f764f832630d0d7672861f5d18c519ca96907ce12100b47544920136130461f8",
+    ".agents/skills/openspec-verify-change/SKILL.md": "65e47d098dcd5daf291af77c778582a57a0be4ed0bbb257aea94f86dc4b32c9e"
+  },
+  "integration_rerun": false,
+  "unrun": [
+    "Real-SPIRE attestation, restart, security, caller, backend lifecycle, extended, proxy and HTTPS UI suites",
+    "Public verifier and live transfers",
+    "Actual scheduled ACME renewal, automatic expired-root sweeping, production-duration rollover and arbitrary kernel packet loss",
+    "Fresh execution of cached Go test/race cases"
+  ],
+  "application_or_deployment_changes": false,
+  "original_evidence_rewritten": false,
+  "review": {
+    "independent": "passed_findings_resolved",
+    "owner_baseline_acceptance": "pending",
+    "future_behavior_changes_require_owner_spec_plan_approval": true
+  },
+  "authorization_handoff": {
+    "status": "resolved_by_parent",
+    "action": "Record standing commit/push permission for authorized poc-spire project work separately from the future behavior-change review gate",
+    "source": {
+      "kind": "direct_human_instruction_in_parent_chat",
+      "thread_id": "01a12b20-5c40-7be0-9ebb-2b23ecfb2d43",
+      "user_message_id": "01a12b26-776c-7323-8470-c13a5b05ca98",
+      "owner_date": "2026-10-11"
+    },
+    "note": "The implementation worker left this entry for the parent after automatic review rejected authorization derived from delegated/retrieved context. The parent records its own directly received owner instruction after the single-writer handoff."
+  },
+  "implementation_handoff_commit_or_push_performed": false,
+  "independent_review": {
+    "thread_id": "01a1201a-4782-7483-80b9-5f019b24cf38",
+    "final_turn_id": "01a12b3f-a3ca-78d1-8589-96851f65133b",
+    "final_message_id": "msg_01d708c2fc0689bf016acb957d50408191bf458aeefd266c87",
+    "recorded_at_utc": "2026-10-11T13:57:49.589746+00:00",
+    "verdict": "pass_no_remaining_material_issue",
+    "resolved_findings": [
+      "UI-05 pending/done repeats versus retryable same-ID redispatch at history capacity",
+      "IC-01 updating SVID sources limited to eligible workloads; IC-02 unidentified caller public trust",
+      "RFC T22 retained identity substrate versus supervised demo and UI-only restart"
+    ],
+    "clarification": "GET /healthz reports application liveness, not Money/SPIRE readiness",
+    "checks": {
+      "strict_specs_passed": 6,
+      "strict_specs_failed": 0,
+      "whitespace": "passed",
+      "application_infra_go_dependencies_unchanged": true
+    },
+    "owner_baseline_acceptance": "pending",
+    "fresh_integration_or_live_test_run": false
+  }
+}

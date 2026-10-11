@@ -19,7 +19,13 @@ The earlier checkpoints below record their original scope and results.
 
 **Current simplified demo: UID-1000/native-agent M1–M4 and HTTPS UI tests pass; the specifically approved spire.adianto.dev deployment is live and verified. Human authentication is explicitly assumed.**
 
-The [RFC](rfcs/0001-process-identity.md) defines technical behavior. [TODO.md](../TODO.md) tracks completion. This document defines the dependency order. The current status claims measured M1–M4 internal results; remote UI and full acceptance remain open.
+The [current contracts](../openspec/specs/) define implemented feature behavior;
+the [RFC](rfcs/0001-process-identity.md) retains architecture/security rationale.
+[TODO.md](../TODO.md) tracks current work separately from the historical milestone
+checklist. This document preserves the original dependency order. The simplified
+remote UI/deployment has recorded passing evidence; original verified-human/full
+acceptance is retired and is not claimed. See [the baseline index](spec-baseline.md)
+for exact limits and [the workflow](spec-workflow.md) for future owner-reviewed changes.
 
 | Milestone | Deliverable | Exit gate |
 | --- | --- | --- |
@@ -29,9 +35,13 @@ The [RFC](rfcs/0001-process-identity.md) defines technical behavior. [TODO.md](.
 | M3: Money API | In-process mTLS, exact-ID route authorization, atomic in-memory ledger, idempotency, security tests | Negative identity tests and ledger invariants pass (Gate D) |
 | M4: Callers and control | Separate caller processes, private trigger sockets, trusted transfer, no-SVID TLS probe, structured outcomes | Two intended outcomes demonstrated without UI (Gate E) |
 | M5: Simplified remote UI | Browser HTTPS, declared assumed operator, sessions, CSRF, limits, two buttons, read-only balances | Real-SPIRE UI and public caller tests pass; original human Gate F retired by owner |
-| M6: Verification and handoff | Full security matrix, sanitized evidence, runbook, reset/diagnostics, documented limitations | Owner accepts evidence and behavior (Gate G) |
+| M6: Verification and handoff | Bounded current-profile evidence/runbook and explicitly unrun observations | Owner reviews scope and evidence; original full verified-human Gate G is not claimed |
 
 ## Sequencing rules
+
+Before each future behavior change, prepare the spec delta and short plan and
+obtain Rudi's explicit approval before code/apply. Within approved work, retain
+these dependency rules:
 
 1. Resolve attestation feasibility before spending effort on a polished UI. Docker-only attestation cannot satisfy the stronger executable requirement.
 2. Prefer verified built-in attestors. If a custom plugin is needed, stop for a separate design/scope decision.
@@ -47,4 +57,4 @@ The [RFC](rfcs/0001-process-identity.md) defines technical behavior. [TODO.md](.
 - Executable-bound selectors cannot be safely verified: request a scope/design decision; do not silently produce a container-only demo.
 - Missing or invalid browser HTTPS configuration: fail startup. Human authentication is explicitly assumed only in this approved profile.
 - Trusted/unidentified behavior differs only because of socket mounts, DNS, or network policy: fix the test rather than claim process authentication works.
-- Any path can transfer based on a header, broad trust-domain membership, or an unauthenticated trigger: block acceptance.
+- A transfer based on a claimed header, broad trust-domain membership, unverified workload or exposed caller network trigger blocks acceptance. The owner-approved public browser session deliberately assumes its human.

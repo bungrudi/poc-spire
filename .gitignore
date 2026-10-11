@@ -27,3 +27,9 @@ logs/
 
 # Separate Sites source checkout; the portable page is in docs/explainer/.
 /sites/
+
+# Project-local OpenSpec development tooling and package-manager diagnostics.
+node_modules/
+.npm/
+npm-debug.log*
+.firecrawl/

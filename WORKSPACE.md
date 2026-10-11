@@ -19,7 +19,7 @@ changes are installed and verified at `https://spire.adianto.dev/`.
 
 Implementation was separately authorized on 5 October 2026 in this existing `personal-vps` project. The P1 real-SPIRE executable/deployment attestation suite passes for UID 1000 with an unprivileged native host agent. See [feasibility evidence](docs/attestation-feasibility.md). The money service, actual callers and simplified HTTPS UI are implemented and verified. The owner-approved demo is live at `https://spire.adianto.dev/` with an explicitly assumed human operator. See [implementation checkpoint](docs/implementation-status.md). Persistent credentials/access and host/network security changes still require specific approval.
 
-The detailed technical proposal is [RFC 0001](docs/rfcs/0001-process-identity.md). Recommendations are design proposals, not claims of a working or tested system.
+The technical architecture and security rationale are in [RFC 0001](docs/rfcs/0001-process-identity.md). Current implemented behavior is documented in [OpenSpec contracts](openspec/specs/), with source/test/evidence limits in [the baseline index](docs/spec-baseline.md). Future behavior changes require owner review of a spec delta and short plan before coding; see [the workflow](docs/spec-workflow.md). Historical recommendations are not implementation or acceptance claims.
 
 ## 2. Confirmed requirements
 
@@ -34,9 +34,9 @@ The detailed technical proposal is [RFC 0001](docs/rfcs/0001-process-identity.md
 | R7 | The design must resist forged network requests and unauthorized network peers, including peers that can reach the money service. |
 | R8 | Produce a clear workspace brief, TODO list, technical RFC, and agent guidance before coding. |
 
-## 3. Recommended decisions
+## 3. Current design decisions and measured scope
 
-| Decision | Recommendation and rationale |
+| Decision | Current decision and rationale |
 | --- | --- |
 | Process topology | Separate unprivileged caller containers, same numeric UID and same UID mapping. This preserves useful isolation; a shared container would introduce same-user memory/credential attacks that executable attestation alone does not solve. |
 | Proof of process attestation | Combine deployment selectors with an executable digest derived from the Workload API peer PID. Include a controlled wrong-executable test in the trusted deployment. Both callers get socket access; access denial alone does not count as the proof. |
@@ -48,7 +48,7 @@ The detailed technical proposal is [RFC 0001](docs/rfcs/0001-process-identity.md
 | UI balance reads | A distinct UI SPIFFE identity can read balances but cannot transfer. The UI never borrows the trusted caller's credentials. |
 | Demo ledger | Integer minor units, fixed transfer amount, atomic updates, in-memory idempotency. Restart resets the ledger and retry history. |
 
-These choices address the user's request for a recommendation. They are not additional requirements already approved by the user.
+The measured layout uses UID 1000 with an unprivileged native agent and separate application containers. The originally proposed UID 10001/containerized agent is unverified. Coverage is bounded by the [baseline index](docs/spec-baseline.md); adopting a contract does not create a new test pass or owner acceptance.
 
 ## 4. What the demo will and will not establish
 
@@ -60,11 +60,14 @@ It intentionally does not restrict browser users. It will not prove resistance t
 
 ## 5. Document ownership
 
-- [RFC 0001](docs/rfcs/0001-process-identity.md): authoritative technical design.
+- [OpenSpec specs](openspec/specs/): source-derived current behavior contracts; owner baseline acceptance pending.
+- [RFC 0001](docs/rfcs/0001-process-identity.md): authoritative architecture/security rationale and original T01–T23 matrix; reconcile current sections with approved contract changes.
+- [Spec workflow](docs/spec-workflow.md): document authority, pinned tooling and explicit owner review before future behavior changes.
+- [Baseline index](docs/spec-baseline.md): sources, named checks, recorded evidence, discrepancies and verification limits.
 - [TODO.md](TODO.md): task status and acceptance gates; `[x]` means actually completed, not merely specified.
 - [docs/design.md](docs/design.md): short overview; refer to the RFC for details.
 - [docs/plan.md](docs/plan.md): milestone sequence, not a second independent checklist.
-- [AGENTS.md](AGENTS.md): implementation guardrails and documentation-only stop condition.
+- [AGENTS.md](AGENTS.md): current authorization, security guardrails and behavior-change review gate.
 - [README.md](README.md): entry point; add real run instructions only when a tested implementation exists.
 
 ## 6. Original proposed layout — historical

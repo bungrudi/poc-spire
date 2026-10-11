@@ -37,6 +37,29 @@ verified-human or original full Gate F/G acceptance is claimed.
 - [x] Verify deployed HTTPS browser/API, caller outcomes, ports/mounts, protected key permissions, startup/renewal timers and renewal-hook session/ledger continuity; record public evidence.
 - [ ] Observe actual scheduled ACME renewal in the future; current issuance and manual hook test pass.
 
+## OpenSpec adoption — owner request, 11 October 2026
+
+- [x] Pin project-local OpenSpec 1.14.1, lock dependencies and document a suitable existing Node runtime without global/user-wide installation.
+- [x] Generate the seven official Codex skills, including verification, using the stock spec-driven schema and isolated configuration.
+- [x] Document six current capabilities with 26 requirements/60 scenarios and link source, named checks, recorded evidence and R1–R8/T01–T23 coverage/limits.
+- [x] Require actual owner approval of each future behavioral spec delta and short plan before code/apply; an agent-written review cannot grant approval.
+- [x] Reconcile active assumed-operator/UID-1000/deployment prose and label old OIDC/full-acceptance checkpoints as historical.
+- [x] Verify locked installation, reproducible skills, strict spec validation, scoped references/exclusions and deterministic checks; record cached Go results and unrun integration checks in [adoption evidence](docs/evidence/openspec-adoption.json).
+- [x] Complete independent review and resolve the three factual wording findings plus health-check clarification; final strict validation passes.
+- [ ] Obtain owner acceptance of baseline correctness; source inspection and structural validation do not imply acceptance.
+- [x] Parent records the directly authorized standing commit/push permission after the single-writer handoff, separately from future behavior-change review.
+
+## Original milestone checklist — historical
+
+The P0–P6 entries below preserve the 5 October implementation sequence and its
+original verified-human acceptance definition. Old unchecked UI/deployment/OIDC
+items and gate text are not the current public-demo backlog. The active profile
+and remaining scheduled-renewal observation are above; current feature/test
+contracts and bounded coverage are in [the baseline index](docs/spec-baseline.md).
+Future behavior changes follow [the owner-reviewed workflow](docs/spec-workflow.md).
+Do not mark historical requirements passed merely because the simplified demo
+was accepted for a different scope.
+
 ## P0 — Planning and approval
 
 - [x] Record confirmed requirements and recommended same-UID container topology in `WORKSPACE.md`.

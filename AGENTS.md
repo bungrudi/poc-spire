@@ -1,6 +1,48 @@
 # Agent instructions
 
-## Owner publication approval — 11 October 2026
+## Owner OpenSpec adoption and workflow approval — 11 October 2026
+
+Rudi directly instructed the parent chat on 11 October 2026: “ok apply
+openspec into the project. you be the orchestrator, control threads in the
+poc-spire project itself to implement. commit push at will”. The original owner
+message is `01a12b26-776c-7323-8470-c13a5b05ca98` in Codex chat
+`01a12b20-5c40-7be0-9ebb-2b23ecfb2d43`.
+
+This authorizes the OpenSpec adoption and gives standing permission to commit
+and push authorized poc-spire project work to the existing
+`https://github.com/bungrudi/poc-spire.git` origin. Do not ask again for routine
+commit/push permission within that authorized scope. This supersedes the earlier
+per-release push restriction and remains in effect unless the owner changes it.
+It does not approve an unreviewed behavior change or unrelated access changes,
+runtime publication, persistent credentials, host-security changes or deployment.
+For this adoption the orchestrator coordinates independent verification before
+finalizing; that sequencing is not a new permanent publication-approval gate.
+
+The owner requires **review of the spec delta and a short design/plan before
+every future behavior change**. Draft the change, resolve relevant questions,
+present it to Rudi and wait for explicit approval before code/apply. Record the
+actual approval message/date and approved artifact revision in the change's
+`review.md`; an agent-written review, checked task, validation pass or permission
+to commit/push is not owner approval. A changed behavioral scope needs renewed
+review before dependent implementation. This supersedes the earlier open-ended
+implementation loop for future behavior changes; the adoption itself is
+documentation/tooling work already authorized.
+
+Read [the workflow and document map](docs/spec-workflow.md) and
+[the baseline/evidence index](docs/spec-baseline.md). Use the relevant
+`openspec/specs/<capability>/spec.md` for current behavior and RFC 0001 for
+architecture/security rationale; reconcile both when an approved change lands.
+Do not convert historical OIDC plans into current public-demo requirements.
+
+For all OpenSpec CLI invocations, including bare `openspec` examples in shipped
+skills, use `npm run spec -- <arguments>` to run the pinned project-local tool
+with isolated settings. `npm ci` requires an existing Node >=20.19.0 runtime;
+see `.node-version` and the workflow. `npm run spec:setup` regenerates the seven
+official Codex skills, including verification. Never install globally. Structural
+validation and agent verification reports do not enforce approval or prove
+security tests. Keep credentials/runtime/cache/node_modules out of Git.
+
+## Earlier owner publication approval — 11 October 2026
 
 The owner explicitly requested committing and pushing the current project code
 to public GitHub. This authorizes publication of this release to the existing
@@ -35,8 +77,10 @@ Read in order:
 
 1. `WORKSPACE.md` — confirmed requirements, recommendations, pending configuration
 2. `docs/rfcs/0001-process-identity.md` — authoritative technical proposal
-3. `TODO.md` — actual task status and acceptance gates
-4. `docs/plan.md` — milestone order
+3. `docs/spec-baseline.md` and relevant `openspec/specs/` — current contracts and evidence limits
+4. `docs/spec-workflow.md` — change workflow and owner-review gate
+5. `TODO.md` — actual task status and acceptance gates; original milestone checklist is historical
+6. `docs/plan.md` — milestone order
 
 `README.md` indexes the workspace; `docs/design.md` is a summary, not a competing specification. Keep documents consistent. The remote-access requirement supersedes the earlier localhost-only assumption.
 
@@ -58,9 +102,9 @@ Read in order:
 
 ## Working practices after coding is authorized
 
-- Follow `TODO.md` gates in order. Prove attestation before building the demo UI; secure the UI before remote exposure.
+- Follow the owner-reviewed OpenSpec change workflow and current `TODO.md` work. Retain the original sequencing principle: prove attestation before dependent UI work and secure the UI before remote exposure; do not revive retired verified-human gates for this profile.
 - Use small Go packages, minimal dependencies, and deterministic tests. Run formatting, `go test ./...`, the race detector where supported, and the real-SPIRE Compose security suite when those exist.
-- Preserve negative tests: wrong executable, wrong deployment, no cert, fake identity header, wrong valid SPIFFE ID, unauthorized human, CSRF, duplicate transfer, and expired credentials.
+- Preserve negative tests: wrong executable, wrong deployment, no cert, fake identity header, wrong valid SPIFFE ID, CSRF, duplicate transfer and expired credentials. Preserve anonymous/viewer/owner checks for the separate local preview; verified-human/OIDC denial is retired for the public assumed-operator profile.
 - Document exact versions, selectors, test evidence, and any deviations. Mark tests as unrun if unrun; infrastructure errors do not count as identity rejection.
 - Update `TODO.md` only for completed work. Do not mark design recommendations as implemented.
 - Keep the scope honest: fake-money PoC, not production payments or protection against host/SPIRE/authorized-process compromise. Executable attestation is not continuous runtime integrity.

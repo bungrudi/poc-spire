@@ -13,6 +13,13 @@ credential is supplied by the browser or forwarded through Nginx.
 
 ## Implemented profile
 
+Current behavior contracts and source/test/evidence limits are indexed in
+[the OpenSpec baseline](spec-baseline.md). Future behavior changes need a spec
+delta and short plan explicitly reviewed by Rudi before code/apply; see
+[the workflow](spec-workflow.md). This runbook owns deployment operations, while
+the RFC owns architecture/security rationale. Saved results are recorded evidence,
+not a fresh execution triggered by adoption.
+
 - `cmd/ui -mode demo` requires HTTPS and an exact configured origin. OIDC and
   its implementation/dependencies have been removed.
 - Browser sessions are in memory with Secure/HttpOnly/SameSite=Lax cookies,

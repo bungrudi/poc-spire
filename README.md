@@ -14,6 +14,33 @@ The Go + Docker Compose demo has a web UI with two buttons. On 11 October 2026 t
 | [Design summary](docs/design.md) | Short architecture overview |
 | [Delivery plan](docs/plan.md) | Milestones and sequencing |
 | [AGENTS.md](AGENTS.md) | Rules for future coding agents |
+| [Current feature contracts](openspec/specs/) | Six source-derived OpenSpec capabilities with normal and negative scenarios |
+| [Baseline and traceability](docs/spec-baseline.md) | Source/test/evidence mappings, current versus historical coverage and limits |
+| [OpenSpec workflow](docs/spec-workflow.md) | Pinned local tooling, document authority and owner approval before behavior changes |
+
+## Spec-driven development
+
+The current features are documented directly as a baseline in `openspec/specs/`.
+Before changing behavior, draft a spec delta and short design/plan, resolve
+questions, and obtain Rudi's explicit approval before code/apply. Agent reviews
+and passing CLI validation do not establish owner approval or security acceptance.
+See [the workflow](docs/spec-workflow.md) for the full sequence.
+
+OpenSpec 1.14.1 is a locked project-local development dependency. Use an existing
+Node >=20.19.0 runtime (`.node-version` records measured Node 22.23.0), then:
+
+```sh
+npm ci
+npm run spec:version
+npm run spec:list
+npm run spec:validate
+```
+
+The committed seven Codex skills include verification. `npm run spec:setup`
+reproduces them. Use `npm run spec -- <arguments>` for all CLI calls, including
+bare commands shown by the official skills. The wrapper isolates user settings
+and disables telemetry/update checks; it performs no global installation.
+Node/OpenSpec are not needed to build or run the Go demo.
 
 ## Recommendations
 
@@ -38,7 +65,7 @@ The runner downloads checksum-pinned SPIRE 1.14.0, builds locally content-addres
 
 Rudi approved protected project-local PoC CA/database/agent retention. The identity substrate, money service and private caller controls are implemented and tested; see [implementation checkpoint](docs/implementation-status.md). On 11 October 2026 the owner also requested public source publication to [bungrudi/poc-spire](https://github.com/bungrudi/poc-spire). Credentials and runtime state remain excluded. The simplified UI uses the measured UID-1000 agent layout; public HTTPS installation is approved, live and verified; see the current deployment plan.
 
-The next tested internal commands are `python3 scripts/test_identity_restart.py`, `python3 scripts/security_suite.py`, and `python3 scripts/caller_suite.py`. Run them one at a time. They retain only approved identity state and remove their own test grants/resources. See the checkpoint for measured limits and M5 blockers.
+The tested internal commands are `python3 scripts/test_identity_restart.py`, `python3 scripts/security_suite.py`, and `python3 scripts/caller_suite.py`. Establish isolation before running them, one at a time: they use approved retained identity state and remove their own test grants/resources. See the checkpoint for historical coverage and the [baseline index](docs/spec-baseline.md) for current scope and limits.
 
 The bounded backend acceptance command is `python3 scripts/backend_suite.py`. It
 uses isolated short-TTL SPIRE state, removes all test keys/state, and verifies
@@ -54,7 +81,8 @@ own temporary fixture; it cannot recover/reset the retained PoC agent. See
 Final bounded transport-fault verification: `python3 scripts/backend_proxy_suite.py`.
 This opaque, credential-free proxy runs only inside the internal test network.
 Read the [final backend status](docs/backend-final-status.md) for the reconciled
-T01–T23 coverage, automatic-pruning limit and remaining M5 decisions.
+historical T01–T23 coverage and automatic-pruning limit; the current UI profile
+and coverage are in the [baseline index](docs/spec-baseline.md).
 
 ## Simplified browser demo
 
