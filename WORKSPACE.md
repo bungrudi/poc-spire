@@ -1,8 +1,23 @@
 # Workspace brief
 
+## Owner scope update — 11 October 2026
+
+The owner requested deployment at `spire.adianto.dev` and then explicitly
+removed OIDC, asking to assume human authentication to focus on SPIRE. The
+current HTTPS demo labels its operator as **assumed, not authenticated**;
+anyone with browser access may trigger fake transfers. The original OIDC and
+verified-human acceptance requirements below are historical and superseded
+for this demo. Workload attestation, direct mandatory mTLS, exact-ID Money
+authorization, separate caller control mounts, HTTPS and CSRF checks remain.
+The isolated UI uses the measured UID-1000/native-agent layout. See
+[the current demo and deployment plan](docs/remote-demo.md). The owner specifically approved the HTTPS certificate/key, Nginx route,
+renewal hook, persistent service and public access without human login. Those
+changes are installed and verified at `https://spire.adianto.dev/`.
+
+
 ## 1. Current status
 
-Implementation was separately authorized on 5 October 2026 in this existing `personal-vps` project. The P1 real-SPIRE executable/deployment attestation suite passes for UID 1000 with an unprivileged native host agent. See [feasibility evidence](docs/attestation-feasibility.md). The money service and actual caller/control path are implemented and tested; the remote UI remains unimplemented. See [implementation checkpoint](docs/implementation-status.md). Persistent credentials/access and host/network security changes still require specific approval.
+Implementation was separately authorized on 5 October 2026 in this existing `personal-vps` project. The P1 real-SPIRE executable/deployment attestation suite passes for UID 1000 with an unprivileged native host agent. See [feasibility evidence](docs/attestation-feasibility.md). The money service, actual callers and simplified HTTPS UI are implemented and verified. The owner-approved demo is live at `https://spire.adianto.dev/` with an explicitly assumed human operator. See [implementation checkpoint](docs/implementation-status.md). Persistent credentials/access and host/network security changes still require specific approval.
 
 The detailed technical proposal is [RFC 0001](docs/rfcs/0001-process-identity.md). Recommendations are design proposals, not claims of a working or tested system.
 
@@ -27,8 +42,8 @@ The detailed technical proposal is [RFC 0001](docs/rfcs/0001-process-identity.md
 | Proof of process attestation | Combine deployment selectors with an executable digest derived from the Workload API peer PID. Include a controlled wrong-executable test in the trusted deployment. Both callers get socket access; access denial alone does not count as the proof. |
 | Scope of 'process identity' | Approved executable in an approved deployment, not a unique PID identity or continuous runtime-integrity guarantee. |
 | TLS failure semantics | Missing/untrusted certificate: reject TLS. Valid SPIFFE identity but unauthorized role: HTTP `403`. |
-| Browser edge | Go UI serves remote HTTPS using a DNS-valid certificate. No sidecar is needed. Browser PKI and internal SPIFFE PKI are separate. |
-| Human access | OIDC Authorization Code flow with PKCE, server-side sessions, default-deny roles, and CSRF protection. Only explicit operators can trigger either caller. |
+| Browser edge | Existing VPS Nginx serves browser HTTPS and verifies re-encrypted HTTPS to Go UI. Money workload TLS still terminates only in Go Money; browser and SPIFFE PKI remain separate. |
+| Human access | Owner explicitly requested an assumed operator and removed OIDC. Anyone may trigger fake transfers; disclosure, secure sessions and CSRF remain. |
 | Trigger channel | Private, per-caller Unix-domain sockets mounted into the UI and the corresponding caller only. Callers expose no network trigger endpoint. |
 | UI balance reads | A distinct UI SPIFFE identity can read balances but cannot transfer. The UI never borrows the trusted caller's credentials. |
 | Demo ledger | Integer minor units, fixed transfer amount, atomic updates, in-memory idempotency. Restart resets the ledger and retry history. |
@@ -39,9 +54,9 @@ These choices address the user's request for a recommendation. They are not addi
 
 The demo should prove both **attestation** (which executable/deployment can obtain a credential) and **authorization** (which verified identity can transfer). Successful TLS alone is not permission to transfer.
 
-It should reject forged headers, arbitrary certificates, an unregistered same-UID executable, and a valid but unauthorized workload identity. It should also reject unauthenticated or unauthorized remote users at the UI.
+It should reject forged headers, arbitrary certificates, an unregistered same-UID executable, and a valid but unauthorized workload identity. Human rejection was explicitly retired for the owner-requested learning demo.
 
-It will not prove resistance to host/root/Docker/SPIRE compromise, stolen authorized credentials, arbitrary code execution in the trusted caller, or a compromised UI exercising its legitimate trigger capability. No claim of real-money readiness, tamper-proof runtime execution, or availability against an unbounded denial-of-service attack is intended.
+It intentionally does not restrict browser users. It will not prove resistance to host/root/Docker/SPIRE compromise, stolen authorized credentials, arbitrary code execution in the trusted caller, or a compromised UI exercising its legitimate trigger capability. No claim of real-money readiness, tamper-proof runtime execution, or availability against an unbounded denial-of-service attack is intended.
 
 ## 5. Document ownership
 
@@ -52,7 +67,7 @@ It will not prove resistance to host/root/Docker/SPIRE compromise, stolen author
 - [AGENTS.md](AGENTS.md): implementation guardrails and documentation-only stop condition.
 - [README.md](README.md): entry point; add real run instructions only when a tested implementation exists.
 
-## 6. Proposed future layout — not yet created
+## 6. Original proposed layout — historical
 
 ```text
 cmd/
@@ -79,7 +94,7 @@ docs/
 
 Future paths are suggestions, not existing files. Avoid adding a custom SPIRE plugin unless release-specific verification demonstrates it is necessary and the added scope is explicitly approved.
 
-## 7. Decisions still needed before a remote deployment
+## 7. Original deployment decisions — historical; current demo choices recorded above
 
 These do not block writing the design. They do block final configuration and deployment:
 

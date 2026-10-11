@@ -1,0 +1,26 @@
+[Unit]
+Description=SPIRE fake-money HTTPS demo (assumed operator)
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+SupplementaryGroups=docker
+WorkingDirectory=/home/ubuntu/Workspace/poc-spire
+Environment=GOTOOLCHAIN=local
+Environment=PYTHONUNBUFFERED=1
+Environment=PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin
+UMask=0077
+ExecStart=/usr/bin/python3 /home/ubuntu/Workspace/poc-spire/scripts/remote_demo.py
+Restart=on-failure
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=90
+
+[Install]
+WantedBy=multi-user.target

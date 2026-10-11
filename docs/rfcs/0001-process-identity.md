@@ -1,6 +1,21 @@
 # RFC 0001: Direct process-attested transfers with SPIRE
 
-- **Status:** implementation authorized; identity substrate, money API and internal callers/control verified in the measured UID-1000/native-agent layout; remote UI/full security acceptance not implemented
+## Owner supersession — 11 October 2026
+
+The owner requested `spire.adianto.dev` and explicitly removed OIDC, asking to
+assume human authentication to focus on SPIRE. The current demo labels its
+operator as **assumed, not authenticated**; anyone with access may trigger fake
+transfers. This supersedes all earlier mandatory OIDC/verified-human gates,
+claims of protection against unauthorized humans, and different-UID UI planning
+for this simplified profile. Workload security remains mandatory. The UI runs
+in a separate UID-1000 container using the measured unprivileged native agent.
+The owner specifically approved the public/persistent installation, which is
+now installed and verified at `https://spire.adianto.dev/`. See [current profile and exact plan](../remote-demo.md).
+Original human-security tests remain historical requirements, not passing tests
+or claims about this public demo.
+
+
+- **Status:** implementation authorized; identity substrate, money API and internal callers/control verified in the measured UID-1000/native-agent layout; simplified HTTPS UI implemented; isolated integration passes; owner-approved public deployment live and verified
 - **Scope:** Go services on one Docker Compose host; fake money only
 - **Decision authority:** project owner
 - **Related:** [workspace brief](../../WORKSPACE.md), [TODO list](../../TODO.md), [delivery plan](../plan.md)
@@ -8,11 +23,11 @@
 
 ## 1. Summary
 
-Build a remote, authenticated web demo with two buttons: **Transfer as trusted process** and **Transfer as unidentified process**. Each button tells the selected Go process to initiate its own direct connection to a money service. The money service requires SPIFFE mTLS and authorizes the exact caller SPIFFE ID in Go. It does not trust browser-supplied identities, network location, or a sidecar's forwarded identity headers.
+Build a remote HTTPS learning demo with an assumed operator with two buttons: **Transfer as trusted process** and **Transfer as unidentified process**. Each button tells the selected Go process to initiate its own direct connection to a money service. The money service requires SPIFFE mTLS and authorizes the exact caller SPIFFE ID in Go. It does not trust browser-supplied identities, network location, or a sidecar's forwarded identity headers.
 
 Recommend separate caller containers with the same numeric UID, plus executable-bound SPIRE workload attestation. A dedicated test runs a different executable under the trusted deployment's other attestation conditions. This separates the executable test from the container test without presenting same-container arbitrary-code execution as a safe security boundary.
 
-Remote access adds a separate requirement: authenticate and authorize the **human operator** before allowing the trusted process to make a transfer. Workload mTLS alone cannot prevent an exposed trigger endpoint from being abused.
+The owner intentionally assumes the **human operator** for this learning demo. Workload mTLS proves caller identity, not human authentication. Any visitor can trigger a fake transfer through the UI; this is disclosed on the page.
 
 ### Terminology
 
@@ -29,7 +44,7 @@ Remote access adds a separate requirement: authenticate and authorize the **huma
 1. Authenticate and authorize transfers in the Go money process, end to end from the caller.
 2. Demonstrate that same UID, network reachability, knowledge of the expected SPIFFE ID, and Workload API socket access are insufficient to impersonate the trusted executable.
 3. Make both the successful transfer and the identity-based rejection visible in the remote UI.
-4. Protect the remote UI and its trigger path against unauthenticated calls, unauthorized users, CSRF, and simple replay/duplicate submission.
+4. Retain browser CSRF/origin/Host controls and duplicate prevention while disclosing the explicit assumed-human scope.
 5. Keep startup, teardown, identity inspection, and negative tests reproducible with Compose.
 6. Describe limits explicitly; avoid equating container identity, executable attestation, and runtime integrity.
 
@@ -50,7 +65,7 @@ Remote access adds a separate requirement: authenticate and authorize the **huma
 | D2 | Require both deployment-bound selectors and an agent-derived executable digest. Prefer built-in attestors verified for the selected release. |
 | D3 | Strict SPIFFE mTLS on every money API route. Authenticate the trust-domain credential during TLS; apply exact identity/route policy in Go before any operation. |
 | D4 | Return HTTP `403` only for an authenticated identity lacking permission. Missing/invalid credentials fail TLS and have no HTTP status from the money API. |
-| D5 | Remote Go UI serves ordinary browser HTTPS, uses OIDC and server-side sessions, and enforces roles plus CSRF protection. |
+| D5 | Remote Go UI serves browser HTTPS with an explicitly assumed operator, secure in-memory sessions and CSRF protection. No human login. |
 | D6 | Per-caller private Unix-domain sockets carry trigger commands. No caller listens for triggers on the transfer network. |
 | D7 | UI has a separate, read-only workload identity for balance display; it cannot invoke the transfer API directly. |
 | D8 | Fixed fake transfers, integer minor units, atomic ledger mutation, and in-memory idempotency. |
@@ -60,9 +75,9 @@ These are design recommendations. Implementation was authorized on 5 October 202
 ## 4. Architecture and trust boundaries
 
 ```text
-Remote browser <-- login redirects --> OIDC provider
+Remote browser [human identity assumed]
       |
-      | HTTPS :443 + session + CSRF + operator role
+      | HTTPS :443 + demo session + CSRF
       v
 Go UI / control service [identity: /ui]
       |                                  |
@@ -201,36 +216,40 @@ Rotation affects new TLS handshakes; it does not reauthenticate an already-estab
 
 ## 7. Remote browser access and safe triggering
 
-### 7.1 Two independent identities
+### 7.1 Workload identity and the assumed human
 
-- **Human:** OIDC subject and explicitly mapped application role.
-- **Workload:** SPIFFE ID authenticated on the money connection.
+The human principal is a declared constant (`urn:poc-spire:assumed`,
+`demo-operator`), not a verified login. Anyone can obtain a demo session by
+opening `/`. Money still authenticates real SPIFFE workload IDs during TLS and
+authorizes the exact ID by route. The browser never presents caller credentials.
 
-Both gates matter. A valid operator session does not let the browser present a workload identity. A trusted caller SVID does not prove the request was approved by a particular human. The PoC trusts the UI/control service and trusted caller to enforce the human gate; their compromise is outside the threat model.
+### 7.2 Browser HTTPS and sessions
 
-### 7.2 Public HTTPS and OIDC
+Go UI serves HTTPS with a DNS-valid certificate. The proposed existing VPS Nginx
+edge terminates browser TLS and re-encrypts to Go UI, verifying its exact DNS
+name and certificate using ordinary web PKI. Neither proxy terminates workload
+mTLS. This specific edge installation was approved and is live.
 
-Recommended baseline: the Go UI serves HTTPS directly with a DNS-valid certificate mounted as a secret. Browser trust uses ordinary web PKI, not the internal SPIFFE trust bundle. This avoids ambiguity about the no-sidecar requirement. A future edge proxy may terminate **browser** TLS only with separate approval; it must never terminate caller-to-money TLS or supply workload identity through headers.
+Opaque in-memory sessions use Secure/HttpOnly/SameSite=Lax cookies, 15-minute
+idle and one-hour absolute expiry. They bind CSRF controls, not a human identity.
+POST `/auth/logout` clears a session with CSRF protection. OIDC is removed.
+Missing or invalid browser TLS configuration fails startup.
 
-Use OIDC Authorization Code flow with PKCE (S256), state, nonce, an exact registered redirect URI, and a maintained Go OIDC/OAuth library. Validate issuer, audience, signature, expiry, and nonce; do not equate an arbitrary token or email header with a logged-in user. Store tokens server-side rather than in local storage. Avoid an open redirect through a user-controlled return URL.
+### 7.3 Browser defenses
 
-Use opaque, high-entropy session cookies with `Secure`, `HttpOnly`, restrictive path/domain, and `SameSite=Lax` compatible with the chosen callback flow. Rotate the session after login. Proposed lifetimes: 15-minute idle and 60-minute absolute expiry. Restart invalidates in-memory sessions. Logout is POST + CSRF protected and clears the local session.
-
-The actual issuer/client/certificate/DNS choices are pending configuration decisions. If no OIDC provider is available, choose a protected development provider rather than adding a public auth bypass. Missing/invalid remote authentication configuration must block startup/readiness, not turn off authentication.
-
-### 7.3 Authorization and web defenses
-
-- Default-deny role assignment. Map verified `(issuer, subject)` or explicitly allowlisted verified group claims to `operator` and optionally `viewer`. Being authenticated alone is not operator permission.
-- Both buttons require `operator` on the server, not merely hidden/disabled UI elements. `viewer` may read sanitized attempt results and balances only.
-- CSRF token and exact origin checks for all state-changing browser routes, including logout. No state changes through GET. Deny cross-origin API access by default; CORS is not a substitute for CSRF defenses.
-- Configure the expected public origin and allowed Host; do not derive security policy from arbitrary Host/forwarded headers.
-- Use escaped templates, a restrictive CSP, no third-party scripts, `frame-ancestors 'none'`, and no raw upstream error HTML. Mark authenticated/API responses `Cache-Control: no-store`.
-- Bound bodies, deadlines, per-operator attempts, concurrent transfers, and result history. Fail rate-limited requests with `429`, never by skipping identity checks.
-- GET `/healthz` may expose a minimal public health response with no secrets; diagnostic internals and metrics are not public routes.
+- Both buttons are available to the assumed demo operator. No human-access
+  restriction or anonymous-user-denial claim is made.
+- CSRF tokens and exact Origin/Host checks protect state-changing routes.
+  Forwarded identity or Host headers never substitute for policy.
+- Escaped templates, a restrictive CSP, frame protection, no third-party
+  scripts and no-store responses remain.
+- Fixed transfer input, request deadlines, bounded concurrency/history and a
+  rate limit shared by the assumed principal remain. These are demo limits,
+  not production abuse or denial-of-service protection.
 
 ### 7.4 Private control channel
 
-Each caller exposes a small HTTP-over-UDS control endpoint to the UI. The UI is the only other container with that volume. Have the caller own the socket directory and allow the UI group to connect but not replace the socket. Validate peer credentials as defense in depth using a separate UI UID; test permissions at startup. No world-writable socket directory.
+Each caller exposes a small HTTP-over-UDS control endpoint to the UI. The UI is the only other container with that volume. Have the caller own the socket directory and allow the UI group to connect but not replace the socket. The measured demo uses a separate UID-1000 UI container; kernel peer checks enforce that UID, while separate mounts provide cross-caller isolation. Test permissions at startup. No world-writable socket directory.
 
 The trigger message contains a server-created attempt ID and bounded correlation metadata. It does **not** accept an arbitrary upstream URL, arbitrary headers, SPIFFE ID, command line, shell command, or account/amount selection. Target money address and transfer parameters are fixed deployment configuration. This prevents the control API becoming a general HTTP proxy or command runner.
 
@@ -240,7 +259,7 @@ The UI can reach both control sockets. The unidentified caller cannot reach the 
 
 ### 8.1 Trusted button
 
-1. Browser submits an operator-authorized, CSRF-protected action with a stable idempotency key for this logical click.
+1. Browser submits an assumed-operator, CSRF-protected action with a stable idempotency key for this logical click.
 2. UI validates session/role/CSRF, reserves an attempt ID, and sends a fixed command over the trusted caller's UDS.
 3. Trusted caller obtains/uses its live SVID and establishes direct mTLS to the expected money identity.
 4. Money authenticates, checks exact transfer permission, validates the request, atomically applies or retrieves the idempotent result, and records an audit event.
@@ -248,7 +267,7 @@ The UI can reach both control sockets. The unidentified caller cannot reach the 
 
 ### 8.2 Unidentified button
 
-1. Same operator checks; UI triggers the unidentified caller over its separate UDS.
+1. Same demo-session and CSRF checks; UI triggers the unidentified caller over its separate UDS.
 2. The caller tries the Workload API with a bounded deadline and records that no matching SVID is available. Distinguish attestation denial from an unavailable socket/agent.
 3. As an explicit **negative test mode**, it then attempts HTTPS to the money service with **no client certificate**. Use a public trust bundle supplied through trusted bootstrap to verify the exact server SPIFFE identity. Do not assume an unregistered process can fetch trust material from the Workload API; verify support or use the read-only bootstrap bundle.
 4. Money rejects TLS. No HTTP transfer is processed and balances do not change.
@@ -277,14 +296,13 @@ If the response is lost after commit, report the result as unknown until retryin
 
 ## 9. Proposed API and data contracts
 
-Money and private caller contracts are implemented and tested; browser-facing contracts remain planned. See [implementation checkpoint](../implementation-status.md) for measured coverage.
+Money and private caller contracts are implemented and tested; simplified assumed-operator browser contracts are implemented. See [implementation checkpoint](../implementation-status.md) for measured coverage.
 
 ### 9.1 Browser-facing routes
 
 | Method/path | Access | Behavior |
 | --- | --- | --- |
-| `GET /` | Logged-in viewer/operator | Two buttons, balances, evidence explanation |
-| `GET /auth/login`, `GET /auth/callback` | Public, protected OAuth flow | Begin/complete OIDC login |
+| `GET /` | Public assumed operator | Issue/renew demo session; buttons, balances, evidence explanation |
 | `POST /auth/logout` | Session + CSRF | Invalidate local session |
 | `POST /api/attempts` | Operator + CSRF + idempotency key | Accept only `trusted` or `unidentified`; create bounded attempt |
 | `GET /api/attempts/{id}` | Authorized session | Read sanitized result; restrict to owner unless explicitly granted broader access |
@@ -293,7 +311,7 @@ Money and private caller contracts are implemented and tested; browser-facing co
 
 Return `202` + attempt ID for a newly accepted action; poll status rather than keeping a browser connection open across Workload API delays. Bind browser idempotency keys to `(issuer, subject, key)` and record the selected caller. Reusing a key with a different caller returns `409` while that UI record exists. This UI deduplication complements, rather than replaces, the money service's idempotency.
 
-Require a high-entropy browser key for each logical click, retained for retries. Derive the money `request_id` deterministically from a domain-separated, unambiguously encoded `(issuer, subject, browser key)` using SHA-256; do not make it a fresh random value on every dispatch. Thus, after UI restart and re-login, retrying the same logical transfer still reaches the money service with the same request ID even if UI attempt history was lost. UI attempt display IDs may be separate. This derivation is a deduplication mechanism, not an authorization credential.
+Require a high-entropy browser key for each logical click, retained for retries. Derive the money `request_id` deterministically from a domain-separated, unambiguously encoded `(issuer, subject, browser key)` using SHA-256; do not make it a fresh random value on every dispatch. Thus, after UI restart and a renewed demo session, retrying the same logical transfer still reaches the money service with the same request ID even if UI attempt history was lost. UI attempt display IDs may be separate. This derivation is a deduplication mechanism, not an authorization credential.
 
 ### 9.2 Money-facing routes
 
@@ -359,7 +377,7 @@ Linux kernel/host administrator, Docker daemon and deployment authority, SPIRE s
 - Give the agent only measured permissions required by supported attestors; record any elevated permissions and why. Keep server/admin paths inaccessible to workloads.
 - Secrets supplied through protected runtime files/secret mounts; Compose secret mounts are not automatically an encrypted secret manager. Protect host files and backups. No secrets in build arguments, URLs, committed `.env`, or screenshots.
 - Readiness requires correct dependencies/configuration. `depends_on` alone is not proof of SPIRE readiness or eligible identity. Apply deadlines and distinguish not-ready from policy denial.
-- On errors, fail closed. No anonymous remote mode, identity-header mode, blanket trust-domain transfer permission, or certificate-verification bypass.
+- On errors, fail closed. The assumed-human remote mode must be explicit and disclosed; never enable it as an error fallback. No identity-header mode, blanket trust-domain transfer permission, or certificate-verification bypass.
 - Restarting UI invalidates sessions; restarting money resets balances and idempotency; SPIRE state persists unless explicitly reset. Document these independently.
 - Provide structured audit events for verified identities, human action subjects, results, and correlation IDs. Do not log SVID PEM, private keys, OIDC tokens, cookie values, join tokens, or CSRF tokens.
 - Keep result history bounded and redact UI-facing internal details. An attacker-controlled error string must never become executable HTML.
@@ -379,7 +397,7 @@ The full application matrix remains **planned**. Measured M1–M4 and backend li
 | T07 | Self-signed cert containing allowed URI | TLS rejection; no mutation |
 | T08 | Valid wrong-ID SVID, including UI identity on transfer | TLS may succeed; HTTP `403`; no idempotency/ledger mutation |
 | T09 | Money impostor with wrong SPIFFE ID | Client rejects server before sending application data |
-| T10 | Anonymous remote action / logged-in non-operator | UI `401` / `403`; no control command |
+| T10 | Original verified-human authorization | Retired by owner for this simplified public demo; no human-denial claim |
 | T11 | Missing/wrong CSRF token or foreign origin | Rejected by UI; no control command |
 | T12 | Unidentified caller targets trusted trigger | No exposed network endpoint; trusted control volume inaccessible |
 | T13 | Same transfer ID/payload retried concurrently | Exactly one ledger mutation within process lifetime; stable result |
@@ -388,7 +406,7 @@ The full application matrix remains **planned**. Measured M1–M4 and backend li
 | T16 | Response lost after money commit | Retry same ID resolves result without second debit |
 | T17 | SVID rotation/expiry and attempted connection reuse | Fresh handshakes use current credentials; expired peer cannot transfer; baseline disables reuse/resumption |
 | T18 | SPIRE down, socket missing, wrong server bundle | Fail closed; UI labels infrastructure failure, not proven identity rejection |
-| T19 | OIDC issuer/audience/nonce/state error, expired session | Rejected; no operator action |
+| T19 | Original OIDC claims / session expiry | OIDC retired; demo session expiry and renewed-session retry tested |
 | T20 | Host ports, volumes, image configs, logs inspected | Only intended remote edge exposed; no credential leaks or cross-caller control mount |
 | T21 | Rebuild changes binary digest | Old registration fails closed; explicit reviewed registration update needed |
 | T22 | Restart and reset | UI-only restart preserves deterministic transfer IDs on retry; money restart resets ledger/history; SPIRE state persists unless explicitly reset |

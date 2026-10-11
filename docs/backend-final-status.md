@@ -1,5 +1,22 @@
 # Backend implementation status — 5 October 2026
 
+## Owner scope update — 11 October 2026
+
+The owner requested deployment at `spire.adianto.dev` and then explicitly
+removed OIDC, asking to assume human authentication to focus on SPIRE. The
+current HTTPS demo labels its operator as **assumed, not authenticated**;
+anyone with browser access may trigger fake transfers. The original OIDC and
+verified-human acceptance requirements below are historical and superseded
+for this demo. Workload attestation, direct mandatory mTLS, exact-ID Money
+authorization, separate caller control mounts, HTTPS and CSRF checks remain.
+The isolated UI uses the measured UID-1000/native-agent layout. See
+[the current demo and deployment plan](remote-demo.md). The owner specifically approved the HTTPS certificate/key, Nginx route,
+renewal hook, persistent service and public access without human login. Those
+changes are installed and verified at `https://spire.adianto.dev/`.
+
+The earlier checkpoints below record their original scope and results.
+
+
 Existing project: `/home/ubuntu/Workspace/poc-spire` on `personal-vps`.
 M1–M4 internal backend behavior is implemented and measured. The remote UI,
 operator security, exposure and whole-PoC owner acceptance are not complete.

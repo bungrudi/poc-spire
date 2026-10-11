@@ -1,8 +1,8 @@
 # SPIRE / SPIFFE process-identity PoC
 
-**Status: identity substrate, money service and internal caller/control path verified. Remote UI is blocked on configuration/layout decisions.**
+**Status: simplified HTTPS UI implemented; real-SPIRE HTTPS browser integration passes. The owner-approved deployment is live at https://spire.adianto.dev/.**
 
-The proposed Go + Docker Compose demo has a remotely accessible web UI with two buttons. Each button triggers a different caller process to attempt the same fake money transfer. The money service authenticates workloads directly using SPIFFE mTLS: the authorized caller succeeds; the unidentified caller fails. No sidecar terminates workload authentication.
+The Go + Docker Compose demo has a web UI with two buttons. On 11 October 2026 the owner removed OIDC and requested an assumed operator to focus on SPIRE. The page discloses that anyone can trigger fake transfers. See [the current demo and deployment plan](docs/remote-demo.md). Each button triggers a different caller process to attempt the same fake money transfer. The money service authenticates workloads directly using SPIFFE mTLS: the authorized caller succeeds; the unidentified caller fails. No sidecar terminates workload authentication.
 
 ## Workspace documents
 
@@ -19,7 +19,7 @@ The proposed Go + Docker Compose demo has a remotely accessible web UI with two 
 
 - Run callers in **separate containers with the same numeric UID**. Require executable-bound attestation as well as deployment selectors; verify this with a wrong-executable test inside the trusted deployment. Container identity alone is not sufficient.
 - Use **strict mTLS**. No certificate means TLS rejection, not an HTTP response. A valid but unauthorized identity gets an HTTP `403` at the money service.
-- Remote UI access requires **HTTPS, OIDC login, explicit operator authorization, and CSRF protection**. Workload identity does not replace human authorization.
+- Browser access uses **HTTPS, secure sessions and CSRF protection**. The human operator is explicitly assumed; SPIRE authenticates the caller processes. OIDC is removed for this owner-requested learning demo.
 
 The first increment adds a Go test fixture, dependency locks, private Compose fixtures, and an ephemeral SPIRE runner. See [measured attestation evidence](docs/attestation-feasibility.md) and [sanitized results](docs/evidence/attestation-latest.json). The measured layout uses equal UID 1000 and an unprivileged native agent; the proposed UID 10001/containerized agent remains unverified.
 
@@ -36,7 +36,7 @@ python3 scripts/attestation.py
 
 The runner downloads checksum-pinned SPIRE 1.14.0, builds locally content-addressed static fixtures, starts loopback-only SPIRE and private containers, and removes its own credentials/state/containers/image/network afterward. It publishes no ports. The TCP sentinel tests reachability only; it is not a money API or demo UI. Missing selectors, timeout, infrastructure failure or unexpected identity fail the suite.
 
-Rudi approved protected project-local PoC CA/database/agent retention. The identity substrate, money service and private caller controls are implemented and tested; see [implementation checkpoint](docs/implementation-status.md). Initial private GitHub publication is separately authorized for [bungrudi/poc-spire](https://github.com/bungrudi/poc-spire); no services are publicly exposed. M5 requires a UI UID/agent-layout decision and remote DNS/HTTPS/OIDC/operator configuration.
+Rudi approved protected project-local PoC CA/database/agent retention. The identity substrate, money service and private caller controls are implemented and tested; see [implementation checkpoint](docs/implementation-status.md). On 11 October 2026 the owner also requested public source publication to [bungrudi/poc-spire](https://github.com/bungrudi/poc-spire). Credentials and runtime state remain excluded. The simplified UI uses the measured UID-1000 agent layout; public HTTPS installation is approved, live and verified; see the current deployment plan.
 
 The next tested internal commands are `python3 scripts/test_identity_restart.py`, `python3 scripts/security_suite.py`, and `python3 scripts/caller_suite.py`. Run them one at a time. They retain only approved identity state and remove their own test grants/resources. See the checkpoint for measured limits and M5 blockers.
 
@@ -55,3 +55,38 @@ Final bounded transport-fault verification: `python3 scripts/backend_proxy_suite
 This opaque, credential-free proxy runs only inside the internal test network.
 Read the [final backend status](docs/backend-final-status.md) for the reconciled
 T01–T23 coverage, automatic-pruning limit and remaining M5 decisions.
+
+## Simplified browser demo
+
+`python3 scripts/ui_suite.py` tests the HTTPS browser API with real SPIRE in an
+isolated loopback-only stack. It removes its temporary browser/workload keys and
+containers and preserves the approved retained identity state. Run it separately
+from other SPIRE commands. Results: `docs/evidence/ui-demo.json`.
+
+The existing local owner-login preview is still available through
+`python3 scripts/local_demo.py`, then `python3 scripts/local_login.py` in a second
+terminal. The new public demo profile assumes an operator and requires a
+provisioned browser certificate; it is not the localhost login profile exposed
+through a proxy. The owner-approved deployment is live at [spire.adianto.dev](https://spire.adianto.dev/).
+See [the deployment runbook](docs/remote-demo.md).
+
+## Live demo
+
+Open [https://spire.adianto.dev/](https://spire.adianto.dev/). The owner explicitly
+approved public access with an assumed operator and no human login. Click
+**Attempt trusted transfer** for a verified USD 1.00 fake transfer, and
+**Attempt unidentified transfer** for no-SVID/TLS rejection with no balance
+change. Repeat the same attempt to test deduplication; choose **New logical
+attempt** for another transfer.
+
+The service starts after reboot. A full restart resets fake balances and retry
+history. See [the operations runbook](docs/remote-demo.md) and
+[sanitized public verification](docs/evidence/public-demo.json).
+
+## Illustrated guide
+
+The [process-identity page](https://spire-process-identity.rudiadianto.chatgpt.site/)
+explains the services through one fake transfer, with rendered Mermaid diagrams
+and excerpts from the Go sender and receiver. Its portable source is in
+[docs/explainer](docs/explainer/README.md). It is an illustrative guide; use
+[spire.adianto.dev](https://spire.adianto.dev/) to exercise the running demo.

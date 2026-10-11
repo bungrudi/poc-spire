@@ -1,0 +1,70 @@
+{
+  "phase": "assumed-operator-HTTPS-demo",
+  "status": "passed",
+  "tests": [
+    {
+      "case": "assumption-disclosure-session-CSRF-origin-Host",
+      "passed": true
+    },
+    {
+      "case": "real-trusted-transfer-browser-repeat",
+      "passed": true
+    },
+    {
+      "case": "UI-restart-new-session-same-ID-no-duplicate",
+      "passed": true
+    },
+    {
+      "case": "real-unidentified-no-SVID-TLS-rejection",
+      "passed": true
+    },
+    {
+      "case": "cross-caller-control-isolation",
+      "passed": true
+    }
+  ],
+  "public_deployment": false,
+  "human_authentication": "explicitly omitted by owner",
+  "runtime": {
+    "money": {
+      "uid": 1000,
+      "mounts": [
+        "/workload"
+      ],
+      "published_loopback_only": true
+    },
+    "trusted-caller": {
+      "uid": 1000,
+      "mounts": [
+        "/workload",
+        "/control"
+      ],
+      "published_loopback_only": true
+    },
+    "untrusted-caller": {
+      "uid": 1000,
+      "mounts": [
+        "/workload",
+        "/control"
+      ],
+      "published_loopback_only": true
+    },
+    "ui": {
+      "uid": 1000,
+      "mounts": [
+        "/workload",
+        "/trusted-control",
+        "/untrusted-control",
+        "/browser"
+      ],
+      "published_loopback_only": true
+    }
+  },
+  "cleanup": {
+    "compose_exit_code": 0,
+    "image_exit_code": 0,
+    "ephemeral_state_removed": true,
+    "retained_identity_unchanged": true
+  },
+  "temporary_browser_keys_removed": true
+}

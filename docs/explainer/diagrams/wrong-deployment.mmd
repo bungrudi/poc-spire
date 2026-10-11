@@ -1,0 +1,20 @@
+sequenceDiagram
+    participant C as Go sender
+    participant A as SPIRE Agent
+    participant S as SPIRE Server
+    participant M as Go Money receiver
+
+    A->>S: Bootstrap and node attestation
+    S-->>A: Agent identity and authorized registrations
+    A->>S: Request or rotate workload certificates
+    S-->>A: Signed SVIDs cached by Agent
+    C->>A: Fetch X.509-SVID over local Unix socket
+    A->>A: Kernel peer PID and UID<br/>Executable SHA-256 and Docker selectors
+    A->>A: Docker role does not match<br/>Approved executable, UID, image still match
+    A-->>C: PermissionDenied: no identity issued
+    Note over C,M: Intentional no-client-certificate test probe
+    C->>M: Begin TLS without client certificate
+    M-->>C: Present server /money SVID
+    C->>C: Verify /money using public trust bundle
+    M-->>C: Reject TLS: client certificate required
+    Note over M: HTTP handler never runs<br/>No Money HTTP status or transfer

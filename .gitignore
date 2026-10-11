@@ -24,3 +24,6 @@ client_secret*.json
 logs/
 *.py[cod]
 .DS_Store
+
+# Separate Sites source checkout; the portable page is in docs/explainer/.
+/sites/

@@ -1,0 +1,44 @@
+name: ${POC_PROJECT:?}
+x-app: &app
+  image: ${POC_IMAGE:?}
+  user: "1000:1000"
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  networks: [money]
+  volumes:
+    - ${POC_SOCKET_DIR:?}:/workload:ro
+services:
+  money:
+    <<: *app
+    entrypoint: [/money]
+    command: [-listen, ":8443"]
+    labels: {poc-spire.role: local-money}
+  trusted-caller:
+    <<: *app
+    entrypoint: [/trusted-caller]
+    command: [-operator-uid, "1000"]
+    labels: {poc-spire.role: local-trusted}
+    volumes:
+      - ${POC_SOCKET_DIR:?}:/workload:ro
+      - ${POC_WORK:?}/trusted-control:/control
+  untrusted-caller:
+    <<: *app
+    entrypoint: [/untrusted-caller]
+    command: [-operator-uid, "1000"]
+    labels: {poc-spire.role: local-unidentified}
+    volumes:
+      - ${POC_SOCKET_DIR:?}:/workload:ro
+      - ${POC_WORK:?}/untrusted-control:/control
+  ui:
+    <<: *app
+    entrypoint: [/ui]
+    command: [-mode, local, -origin, "http://127.0.0.1:${POC_PORT:?}"]
+    labels: {poc-spire.role: local-ui}
+    volumes:
+      - ${POC_SOCKET_DIR:?}:/workload:ro
+      - ${POC_WORK:?}/trusted-control:/trusted-control:ro
+      - ${POC_WORK:?}/untrusted-control:/untrusted-control:ro
+      - ${POC_WORK:?}/ui-state:/state
+networks:
+  money: {internal: true}

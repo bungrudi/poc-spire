@@ -1,0 +1,57 @@
+name: ${POC_PROJECT:?}
+x-app: &app
+  image: ${POC_IMAGE:?}
+  user: "1000:1000"
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  networks: [money]
+  volumes:
+    - ${POC_SOCKET_DIR:?}:/workload:ro
+services:
+  money:
+    <<: *app
+    entrypoint: [/money]
+    command: [-listen, ":8443"]
+    labels: {poc-spire.role: demo-money}
+  trusted-caller:
+    <<: *app
+    entrypoint: [/trusted-caller]
+    command: [-operator-uid, "1000"]
+    labels: {poc-spire.role: demo-trusted}
+    volumes:
+      - ${POC_SOCKET_DIR:?}:/workload:ro
+      - ${POC_WORK:?}/trusted-control:/control
+  untrusted-caller:
+    <<: *app
+    entrypoint: [/untrusted-caller]
+    command: [-operator-uid, "1000"]
+    labels: {poc-spire.role: demo-unidentified}
+    volumes:
+      - ${POC_SOCKET_DIR:?}:/workload:ro
+      - ${POC_WORK:?}/untrusted-control:/control
+  ui:
+    <<: *app
+    entrypoint: [/ui]
+    command:
+      - -mode
+      - demo
+      - -origin
+      - ${POC_ORIGIN:?}
+      - -listen
+      - :8443
+      - -tls-cert
+      - /browser/browser.pem
+      - -tls-key
+      - /browser/browser.pem
+    labels: {poc-spire.role: demo-ui}
+    networks: [money, browser]
+    ports: ["127.0.0.1:${POC_PORT:?}:8443"]
+    volumes:
+      - ${POC_SOCKET_DIR:?}:/workload:ro
+      - ${POC_WORK:?}/trusted-control:/trusted-control:ro
+      - ${POC_WORK:?}/untrusted-control:/untrusted-control:ro
+      - ${POC_BROWSER_DIR:?}:/browser:ro
+networks:
+  money: {internal: true}
+  browser: {}

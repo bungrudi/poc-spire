@@ -32,7 +32,7 @@ type uidKey struct{}
 
 var idPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,128}$`)
 
-func peerUID(conn net.Conn) (uint32, error) {
+func PeerUID(conn net.Conn) (uint32, error) {
 	u, ok := conn.(*net.UnixConn)
 	if !ok {
 		return 0, errors.New("not Unix connection")
@@ -104,7 +104,7 @@ func Serve(ctx context.Context, path string, operatorUID uint32, execute Executo
 	server := &http.Server{Handler: endpoint(operatorUID, execute), ReadHeaderTimeout: time.Second,
 		ReadTimeout: 2 * time.Second, WriteTimeout: 12 * time.Second, MaxHeaderBytes: 2048,
 		ConnContext: func(ctx context.Context, conn net.Conn) context.Context {
-			uid, err := peerUID(conn)
+			uid, err := PeerUID(conn)
 			if err != nil {
 				return ctx
 			}

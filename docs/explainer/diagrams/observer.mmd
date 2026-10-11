@@ -1,0 +1,24 @@
+sequenceDiagram
+    participant C as Go sender
+    participant A as SPIRE Agent
+    participant S as SPIRE Server
+    participant M as Go Money receiver
+
+    A->>S: Bootstrap and node attestation
+    S-->>A: Agent identity and authorized registrations
+    A->>S: Request or rotate workload certificates
+    S-->>A: Signed SVIDs cached by Agent
+    C->>A: Fetch X.509-SVID over local Unix socket
+    A->>A: Kernel peer PID and UID<br/>Executable SHA-256 and Docker selectors
+    A->>A: Match the UI observer registration
+    A-->>C: Own /ui SVID, key, trust bundle
+    C->>M: Begin mutual TLS handshake
+    M-->>C: Present server /money SVID
+    C->>C: Verify server chain and exact /money ID
+    C->>M: Present valid /ui SVID<br/>Prove possession of private key
+    M->>M: Verify client SVID and trust domain
+    Note over C,M: Illustrative unauthorized transfer attempt
+    C->>M: POST /transfer
+    M->>M: Extract verified /ui ID<br/>Check exact route permission
+    M-->>C: HTTP 403: forbidden
+    Note over M: /ui may GET /balances<br/>It cannot POST /transfer

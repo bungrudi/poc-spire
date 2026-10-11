@@ -1,0 +1,99 @@
+{
+  "origin": "https://spire.adianto.dev",
+  "status": "passed",
+  "human_identity": "assumed, not authenticated",
+  "tests": [
+    {
+      "case": "public-HTTPS-disclosure-session-CSRF",
+      "passed": true
+    },
+    {
+      "case": "public-real-trusted-transfer-stable-retry",
+      "passed": true
+    },
+    {
+      "case": "public-real-unidentified-TLS-rejection",
+      "passed": true
+    }
+  ],
+  "final_fake_ledger": {
+    "balances": {
+      "demo-a": 99900,
+      "demo-b": 100100
+    },
+    "version": 1
+  },
+  "verified_at_utc": "2026-10-10T23:32:57Z",
+  "runtime_boundaries": {
+    "money": {
+      "user": "1000:1000",
+      "read_only": true,
+      "capabilities_dropped": true,
+      "privileged": false,
+      "mounts": [
+        "/workload"
+      ],
+      "host_ports": {}
+    },
+    "trusted-caller": {
+      "user": "1000:1000",
+      "read_only": true,
+      "capabilities_dropped": true,
+      "privileged": false,
+      "mounts": [
+        "/control",
+        "/workload"
+      ],
+      "host_ports": {}
+    },
+    "untrusted-caller": {
+      "user": "1000:1000",
+      "read_only": true,
+      "capabilities_dropped": true,
+      "privileged": false,
+      "mounts": [
+        "/workload",
+        "/control"
+      ],
+      "host_ports": {}
+    },
+    "ui": {
+      "user": "1000:1000",
+      "read_only": true,
+      "capabilities_dropped": true,
+      "privileged": false,
+      "mounts": [
+        "/workload",
+        "/trusted-control",
+        "/untrusted-control",
+        "/browser"
+      ],
+      "host_ports": {
+        "8443/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "18087"
+          }
+        ]
+      }
+    }
+  },
+  "certificate_hook": {
+    "manually_exercised": true,
+    "same_certificate_atomic_republication": true,
+    "session_ledger_process_preserved": true,
+    "actual_ACME_renewal": "unrun; initial issuance and renewal timer verified"
+  },
+  "browser_secret_permissions": {
+    "directory": "0700",
+    "combined_pem": "0600",
+    "owner": "ubuntu"
+  },
+  "reboot_start_enabled": true,
+  "certbot_timer_enabled": true,
+  "live_identity_refresh": {
+    "fresh_verified_balance_read_after_initial_90_second_SVID_lifetime": true,
+    "service_uptime_seconds_at_read": 325,
+    "service_restarts": 0
+  }
+}

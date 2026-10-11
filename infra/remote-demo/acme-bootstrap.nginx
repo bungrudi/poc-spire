@@ -1,0 +1,13 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name spire.adianto.dev;
+    access_log off;
+    error_log /dev/null crit;
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/spire-acme;
+        default_type text/plain;
+        try_files $uri =404;
+    }
+    location / { return 503; }
+}

@@ -1,10 +1,35 @@
 # Agent instructions
 
-## Current mode: implementation authorized
+## Owner publication approval — 11 October 2026
+
+The owner explicitly requested committing and pushing the current project code
+to public GitHub. This authorizes publication of this release to the existing
+`bungrudi/poc-spire` repository and changing that repository to public after
+checking source and history for credentials. It does not authorize future
+pushes, unrelated access changes, or publication of runtime state. The static
+service-story explainer is exported in `docs/explainer/`; `/sites/` is a separate,
+ignored Sites checkout.
+
+## Owner scope update — 11 October 2026
+
+The owner requested deployment at `spire.adianto.dev` and then explicitly
+removed OIDC, asking to assume human authentication to focus on SPIRE. The
+current HTTPS demo labels its operator as **assumed, not authenticated**;
+anyone with browser access may trigger fake transfers. The original OIDC and
+verified-human acceptance requirements below are historical and superseded
+for this demo. Workload attestation, direct mandatory mTLS, exact-ID Money
+authorization, separate caller control mounts, HTTPS and CSRF checks remain.
+The isolated UI uses the measured UID-1000/native-agent layout. See
+[the current demo and deployment plan](docs/remote-demo.md). The owner specifically approved the HTTPS certificate/key, Nginx route,
+renewal hook, persistent service and public access without human login. Those
+changes are installed and verified at `https://spire.adianto.dev/`.
+
+
+## Current mode: implementation and named demo deployment authorized
 
 On 5 October 2026 Rudi instructed the implementation loop to proceed in this existing `personal-vps` project following the RFC/backlog. P1 attestation feasibility is verified in the measured UID-1000/native-agent layout; see `docs/attestation-feasibility.md`. This supersedes the previous documentation-only restriction.
 
-Authorization covers project implementation and isolated testing. On 5 October 2026 Rudi separately authorized initializing Git and the initial publication to a new private `bungrudi/poc-spire` GitHub repository. This does not authorize future pushes, merges, migrations, deployments, collaborators or credential/access changes. Obtain specific approval before creating/retaining persistent credentials or host access, or changing host/network security settings. The ephemeral P1 runner retains no credentials. Rudi separately approved project-local PoC CA/agent state retention on 5 October 2026. That state now exists with owner-only permissions; no unrelated persistent access or deployment is authorized. M2–M4 tests pass. M5 is blocked on UI UID/agent-layout and HTTPS/OIDC configuration decisions; see `docs/implementation-status.md`.
+Authorization covers project implementation and isolated testing. On 5 October 2026 Rudi separately authorized initializing Git and the initial publication to a new private `bungrudi/poc-spire` GitHub repository. The original publication approval does not authorize future pushes, merges, migrations, collaborators or unrelated deployment/credential/access changes. The 11 October approval covers only the named demo, protected browser TLS key, Nginx route, renewal hook and startup service. Obtain specific approval before creating/retaining persistent credentials or host access, or changing host/network security settings. The ephemeral P1 runner retains no credentials. Rudi separately approved project-local PoC CA/agent state retention on 5 October 2026. That state now exists with owner-only permissions; no unrelated persistent access or deployment is authorized. M2–M4 and simplified HTTPS UI/public checks pass. The current demo uses an isolated UID-1000 UI and explicitly assumes the human operator; see `docs/remote-demo.md`.
 
 Read in order:
 
@@ -24,9 +49,9 @@ Read in order:
 - Same UID, same container, image labels, and binary paths alone are not executable identity. Verify agent-derived executable-digest selectors plus deployment restrictions against a pinned SPIRE release before claiming process attestation.
 - The two callers run in separate containers with the same UID/mapping and can reach both money and the Workload API socket. Include a controlled same-deployment wrong-executable test and a wrong-deployment approved-binary test.
 - Do not invent plugin options or selector syntax. Prefer verified built-in attestors; a custom attestor requires explicit scope approval. Do not silently downgrade to container identity.
-- Remote browser access requires HTTPS, validated OIDC login, backend operator authorization, CSRF/origin checks, and safe sessions. Missing configuration fails closed; no anonymous demo bypass.
+- The specifically approved learning demo uses HTTPS, CSRF/origin/Host checks and safe demo sessions, and declares an assumed human operator. OIDC is intentionally removed; anyone visiting may trigger fake transfers. Do not describe the assumed human as authenticated. Browser TLS configuration still fails closed.
 - Callers have private, separate UDS trigger channels, not network trigger endpoints. The unidentified caller must not reach the trusted caller's control socket. UI may trigger callers but never borrows their credentials.
-- The UI's distinct workload identity can read balances, not transfer. SPIFFE authenticates the process; OIDC authenticates the human. Neither replaces the other.
+- The UI's distinct workload identity can read balances, not transfer. SPIFFE authenticates the process; this simplified demo explicitly assumes the human. Never claim SPIFFE authenticates the browser user.
 - Application containers receive no Docker/admin sockets or other workloads' credentials. The agent's required host/Docker privileges belong in the trusted computing base. A read-only Docker socket mount is not a read-only API.
 - Fake money uses integer units, atomic updates, and identity-bound idempotency. Do not create a fresh transfer ID when retrying an unknown result.
 - Keep credentials, SVID/private-key material, join tokens, OIDC tokens, cookie values, and runtime state out of git/logs/evidence.

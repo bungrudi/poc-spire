@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+[ "${RENEWED_LINEAGE:-}" = /etc/letsencrypt/live/spire.adianto.dev ] || exit 0
+browser_dir=/home/ubuntu/Workspace/poc-spire/.runtime/browser
+install -d -m 0700 -o ubuntu -g ubuntu "$browser_dir"
+tmp_pem=$(mktemp "$browser_dir/.browser.XXXXXX")
+trap 'rm -f "$tmp_pem"' EXIT
+cat "$RENEWED_LINEAGE/fullchain.pem" "$RENEWED_LINEAGE/privkey.pem" > "$tmp_pem"
+chown ubuntu:ubuntu "$tmp_pem"
+chmod 0600 "$tmp_pem"
+mv "$tmp_pem" "$browser_dir/browser.pem"
+nginx -t
+systemctl reload nginx
