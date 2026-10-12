@@ -18,14 +18,29 @@ in [profile.md](profile.md) are proposed policy, not requirements imposed by JWS
 | [Kafka delivery design](https://kafka.apache.org/42/design/design/) | Broker delivery/offset progress is distinct from atomic external business effects. Our in-memory ledger/offsets do not constitute durable exactly-once effects. |
 | [Independent Node JOSE v6.1.0](https://github.com/panva/jose/releases/tag/v6.1.0) | Proposed separately pinned test-only interoperability implementation. Verify its runtime/API compatibility in implementation; no package is installed now. |
 
-Observed local source at draft base **4b0077437cc17381fb14c918fff6a779e518c994**:
+Application contracts were inspected against revision base
+**0102ec7b670812c7ff2511d1c9a4ea9b67fe0118** (the prior documentary draft).
 [go.mod](../../../go.mod) pins Go 1.24.2, Go SPIFFE 2.6.0 and indirect go-jose
 4.1.2; [Money](../../../internal/money/server.go) owns the HTTP policy,
 [ledger](../../../internal/ledger/ledger.go) keys history by caller/request ID,
 [trusted caller](../../../cmd/trusted-caller/main.go) verifies its own exact ID,
 and [identity setup](../../../scripts/identity.py) enforces narrow registrations.
 The [baseline index](../../../docs/spec-baseline.md) links named existing tests.
-No Kafka dependency/configuration/code exists at this base.
+No Kafka dependency/configuration/code, receipt resource or Kafka UI/control API
+exists at this base. Current [web app](../../../internal/web/app.go) accepts only
+caller/browser_key on POST /api/attempts and derives IDs without transport;
+[control](../../../internal/control/control.go) accepts only request_id on
+POST /attempt. UI background jobs do not change the HTTP/mTLS transport.
+[UI entrypoint](../../../cmd/ui/main.go) already owns an observer source and
+[Compose](../../../infra/remote-demo/compose.yaml) has separate control mounts.
+[Remote runner](../../../scripts/remote_demo.py) uses shared remote-demo metadata,
+and IdentityRuntime locks retained runtime.lock even for ephemeral roots.
+The proposed separate runtime/lock mode is implementation work, not an existing
+concurrency guarantee. Future infra/kafka-signing/ assets reuse
+[the scratch-image convention](../../../infra/local-ui/Dockerfile); this draft
+creates no Docker config, credentials or runtime state. Another active chat is
+separately editing browser assets/local-demo evidence; that work is preserved and
+is not part of this proposal or its checks.
 
 Excluded future scope: historical validation would need trustworthy timestamp
 and trust-history evidence (for example Sigstore bundles or JAdES), not a claimed

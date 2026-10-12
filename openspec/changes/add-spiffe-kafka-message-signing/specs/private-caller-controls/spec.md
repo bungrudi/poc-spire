@@ -2,8 +2,30 @@
 
 ## MODIFIED Requirements
 
+### Requirement: PC-04 Stable retry and distinct outcome provenance
+Sync results SHALL retain submitted IDs and distinct Money/TLS/business/infrastructure outcomes. Kafka controls SHALL return only bounded descriptor/digest/publication diagnostics, never infer Money success from broker acknowledgement. Lost/malformed responses MUST remain unknown until same-ID recovery. Only authenticated correlated Money receipts SHALL settle Kafka effects; diagnostics MUST NOT invent a verified signer or Money status.
+
+#### Scenario: Stable successful response
+- **WHEN** the caller receives a valid Money result for the submitted request ID
+- **THEN** the control response includes that ID, outcome, actual Money status and supported verified-server/result evidence
+
+#### Scenario: Response is lost or cannot be correlated
+- **WHEN** control loses a response or receives malformed/oversized evidence or a mismatched request ID
+- **THEN** it reports unknown_commit, preserves the ID and supplies no invented Money success
+
+### Requirement: PC-02 Fixed bounded peer-checked protocol
+Existing POST /attempt SHALL accept exactly one request_id matching [A-Za-z0-9_-]{1,128}, strict JSON with no unknown/trailing fields, at most 1024 body bytes and a kernel peer UID matching configured operator UID. Separate opt-in Kafka routes SHALL use their fixed schema on the same private boundary. Routes MUST NOT accept arbitrary destinations, payloads, amounts, SPIFFE identities or headers.
+
+#### Scenario: Valid command from configured peer
+- **WHEN** the configured peer UID sends a valid request ID to its private socket
+- **THEN** the fixed executor runs within a bounded deadline and concurrency limit
+
+#### Scenario: Wrong peer or arbitrary-request input
+- **WHEN** the peer UID is absent/wrong or the command supplies extra fields, invalid IDs or oversized input
+- **THEN** control rejects the peer with 403 or malformed command with 400 before executing
+
 ### Requirement: PC-03 Caller-owned authentication and no-SVID probe
-The existing private-control caller profile MUST continue obtaining its exact trusted SVID and making fixed direct mTLS transfers. The unidentified caller SHALL require reachable Workload API no-matching-identity denial, then probe without a client certificate while verifying Money. Unexpected issuance or Money HTTP response MUST be flagged. Explicit Kafka signing mode in the approved trusted executable MUST NOT alter default controls or public triggers.
+The existing private-control caller profile MUST continue obtaining its exact trusted SVID and making fixed direct mTLS transfers. Unidentified Sync attempts SHALL require reachable no-identity denial, then a verified-Money no-certificate probe. Unexpected issuance/HTTP response MUST fail. Opt-in fixed Kafka controls SHALL preserve those Sync commands while publishing trusted/unsigned/tampered scenarios; UI MUST NOT receive producer keys.
 
 #### Scenario: Trusted and unidentified attempts
 - **WHEN** each caller executes its own fixed attempt in the measured deployment
@@ -13,9 +35,33 @@ The existing private-control caller profile MUST continue obtaining its exact tr
 - **WHEN** the API is unreachable, reports another failure or issues an identity to the unidentified caller
 - **THEN** the attempt reports infrastructure failure or unexpected_identity_issued rather than claiming no-SVID rejection
 
-#### Scenario: Explicit one-shot Kafka signing mode
-- **WHEN** the owner-approved fixture selects Kafka mode with an immutable command descriptor
-- **THEN** the same narrowly attested trusted executable signs/publishes its fixed command, while default UDS callers and browser triggers retain their synchronous path
+#### Scenario: Fixed Kafka publish alongside Sync controls
+- **WHEN** the combined profile enables its separate fixed Kafka control route
+- **THEN** callers publish only their permitted menu cases, while existing POST /attempt and Sync behavior remain unchanged
+
+## ADDED Requirements
+
+### Requirement: PC-05 Fixed private Kafka controls
+Opt-in callers SHALL add POST /attempt/kafka with exactly request_id, scenario and a 32-hex authenticated-Money instance nonce, plus GET /attempt/kafka/{request_id} for metadata. Trusted SHALL support only kafka-trusted/kafka-tampered; unidentified SHALL support only kafka-unidentified. Peer checking, 1024-byte input, strict parsing and bounded deadlines MUST apply. No network control listener or signing-key export is allowed.
+
+#### Scenario: Fixed Kafka command is published
+- **WHEN** an authorized UI peer submits a valid fixed scenario/ID/instance tuple on the corresponding private socket
+- **THEN** the caller reserves exact record metadata before publishing and reports queued or publish_unknown independently of Money effects
+
+#### Scenario: Wrong scenario peer or arbitrary payload
+- **WHEN** a peer is unauthorized or sends another caller's scenario, extra fields, oversized data or selectable broker/amount/identity
+- **THEN** the command is rejected before publication and the old POST /attempt contract remains unchanged
+
+### Requirement: PC-06 Initialized bounded retry state
+The runner SHALL initialize one stream-bound caller manifest/index before startup. Caller-only state SHALL retain at most 64 immutable descriptors and four record variants each, atomically before publication; callers MUST NOT recreate missing/corrupt expected state. Retry/UI or caller restart MUST preserve original deadline, instance nonce and potentially submitted digests. New IDs at capacity SHALL fail without eviction.
+
+#### Scenario: Lost publish response then restart
+- **WHEN** publication may have happened but its control response is lost and UI/caller container restarts in the same run
+- **THEN** initialized state recovers the exact descriptor/all potentially submitted digests without a new ID/deadline
+
+#### Scenario: State loss or descriptor expiry
+- **WHEN** expected state is missing/corrupt, stream/instance differs, or the original deadline expired
+- **THEN** Kafka publish fails closed as unknown/reset/expired instead of creating a fresh descriptor; metadata lookup can still recover surviving evidence
 
 ## Traceability and proposed coverage
 

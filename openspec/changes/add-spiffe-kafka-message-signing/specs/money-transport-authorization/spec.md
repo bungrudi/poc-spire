@@ -29,7 +29,7 @@ Every workload client of Money's HTTP API, including the UI and unidentified no-
 - **THEN** the client rejects server verification without a successful transfer
 
 ### Requirement: MT-02 Exact identity method and route policy
-For HTTP, Money MUST authorize the verified exact SPIFFE ID, method and route before parsing transfer input or consulting history. Only spiffe://poc.internal/caller/trusted SHALL POST /transfer; only spiffe://poc.internal/ui SHALL GET /balances. All other HTTP combinations MUST receive 403 after authentication. Opt-in Kafka ingestion separately validates and authorizes the original signed producer.
+For HTTP, Money MUST authorize exact verified ID/method/path before history. Only spiffe://poc.internal/caller/trusted SHALL POST /transfer. Only spiffe://poc.internal/ui SHALL GET /balances and enabled GET /kafka/outcomes or GET /kafka/outcomes/{64-hex-digest}. Other authenticated HTTP combinations MUST receive 403. Kafka separately verifies its signed producer; observer reads MUST NOT trigger transfer.
 
 #### Scenario: Allowed transfer and observer read
 - **WHEN** the trusted ID posts a valid transfer or the UI ID requests balances
@@ -42,6 +42,10 @@ For HTTP, Money MUST authorize the verified exact SPIFFE ID, method and route be
 #### Scenario: Authorized identity uses another route
 - **WHEN** a trusted caller requests balances or any verified ID uses an unsupported method/path
 - **THEN** Money denies the operation before business logic
+
+#### Scenario: Observer reads Kafka receipts
+- **WHEN** the UI's exact observer SVID requests enabled Kafka outcome metadata or a digest receipt
+- **THEN** Money serves bounded read-only evidence; trusted/wrong-ID clients are denied and transfer/balance route permissions remain unchanged
 
 ### Requirement: MT-04 Bounded input and current credential guards
 For POST /transfer, after authorization, Money MUST accept one bounded JSON transfer object with no unknown fields or trailing values and a maximum 4096-byte body. It MUST check the peer credential's validity before authorization and again after body parsing. Requests crossing expiry MUST NOT mutate the ledger. Kafka uses its separate signed-message limits and guarded acceptance; these HTTP checks remain unchanged.

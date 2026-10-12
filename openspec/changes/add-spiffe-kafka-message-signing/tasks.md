@@ -1,38 +1,50 @@
 # Tasks
 
-All tasks are unchecked. Draft authorization is not implementation approval.
+All tasks are unchecked. This expanded revision needs fresh independent review
+and explicit owner approval; the prior published draft PASS is historical.
 
 ## 1. Approval and assessed dependencies
 
-- [ ] 1.1 Obtain explicit owner approval of the final delta/profile and short design; record the actual message/date and artifact digest manifest in review.md. Verify pending status is replaced only by real approval, including acceptance of memory-only crash limits.
-- [ ] 1.2 Assess/pin go-jose 4.1.5, franz-go 1.19.5 and the Kafka 4.0.2 image digest plus test-only independent JOSE candidate; verify Go 1.24.2 compatibility, dependency/security findings and baseline tests, and document exact accepted versions without global installs.
+- [ ] 1.1 Obtain explicit owner approval of this expanded delta/profile and short plan; record message/date and artifact manifest in review.md, including receipt/deadline/reset limits. Verify no prior agent PASS or publication is substituted.
+- [ ] 1.2 Assess/pin go-jose 4.1.5, franz-go 1.19.5, Kafka 4.0.2 image digest and independent JOSE test candidate; verify Go 1.24.2 compatibility/security and baseline tests, documenting exact versions without global installation.
 
-## 2. Signing profile and deterministic verification
+## 2. Signed commands and shared effects
 
-- [ ] 2.1 Implement bounded compact ES256/x5c codec, strict JSON/base64/curve/chain handling and atomic SVID pairing; verify JS-02–JS-05/SJ-01–SJ-03 vectors/fuzz cases and document the wire format/limits.
-- [ ] 2.2 Implement configured context/key binding and captured local trust/time validation; verify JS-04/JS-08/JS-09 boundary tests, cached-outage versus missing/rejected trust classification, and update the profile's verification examples.
-- [ ] 2.3 Implement immutable descriptor-driven signing/re-signing with original ID/deadline; verify JS-07/JS-08 rotation, expiry and separate-invocation retries and document creation versus retry commands.
+- [ ] 2.1 Implement bounded ES256/x5c codec, strict parsing and matched SVID/key snapshots; verify JS-02–JS-05/JS-13 vectors and document wire limits.
+- [ ] 2.2 Implement context/key/time checks with independent cached trust snapshots and Kafka-only guarded shared-ledger/context access; verify JS-06–JS-09/JS-12 cross-ingress and expiry/budget/assignment distinctions, keeping original HTTP guards/tests unchanged.
+- [ ] 2.3 Implement fixed signed/unsigned/tampered record builders without an arbitrary-payload API; verify JS-04/JS-05/JS-16 expected classifications and document fixed menu semantics.
 
-## 3. Shared Money effects and producer integration
+## 3. Authenticated Money outcome resource
 
-- [ ] 3.1 Add Kafka-only guarded shared-ledger access and bounded atomic context binding; verify JS-06/JS-07/JS-08/JS-12 cross-ingress concurrency, conflicts, no history on guard failure, and unchanged original ledger/HTTP tests. Document shared key/reset semantics.
-- [ ] 3.2 Add explicit Kafka mode to the trusted executable without altering default UDS control commands; verify mode/config tests and PC-03 regressions, then document the required explicit digest-policy update and single trusted grant.
+- [ ] 3.1 Implement complete-record digest framing, instance metadata and observer-only mTLS GET outcome reads; verify JS-17 wrong-reader/no-cert/mismatched-digest/invalid-claim cases and document query versus business statuses.
+- [ ] 3.2 Add 4096-slot/180-second receipt reservation and atomic effect/context/result publication, plus retained rejection-digest discard; verify JS-12/JS-18/JS-21 capacity, duplicate time/trust changes and transient guards. Document receipt expiry separately from ledger history.
+- [ ] 3.3 Embed the opt-in consumer with manual ordered commits, pauses/heartbeats and assignment fencing; verify JS-10/JS-11/JS-14 fake-client fault/reset cases and unchanged Sync service availability.
 
-## 4. Embedded Kafka ingress and fixture boundaries
+## 4. Private callers and bounded recovery
 
-- [ ] 4.1 Add complete opt-in Money Kafka configuration and embedded consumer; verify disabled/default and incomplete startup cases, original POST /transfer/GET /balances statuses/guards and absence of relay/public trigger routes; document isolated enable/disable settings.
-- [ ] 4.2 Implement manual one-partition processing/ack sequencing, pauses/heartbeats and assignment fencing; verify JS-10/JS-11 fake-client fault/generation tests and no offset ahead of undecided work, and document runtime Kafka failure/reset behavior.
-- [ ] 4.3 Build stock private Kafka TLS/DN ACL and ephemeral SPIRE fixture provisioning, with per-app credentials and disabled producer idempotence; verify JS-14/JS-15 runtime inspection/cleanup and document exact image/ACL/mount/port facts.
+- [ ] 4.1 Add new fixed Kafka publish/lookup controls on existing private sockets while preserving POST /attempt; verify PC-02/PC-04 and JS-16/JS-20 peer/schema/mount regressions, documenting exact request fields.
+- [ ] 4.2 Implement runner-initialized caller-only manifest/index, atomic pre-publish variant reservation, original-deadline retention and 64/four limits; verify JS-07/JS-19/JS-22 response loss, restart, corruption/capacity/reset cases and no SVID private-key storage. Document explicit new-attempt versus retry.
 
-## 5. Integration evidence and reconciliation
+## 5. Fixed combined UI
 
-- [ ] 5.1 Establish fixture isolation without live/retained state changes, run JS-01–JS-12 and JS-14–JS-15 serially with real SPIRE/Kafka, plus formatting/Go test/race/vet and relevant deterministic checks; save sanitized evidence with revision/versions and mark all unrun failures honestly.
-- [ ] 5.2 Run JS-13 bidirectional independent JOSE and RFC vectors; verify exact-byte/curve rejection without exporting keys/SVIDs and record the independent tool/version, distinguishing codec from full policy coverage.
-- [ ] 5.3 Reconcile current docs/RFC/baseline evidence and approved deltas, promoting this profile/reference material to a stable documentation location and fixing links before sync/archive; verify strict validation and reference checks. Update TODO only for completed work and retain owner-acceptance/unrun limits.
+- [ ] 5.1 Preserve Sync labels/APIs and add the three Async scenarios through a separate strict creation API sharing quotas/ownership/CSRF; verify original web tests plus JS-16/JS-20, documenting transport versus background execution.
+- [ ] 5.2 Implement authenticated Money metadata/all-variant receipt polling, nonce/reset checks and caller lookup recovery; verify JS-17–JS-19/JS-21/JS-22 queued/terminal/unknown and UI restart cases, including latest-reject/earlier-unknown. Document bounded polling and evidence provenance.
+
+## 6. Compose iteration and native identity isolation
+
+- [ ] 6.1 Add infra/kafka-signing/ Compose/config/templates/helpers/README with reused hardened Go images and stock private KRaft TLS/DN ACL bootstrap; verify JS-14/JS-15/JS-23 compose configuration and port/network/key boundaries, including no UI broker/admin credential.
+- [ ] 6.2 Factor a validated fully ephemeral identity/runner mode with own lock/descriptor/socket paths, preserving retained/default lock behavior; verify JS-23 existing-demo coexistence, busy-lock/path collision and failure cleanup. Document native SPIRE and separate loopback browser TLS.
+- [ ] 6.3 Add bounded broker/topic/ACL/assignment/HTTPS readiness and owned-resource cleanup; verify JS-15/JS-23 start/stop/failure and caller-state retention within a run, documenting generated ignored paths and reset semantics.
+
+## 7. Integration evidence and reconciliation
+
+- [ ] 7.1 Establish isolated real SPIRE/Kafka/combined-UI fixtures and run JS-01–JS-23 serially plus relevant formatting/Go test/race/vet/deterministic checks; save revision/versioned sanitized evidence and leave every unrun case explicit.
+- [ ] 7.2 Run bidirectional independent JOSE interoperability separately from policy tests; verify JS-13 raw-byte/curve negatives without exporting keys/SVIDs and record actual independent versions.
+- [ ] 7.3 Reconcile approved deltas/current docs/RFC/evidence, promote normative material to stable documentation and check links before sync/archive; verify strict validation and update TODO only for completed work.
 
 ## Workflow follow-up
 
-- Use OpenSpec verification and present evidence for owner review. Sync/archive
-  only through the applicable workflow after implementation is actually complete.
-- No deployment or public Kafka trigger is included; any later exposure needs its
-  own approved spec/plan and applicable deployment authorization.
+- Present implementation evidence for independent and owner review. Sync/archive
+  only after actual implementation and required approval.
+- This revision creates no running stack or live/public deployment. Enabling or
+  publishing the combined demo needs applicable later deployment authorization.

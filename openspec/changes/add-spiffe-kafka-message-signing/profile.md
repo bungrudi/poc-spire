@@ -6,13 +6,14 @@ profile, not a new industry standard. See [references](references.md).
 
 ## Topology and authority
 
-The existing trusted-caller executable gains an explicit one-shot Kafka
-producer mode using `spiffe://poc.internal/caller/trusted`. Money embeds one
+The existing caller executables gain separate opt-in private Kafka controls;
+trusted signs using `spiffe://poc.internal/caller/trusted`. Money embeds one
 consumer and authenticates the original signer itself. It calls its **same**
 ledger instance used by POST `/transfer`; GET `/balances` continues to read it.
-No relay or POST `/transfer/jws` is introduced. The producer cannot choose
-arbitrary operations. Default UDS callers and the public assumed-operator UI
-continue their existing behavior; Kafka requires complete opt-in configuration.
+No relay or POST `/transfer/jws` is introduced. Producers cannot choose arbitrary
+operations. Existing scenarios remain **Sync (HTTP/mTLS)** even though browser
+jobs run in the background; added scenarios are **Async (Kafka)**. Default UDS
+commands remain unchanged; the combined opt-in UI adds the fixed menu below.
 
 The first implementation is tested only in an isolated Compose fixture using
 the measured UID-1000/native-agent layout. One binary/image/deployment digest
@@ -133,14 +134,15 @@ certificate and envelope times are not ledger keys. Unknown broker acknowledgeme
 or Money outcome does not authorize a new request_id. A caller may intentionally
 start a new logical operation with a new ID; no exactly-once guarantee follows.
 
-The one-shot producer consumes an explicit immutable command descriptor containing
-the original context and transfer fields. The local fixture harness creates it
-once, before the first publish, and supplies the same descriptor on every invocation
-through a private read-only temporary mount. It contains no credential. Producer
-mode does not silently generate a new ID, created_at or deadline; it rejects a
-missing/expired descriptor. Changing logical content is an explicitly new command,
-not retry. Broker retry may reuse valid envelope bytes; re-signing recaptures only
-the SVID and envelope times. No new retained credentials/state are required.
+The private caller creates an immutable descriptor once for the server-derived
+request_id/scenario, before publishing. It retains the descriptor and exact
+bounded record variants in a private per-run state mount, never storing an SVID
+private key. Lookup/retry recovers the original creation/deadline and digests;
+UI/caller-container restart within that run must not silently reset them. Corrupt
+or missing state after a known attempt fails closed as unknown. Broker retry may
+reuse identical valid bytes; re-signing recaptures only SVID/envelope times before
+the original deadline. Caller state is bounded and removed with the combined run,
+not new persistent credentials or durable Money state. See recovery rules below.
 
 ## Validation-to-commit boundary
 
@@ -203,8 +205,9 @@ Transport polls/fetches/commits have bounded deadlines and shutdown cancellation
 An acknowledged produce means broker publication, not Money commit. Kafka
 decisions are reported as sanitized Money audit outcomes with `ingress: kafka`,
 authenticated original producer ID, request_id, stage and ledger result/replay.
-They have no Money HTTP status; existing numeric ledger result codes may be
-labeled business codes only. No result topic or new browser endpoint is added.
+They have no Money transfer HTTP status; existing numeric ledger result codes are
+business codes. The observer receipt query has its own HTTP status, kept distinct
+from the Kafka disposition. No result topic or HTTP transfer forwarding is added.
 Producer idempotent-write mode is explicitly disabled and acknowledgements use
 all in-sync replicas (one in this fixture). No cluster IdempotentWrite or
 transactional-ID ACL is assumed or required; uncertain produce outcomes may
@@ -224,7 +227,7 @@ separate broker/producer/Money client certificates and normal hostname verificat
 for `kafka`. These are conventional test-PKI fixtures, not a custom Kafka plugin
 or persistent CA service; each application mounts only its own broker credential.
 Broker PKI is independent of SPIRE. Preserve default DN principals: exact
-`User:CN=kafka-producer` has Write/Describe on the exact topic; exact
+`User:CN=kafka-producer` and `User:CN=kafka-unidentified` have Write/Describe on the exact topic; exact
 `User:CN=kafka-money` has Read/Describe and Read on the one configured group.
 StandardAuthorizer defaults deny; only isolated admin tooling creates topic/ACLs
 and has admin privileges. No app receives admin keys, no plaintext listener is
@@ -238,3 +241,219 @@ Logs/evidence contain case IDs, verified IDs after validation, reason codes,
 digests, versions and ledger/offset observations; no complete JWS, SVID chain,
 private key, cookie, token or broker credential is exported. Temporary broker
 records contain the signed public chain by design and are destroyed on cleanup.
+
+## Fixed browser menu and private controls
+
+The two existing buttons are grouped as **Sync (HTTP/mTLS)**: trusted transfer
+and unidentified no-SVID/TLS rejection. Their existing POST /api/attempts body
+(`caller`, `browser_key`), POST /attempt body (`request_id`), 202/background-job/
+GET /api/attempts/{id} polling, Money HTTP semantics and private mounts are unchanged.
+Background browser execution does not make these scenarios Async transport.
+
+Only the enabled combined profile adds **Async (Kafka)**:
+
+| Browser scenario | Fixed caller action | Expected Money evidence |
+| --- | --- | --- |
+| `kafka-trusted` | Trusted caller seals the fixed transfer and publishes it. | Valid original trusted SVID/JWS; applied/replayed shared ledger result. |
+| `kafka-unidentified` | Unidentified caller observes reachable Workload API no-identity denial, then publishes one fixed unsigned probe using only its own broker-admission certificate. | Exact-record rejection for missing valid JWS; no authenticated original producer asserted. |
+| `kafka-tampered` | Trusted caller signs the fixed transfer, then deterministically changes amount_minor to 200 without re-signing. | Exact-record signature rejection; certificate contents do not authenticate the author of invalid bytes. |
+
+These are the whole menu. Wrong-ID/root/curve/deployment and other security cases
+remain tests. Intentional negative probes violate the signed-command profile and
+must be rejected; they are not an unsigned transfer fallback.
+
+New browser POST /api/kafka-attempts accepts exactly `scenario`, `browser_key`
+and `stream_id`, with the same bounded body/key/CSRF/Origin/Host/session/operator
+checks as existing creation. stream_id must equal UI's configured current stream;
+other fields/scenarios fail. It uses the unchanged issuer/subject/browser-key
+RequestID derivation, not a transport namespace. A retained ID bound to another
+scenario/stream conflicts. Ownership and GET /api/attempts/{id} polling remain
+principal-bound, shared for the assumed public operator. All scenarios share the
+existing 64-attempt, two-active-worker and eight-dispatched-attempts/minute limits.
+Completed/pending repeats do not dispatch; retries retain the same key/ID.
+
+Each selected private caller socket adds POST /attempt/kafka with exactly
+`request_id`, `scenario`, `money_instance_id`, and GET /attempt/kafka/{request_id} for read-only metadata
+lookup. Trusted accepts only its two Kafka scenarios; unidentified accepts only
+its one. These routes retain kernel peer-UID enforcement, strict names/types,
+unknown/trailing-field rejection and a 1024-byte POST bound. No caller can choose
+destination/topic/amount/identity/headers through the control request. POST has a
+ten-second overall deadline; lookup has a two-second deadline; existing POST
+/attempt is unchanged. There is no TCP control endpoint or shared caller mount.
+The instance field is a 32-hex process nonce from UI's authenticated Money metadata
+read, not a selectable SPIFFE identity or an authorization grant. It is bound to
+the descriptor on first creation; a different nonce on retry conflicts rather
+than refreshing the descriptor. The current observer alone reads outcomes.
+
+Each caller keeps at most 64 per-run descriptors, keyed by request_id/scenario,
+and at most four exact sealed record variants per descriptor. Private caller-only
+state directories are 0700/files 0600, separate from UI-mounted control volumes.
+The run owner initializes a stream-bound manifest and empty bounded state once,
+before first caller startup. Callers require both and never initialize/repair
+missing state themselves. One atomically replaced, fsynced state/index (maximum
+16 MiB per caller) contains the entries/variants; missing/corrupt state or a
+manifest/stream mismatch disables Kafka controls. Only an intact initialized
+store can allocate an unseen ID; a missing known entry cannot be recreated.
+Persist original descriptor and exact bytes/digest, marking the variant as
+potentially submitted, atomically **before** broker submission; fail without
+publishing if that fails. Container restart reloads the
+same state; missing/corrupt expected state is unknown/fail-closed, never automatic
+new creation. New IDs at capacity receive 503 without evicting retry state. Same
+ID/different scenario receives 409. Expired descriptors cannot be renewed.
+
+Metadata exposes only original creation/deadline, scenario, configured stream/Money instance,
+variant digests/expiry and broker publication state (`not_submitted`, `queued`,
+`publish_unknown`), not JWS/private keys. Ambiguous submission reserves its variant
+first. An ambiguous or crashed submission remains potentially published; it is
+never downgraded to definitely not submitted without evidence. Retry resends
+identical current bytes; re-signing creates at most one next
+variant with the same immutable context before the original deadline. Unsigned
+and tampered probes use their exact fixed variant rules. Publication state is
+caller diagnostics; even an acknowledged `queued` record is not transfer success.
+
+## Authenticated Money receipts
+
+The new Money read-only resource has GET /kafka/outcomes for process/stream/
+consumer-readiness metadata and GET /kafka/outcomes/{digest} for receipts. Both are enabled only with
+Kafka, authorized only for the exact observer `spiffe://poc.internal/ui`, over the
+same mandatory direct SPIFFE mTLS. Path digest is 64 lowercase hex; no query/body
+is accepted. Existing POST /transfer and GET /balances behavior stays intact.
+UI uses its own source and verifies Money's exact ID on each fresh read. It has
+no broker connection/credential, admin privilege or producer signing key.
+
+Correlation is to the complete producer-supplied Kafka record, not an untrusted
+JSON identity/request_id. Define F(bytes) as signed 64-bit big-endian length followed
+by exact bytes, with length -1 for null (no bytes). The record digest is lowercase
+SHA-256 hex over:
+
+```text
+ASCII("poc-spire-kafka-record-v1\0") || F(UTF8(topic)) || F(key)
+|| uint32_be(header_count)
+|| each header in original order: F(UTF8(header.name)) || F(header.value)
+|| F(value)
+```
+
+Length framing distinguishes null/empty values and header sequences. Broker
+partition/offset/timestamp are not part of this digest. Both publisher and Money
+compute it from exact bytes before transformations; unsupported headers/invalid
+JWS still get their own digest when the record fits bounds. Oversized/unavailable
+bytes cannot yield a fabricated receipt. Never index invalid-JWS rejection by a
+claimed producer/request_id. Digest is a correlation identifier, not a credential
+or signature; Money's authenticated response provides the evidence.
+
+Money reserves a bounded receipt slot before any Kafka ledger/history effect.
+Applied/replayed/business-rejected/conflicted results and deterministic structural/
+crypto/identity/context/freshness rejections create terminal receipts; transient
+unknowns do not. Ledger decision, Kafka context binding and success/business
+receipt become visible atomically under the shared acceptance lock; guard failure
+creates only a rejection receipt for expired certificate/message/deadline, not
+ledger history. Snapshot-budget exhaustion or assignment loss is transient and
+creates no terminal rejection receipt. Receipt-capacity failure
+pauses with no business effect/offset advance. Existing Sync operations do not
+require Kafka receipts. A record's first terminal receipt is immutable per Money
+instance; later duplicates cannot overwrite a past commit with an expiry rejection.
+While a terminal structural/crypto/identity/context/freshness rejection receipt
+is retained, the same digest is terminally discarded without business effects,
+even if time/bundle changes could otherwise make it pass. No cached receipt can
+authorize a signature, signer or ledger replay: a potential positive replay still
+requires current validation before history access. This rejection memory is bounded
+by receipt retention and the Money lifetime, not a durable tombstone. Expiry/restart
+removes that receipt guarantee. New re-signed bytes have a new digest and require
+full validation plus shared business idempotency/context checks.
+
+Receipt limit is 4096 terminal/reserved entries; completed entries are retained
+180 seconds from observation and can expire afterward. Fresh entries are not
+evicted to make space. Expiring receipts does not evict ledger dedup/context keys.
+Money has a random per-process instance_id. Lookup returns at most 8192 bytes:
+200 contains that instance, exact digest, observation/retention times, terminal
+disposition/reason and authorized business result where present; 404 means no
+retained receipt and includes instance_id (and consumer-ready status), not proof
+of rejection/non-commit. Full/missing trust or transient processing does not
+invent a terminal record. Invalid JWS has no verified producer/request_id; a
+verified producer ID is supplied only after complete SVID and signature validation.
+The query's HTTP status is distinct from its Kafka/business disposition.
+
+## UI polling, unknown outcomes and restart
+
+Each Kafka worker reads authenticated Money process/stream metadata and looks up
+the initialized caller store. Known descriptors recover original instance/deadline/
+variants; any instance mismatch stops automatic publication as reset/unknown.
+Then it queries every potentially submitted digest before republishing. Only an
+intact initialized store reporting an unseen ID allows first creation; absent/
+corrupt store or missing known entry never does. The first publish passes and
+retains the authenticated instance nonce; subsequent attempts recover it. All calls remain fixed,
+bounded and under the shared worker/rate limits. Kafka workers poll at most once
+per second per variant, with two-second query deadlines and a 30-second worker
+budget; browser polling reports preparing/queued/awaiting-Money separately.
+Sync worker timing and response fields remain unchanged. No background periodic
+polling continues after the worker budget; explicit same-key retry can resume.
+
+Only an exact digest-matching, authenticated Money receipt establishes terminal
+evidence. Trusted success additionally requires expected original trusted ID,
+request_id and fixed business result; negative cases display the correlated
+Money rejection as **unattributed invalid record** plus separate caller diagnostics.
+UI never concludes success from broker ack, balances, unsigned logs or echoed
+claims. A committed/replayed variant resolves the logical operation; otherwise
+every submitted/ambiguous variant must have a terminal no-effect receipt before
+the UI declares rejection. Any outstanding variant keeps the logical outcome
+unknown. Conflicting/mismatched receipt fields are an evidence failure.
+
+Timeout, 404, receipt expiry, unavailable Money or lost control response retains
+the ID and means queued/unknown, not rejected. Lookup recovers ambiguous-publish
+digests even if POST's response was lost. UI-only restart renews the session and
+uses the same browser key/stream and surviving caller state; it does not refresh
+creation/deadline. After deadline, UI can still read retained receipts but cannot
+republish/re-sign or allocate a fresh ID as retry. Missing old evidence stays
+unknown. A detected Money instance change is a reset warning, not a terminal
+result; automatic republishing stops. Undetected crash/restart remains the existing
+memory-only limitation, never durable safety. A new combined stream rejects old
+browser stream IDs; starting a new logical attempt is explicit, not an automatic
+retry with a new deadline. Public sessions share the assumed operator, not privacy.
+
+## Proposed Compose organization and lifecycle
+
+The following directory/assets are planned, not created in this draft:
+
+```text
+infra/kafka-signing/
+  compose.yaml          combined Money/UI/two callers/stock KRaft broker
+  kafka.properties.tmpl TLS/controller/admission configuration
+  acl-bootstrap.*       exact topic/group/DN grants using stock Kafka tooling
+  broker-pki.*          standard temporary test certificate helper/config
+  README.md             isolated start, readiness, retry, inspection, cleanup
+```
+
+Reuse the static Go/scratch app image build, UID/GID 1000, capability drop,
+no-new-privileges and read-only application roots. Add only per-caller private
+state mounts and own broker-client credentials. Money/callers join a private
+Kafka network; UI does not. UI retains the Money network and only its two
+read-only control mounts plus browser TLS. Kafka/admin/controller ports publish
+nothing; only a separate loopback HTTPS UI port (proposed 18088) is exposed.
+Its configured origin/certificate are independent of the live demo's 18087/Nginx
+route. Development browser PKI is generated temporarily and explicitly trusted
+by test clients; no existing public certificate/service is changed.
+
+Use one stock Apache Kafka JVM container in combined single-node KRaft mode,
+one topic/partition/group, temporary TLS/DN ACL bootstrap and a private data
+volume. Kafka readiness proves TLS/hostname/admission, topic/ACL availability and
+consumer assignment; UI /healthz alone is liveness. Configure broker/fetch/value
+bounds, and gate the menu on the complete configured/readiness state.
+
+Current IdentityRuntime takes the retained identity global lock even for temporary
+instances, and RemoteStack uses shared remote-demo.json. The planned combined
+runner must use **validated fully ephemeral** state with its own project, lock,
+server port, Workload API socket and descriptor (for example
+.runtime/backend-kafka-<stream>/). An explicit isolated-runtime option can be
+factored from the helper; retained/default modes keep their existing lock. Never
+ignore lock failures, delete someone else's descriptor or silently reuse live
+CA/registrations. Native SPIRE server/agent stay host processes with the measured
+permissions; Compose does not require moving the agent into Docker.
+
+Start only this separately named combined project; wait for native SPIRE issuance,
+private controls, broker/ACL readiness, Money assignment and browser HTTPS. Failure
+cleanup removes only owned containers, volumes, temporary PKI/trust/descriptors,
+and child processes. Caller state survives UI/caller container restart within a
+run but is removed on full run cleanup. Full restart uses a fresh stream/topic,
+resets shared fake Money state and invalidates old attempt context. The deployed
+demo and approved retained identity/browser state must remain unchanged. All
+generated examples are placeholders; .runtime is already ignored.

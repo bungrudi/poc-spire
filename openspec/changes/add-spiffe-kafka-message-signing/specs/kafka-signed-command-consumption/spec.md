@@ -8,11 +8,11 @@ workload commands and applies the existing shared in-memory transfer operation.
 ## ADDED Requirements
 
 ### Requirement: KC-01 Embedded opt-in Money ingestion
-Kafka ingestion SHALL run inside Money only with complete explicit configuration. Money MUST validate the original producer JWS/SVID itself and use the same ledger instance as POST /transfer and GET /balances. No HTTP forwarding endpoint, separate business ledger or public browser trigger SHALL be introduced. Missing Kafka configuration MUST NOT weaken synchronous mTLS.
+Kafka ingestion SHALL run inside Money only with complete explicit configuration. Money MUST validate the original producer JWS/SVID itself and use the same ledger as POST /transfer and GET /balances. The opt-in combined UI SHALL add only its fixed Kafka scenarios and observer outcome reads. There SHALL be no Kafka-to-HTTP transfer forwarding or separate ledger; missing Kafka settings MUST NOT weaken synchronous mTLS.
 
 #### Scenario: Default synchronous demo
 - **WHEN** Money starts without Kafka enabled
-- **THEN** existing HTTP routes, callers and assumed-operator browser behavior remain unchanged and no broker connection is started
+- **THEN** existing transfer/balance routes, Sync callers and assumed-operator browser behavior remain unchanged; no broker connection or Kafka menu is started
 
 #### Scenario: Enabled Kafka route
 - **WHEN** an authorized signed command is accepted by the configured embedded consumer
@@ -64,7 +64,7 @@ One Money instance/member MUST disable auto-commit and process one partition/rec
 - **THEN** Money records a sanitized terminal rejection and acknowledges that record without balances/history mutation
 
 ### Requirement: KC-05 Preserve unknown outcomes and transient records
-Capacity, unavailable independent trust material, broker/transport faults and unclassifiable outcomes MUST pause consumption without committing undecided offsets. Rejection against available accepted trust MUST be terminal. Retries MUST preserve the record/ID; uncertain commit acknowledgement MUST block later records and retry the known disposition under current assignment, never inventing success or a new transfer ID.
+Capacity, unavailable independent trust, snapshot-budget timeout, assignment loss and unclassifiable outcomes MUST pause without committing undecided offsets or creating terminal rejection receipts. Expired credentials/messages and rejection against available accepted trust MUST be terminal. Retries MUST preserve record/ID; uncertain commit acknowledgement MUST block later records and retry the known disposition under current assignment.
 
 #### Scenario: Commit succeeded but acknowledgement is uncertain
 - **WHEN** the ledger decision is known but Kafka offset acknowledgement is lost
@@ -75,7 +75,7 @@ Capacity, unavailable independent trust material, broker/transport faults and un
 - **THEN** no mutation/offset advancement occurs and processing reports transient infrastructure/capacity failure
 
 ### Requirement: KC-06 Honest in-memory restart scope
-Money SHALL retain one in-memory ledger, retry history and Kafka context bindings only during its process lifetime. Restart resets them together; broker offsets MUST NOT be described as restoring business state. A still-valid resent/unacknowledged command can be a new operation after restart. Durable replay protection, crash-safe effects and atomic offset-plus-ledger storage SHALL NOT be claimed.
+Money SHALL retain one in-memory ledger, retry history, context bindings and outcome receipts only during its lifetime. Restart resets them; broker offsets MUST NOT be described as restoring business state. Caller descriptor files surviving a container/UI restart MUST NOT be described as durable Money recovery. Still-valid unacknowledged commands can apply after Money restart; durable replay protection or atomic offset-plus-ledger storage SHALL NOT be claimed.
 
 #### Scenario: Crash before or after ledger commit
 - **WHEN** Money crashes before commit, or after commit but before offset acknowledgement, and restarts
@@ -95,6 +95,43 @@ The fixture SHALL use stock Kafka TLS client-certificate admission, hostname che
 #### Scenario: Boundaries and cleanup
 - **WHEN** the isolated fixture completes or fails
 - **THEN** its ports/mounts/ACLs and cleanup are verified, secrets/JWS chains are excluded from evidence and retained/live project state is unchanged
+
+### Requirement: KC-08 Observer-authorized record evidence
+With Kafka enabled, Money SHALL serve bounded GET /kafka/outcomes metadata and GET /kafka/outcomes/{digest} receipts only to its exact observer SVID over mandatory direct mTLS. Digest MUST cover complete record bytes/fields, including invalid JWS, not claimed producer/request IDs. Invalid signatures SHALL have no authenticated producer assertion. Query HTTP status MUST remain distinct from Kafka/business disposition.
+
+#### Scenario: Observer queries a known invalid record
+- **WHEN** the observer requests a digest whose exact record Money rejected without valid JWS
+- **THEN** the authenticated receipt proves that record's terminal rejection without trusting claimed identity or request ID
+
+#### Scenario: Unavailable or expired evidence
+- **WHEN** no retained receipt exists or Money has reset
+- **THEN** bounded metadata/404 includes the current process instance but does not prove non-commit; wrong valid readers receive 403 and no-certificate readers fail TLS
+
+### Requirement: KC-09 Atomic bounded immutable receipts
+Money MUST reserve receipt capacity before Kafka effects and atomically expose each ledger/context/terminal business receipt decision. Receipt capacity SHALL be 4096 with 180-second retention and no fresh-entry eviction. Retained rejected digests MUST NOT later cause effects; cached receipts MUST NOT authorize signature/history access. Receipt expiry does not evict ledger deduplication. Transient failures MUST NOT create terminal receipts.
+
+#### Scenario: Receipt capacity is full
+- **WHEN** no receipt slot can be reserved without evicting a retained entry
+- **THEN** Kafka pauses before business effects/offset acknowledgement; Sync remains independent of receipt capacity
+
+#### Scenario: Duplicate rejected bytes later validate
+- **WHEN** a previously rejected exact digest is redelivered while its rejection receipt is retained, after time or trust changed
+- **THEN** it is terminally discarded without business effects and the original receipt stays coherent; no receipt becomes signer authorization
+
+#### Scenario: Budget or assignment guard fails
+- **WHEN** the bounded validation snapshot times out or assignment is lost before effects
+- **THEN** no history/effect/terminal rejection receipt is created; certificate/message expiry is separately terminal
+
+### Requirement: KC-10 Isolated combined Compose organization
+The iteration SHALL define infra/kafka-signing/ for stock single-node KRaft Compose/config/helpers/README, reusing hardened Go app images. The opt-in UI/Money/callers/broker stack MUST use separate project/network/runtime/lock/descriptor paths and native UID-1000 SPIRE. Only its loopback browser port SHALL publish; UI MUST receive no broker/admin credentials or network. Cleanup MUST leave deployed and retained state untouched.
+
+#### Scenario: Combined stack starts beside existing resources
+- **WHEN** the isolated combined profile initializes its own validated ephemeral runtime and broker PKI/topic/ACL readiness
+- **THEN** existing demo processes, ports, native agent state and retained lock are not stopped, reused or bypassed
+
+#### Scenario: Startup failure or complete shutdown
+- **WHEN** readiness fails or the combined run is stopped
+- **THEN** only owned temporary containers/volumes/state/PKI/child processes are removed; the current public deployment is unchanged
 
 ## Traceability and proposed coverage
 
