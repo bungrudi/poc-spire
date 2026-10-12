@@ -1,0 +1,106 @@
+{
+  "revision": "111cb1a691ae8583a18b823fc5ef6cdd2d85e7a6",
+  "source_revision": "81fdb50ecc4879b027c584fc3a87d1802cffccdf",
+  "checks": [
+    {
+      "command": [
+        "go",
+        "test",
+        "-race",
+        "-json",
+        "-count=1",
+        "./..."
+      ],
+      "exit_code": 0,
+      "seconds": 17.08,
+      "result": "passed",
+      "passed_named_tests": 145,
+      "skipped_named_tests": []
+    },
+    {
+      "command": [
+        "go",
+        "vet",
+        "./..."
+      ],
+      "exit_code": 0,
+      "seconds": 1.72,
+      "result": "passed",
+      "summary": ""
+    },
+    {
+      "command": [
+        "go",
+        "test",
+        "-tags",
+        "kafkatest",
+        "-json",
+        "-count=1",
+        "./..."
+      ],
+      "exit_code": 0,
+      "seconds": 6.12,
+      "result": "passed",
+      "passed_named_tests": 145,
+      "skipped_named_tests": []
+    },
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_*.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.71,
+      "result": "passed",
+      "summary": ".....................\n----------------------------------------------------------------------\nRan 21 tests in 0.516s\n\nOK\n"
+    },
+    {
+      "command": [
+        "node",
+        "scripts/kafka_browser_controls.cjs"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07,
+      "result": "passed",
+      "summary": "Browser controls passed: stable Sync/Kafka keys, unknown/reload/new guards, stream reset and viewer controls.\n"
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "spec",
+        "--",
+        "validate",
+        "--all",
+        "--strict",
+        "--no-interactive"
+      ],
+      "exit_code": 0,
+      "seconds": 1.09,
+      "result": "passed",
+      "summary": "\n> poc-spire-specs@0.0.0 spec\n> node scripts/openspec.mjs validate --all --strict --no-interactive\n\n\u2713 change/add-spiffe-kafka-message-signing\n\u2713 spec/fake-ledger-idempotency\n\u2713 spec/https-demo-ui\n\u2713 spec/identity-certificate-lifecycle\n\u2713 spec/kafka-signed-command-consumption\n\u2713 spec/money-transport-authorization\n\u2713 spec/private-caller-controls\n\u2713 spec/spiffe-jws-message-signing\n\u2713 spec/workload-attestation\nTotals: 9 passed, 0 failed (9 items)\nnpm notice\nnpm notice New major version of npm available! 10.9.8 -> 12.2.0\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0\nnpm notice To update run: npm install -g npm@12.2.0\nnpm notice\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.02,
+      "result": "passed",
+      "summary": ""
+    }
+  ],
+  "status": "passed",
+  "started_at_utc": "2026-10-12T08:22:16Z",
+  "existing_evidence_source_manifests_match": true,
+  "formatting_clean": true,
+  "finished_at_utc": "2026-10-12T08:22:43Z"
+}

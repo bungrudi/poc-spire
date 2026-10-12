@@ -98,5 +98,10 @@ above remain historical and do not describe the final completion state. Main
 specs/RFC/current docs are reconciled; [verification](verification.md) records
 implementation mapping and limits. Actual SIGKILL/offset and private-control
 rotation/outage checks pass. Cleanup, live service/PID/HTTPS continuity and
-retained private-state equality pass. Independent final review and owner
-acceptance remain pending. No public runtime deployment or archive occurs.
+retained private-state equality pass. The parent completed
+[independent final review](independent-review.md) with **PASS** and
+[separate rerun evidence](../../../docs/evidence/kafka-independent-review.json):
+43 real checks, seven normal-build checks, 145 Go race and 145 tagged named
+tests with JOSE enabled and zero skips, plus the documented deterministic
+checks. Owner acceptance remains pending. No public runtime deployment or
+archive occurs.

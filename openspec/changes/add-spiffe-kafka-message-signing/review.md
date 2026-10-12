@@ -88,8 +88,12 @@ Implementation tasks are complete. Final tested source is
 contains no application/runner/dependency/fixture source change. See
 [verification](verification.md), [coverage](../../../docs/kafka-signing-acceptance.md)
 and [aggregate evidence](../../../docs/evidence/kafka-final-validation.json).
-Independent **implementation** review by the parent remains **pending**;
-the earlier planning-artifact PASS does not count. Owner acceptance of the
-finished implementation is also pending. The original approved normative
+Independent **implementation** review by the parent is **PASS**,
+12 October 2026, for candidate `111cb1a691ae8583a18b823fc5ef6cdd2d85e7a6`
+and the approved JS-01–JS-23 scope, with no unresolved findings or blockers.
+See the parent-authored [review](independent-review.md) and
+[independent evidence](../../../docs/evidence/kafka-independent-review.json).
+This is separate from the earlier planning-artifact PASS. Owner acceptance of
+the finished implementation remains pending. The original approved normative
 revision/manifest above remains the authorization record, and no Kafka public
 deployment is authorized or performed.

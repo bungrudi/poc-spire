@@ -1,0 +1,117 @@
+{
+  "phase": "independent-final-review",
+  "status": "passed",
+  "reviewer_chat": "01a12b31-9ead-7e92-a024-23860cfe5d8f",
+  "implementation_chat": "01a1201a-4782-7483-80b9-5f019b24cf38",
+  "approved_scope_revision": "735b80fad783bc0350740b18229f61aee8f8aa5d",
+  "independently_tested_revision": "111cb1a691ae8583a18b823fc5ef6cdd2d85e7a6",
+  "frozen_source_revision": "81fdb50ecc4879b027c584fc3a87d1802cffccdf",
+  "separate_review_checkout": true,
+  "source_matches_frozen_revision": true,
+  "same_source_normal_and_test_build": true,
+  "source_file_count": 115,
+  "full_approved_acceptance": true,
+  "acceptance_cases": {
+    "JS-01": "passed",
+    "JS-02": "passed",
+    "JS-03": "passed",
+    "JS-04": "passed",
+    "JS-05": "passed",
+    "JS-06": "passed",
+    "JS-07": "passed",
+    "JS-08": "passed",
+    "JS-09": "passed",
+    "JS-10": "passed",
+    "JS-11": "passed",
+    "JS-12": "passed",
+    "JS-13": "passed",
+    "JS-14": "passed",
+    "JS-15": "passed",
+    "JS-16": "passed",
+    "JS-17": "passed",
+    "JS-18": "passed",
+    "JS-19": "passed",
+    "JS-20": "passed",
+    "JS-21": "passed",
+    "JS-22": "passed",
+    "JS-23": "passed"
+  },
+  "acceptance_mapping": "docs/kafka-signing-acceptance.md",
+  "completed_implementation_tasks": 18,
+  "spec_comparison": {
+    "affected_requirements": 34,
+    "affected_scenarios": 86,
+    "original_requirements_retained": 26,
+    "original_requirement_count": 26,
+    "differences": []
+  },
+  "independent_rerun": {
+    "real_checks_passed": 43,
+    "normal_build_checks_passed": 7,
+    "fixed_scenarios_passed": 5,
+    "sync_scenarios": 2,
+    "kafka_scenarios": 3,
+    "go_race_named_tests_passed": 145,
+    "go_test_build_named_tests_passed": 145,
+    "go_named_tests_skipped": 0,
+    "go_environment": {
+      "POC_JOSE_INTEROP": "1"
+    },
+    "independent_jose_interoperability": "passed",
+    "python_tests_passed": 21,
+    "go_vet": "passed",
+    "formatting": "passed",
+    "shipped_browser_controls": "passed",
+    "strict_openspec_specs_passed": 8,
+    "strict_openspec_changes_passed": 1
+  },
+  "cleanup_complete": true,
+  "retained_identity_unchanged": true,
+  "live_service_continuity": true,
+  "public_kafka_deployment_performed": false,
+  "archive_performed": false,
+  "unresolved_findings": [],
+  "blockers": [],
+  "publication_scan": {
+    "changed_files_scanned": 98,
+    "credential_pattern_findings": [
+      {
+        "file": "scripts/jose_interop.mjs",
+        "pattern": "-----BEGIN CERTIFICATE-----"
+      }
+    ],
+    "reviewed_findings": [
+      {
+        "file": "scripts/jose_interop.mjs",
+        "classification": "public_certificate_PEM_delimiter_only",
+        "resolution": "The literal formats runtime public certificate bytes for the independent JOSE process. It is not a stored certificate or private key."
+      }
+    ],
+    "unresolved_findings": []
+  },
+  "local_link_check_at_tested_revision": {
+    "local_links_checked": 330,
+    "missing": []
+  },
+  "reports": [
+    "docs/evidence/kafka-independent-acceptance.json",
+    "docs/evidence/kafka-independent-smoke.json",
+    "docs/evidence/kafka-independent-deterministic.json"
+  ],
+  "report": "openspec/changes/add-spiffe-kafka-message-signing/independent-review.md",
+  "known_limits": [
+    "Single Money instance with in-memory ledger; retained valid records can apply again after process restart.",
+    "Broker TLS/ACLs are separate from producer signature verification.",
+    "Proof modes for clock, capacity, bundle changes and lost-ack transport remain controlled fixtures where identified by the approved acceptance matrix."
+  ],
+  "not_run": [
+    "rendered-browser visual/manual QA",
+    "long-lived public root rollover/removal or automatic expired-root sweep",
+    "production-TTL observations",
+    "scheduled ACME renewal",
+    "arbitrary kernel packet-loss injection",
+    "public Kafka deployment"
+  ],
+  "runtime_test_finished_at_utc": "2026-10-12T08:27:33Z",
+  "review_recorded_at_utc": "2026-10-12T08:34:31Z"
+}

@@ -6,6 +6,10 @@ revision are in [aggregate evidence](evidence/kafka-final-validation.json).
 The [real acceptance](evidence/kafka-acceptance-current.json),
 [normal-build smoke](evidence/kafka-smoke-current.json) and
 [deterministic checks](evidence/kafka-final-deterministic.json) remain separate.
+The parent completed [independent final review](../openspec/changes/add-spiffe-kafka-message-signing/independent-review.md)
+with **PASS** on 12 October 2026. Its [separate review/rerun evidence](evidence/kafka-independent-review.json)
+confirms all 23 approved cases with no unresolved findings or blockers. Owner
+acceptance remains pending.
 Intermediate attempts explicitly retain their earlier status; their source tree
 may differ from the named commit. A smoke pass alone is not full acceptance.
 

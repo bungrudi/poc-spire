@@ -62,7 +62,7 @@ observations. The synchronous public deployment remains unchanged.
 - [x] Add initialized private caller recovery and the fixed combined UI with authenticated all-variant outcomes.
 - [x] Implement isolated Compose/native SPIRE, separate broker/browser PKI, exact ACLs, readiness and owned cleanup.
 - [x] Complete the frozen-source JS-01–JS-23 acceptance run and sanitized final evidence.
-- [ ] Complete independent review of the final source/evidence revision.
+- [x] Complete independent review of the final source/evidence revision; parent [PASS and separate rerun evidence](docs/evidence/kafka-independent-review.json), 12 October 2026.
 - [ ] Obtain owner acceptance of the implemented learning profile based on evidence.
 
 ## Original milestone checklist — historical

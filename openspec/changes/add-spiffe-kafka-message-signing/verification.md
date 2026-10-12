@@ -80,9 +80,12 @@ follow the existing project patterns.
 
 No critical or warning implementation finding remains in the checks above.
 This verification covers the approved implementation and stated acceptance
-proofs; it does not constitute independent review or owner acceptance. Both
-remain pending in the final review/aggregate records. No archive or public
-runtime deployment was performed.
+proofs; it does not constitute independent review or owner acceptance. The
+parent subsequently completed [independent review](independent-review.md) with
+**PASS** for the approved scope and no unresolved findings or blockers. Its
+[separate rerun evidence](../../../docs/evidence/kafka-independent-review.json)
+is linked from the aggregate record. Owner acceptance remains pending. No
+archive or public runtime deployment was performed.
 
 Rendered-browser visual/manual checks, long-lived public root operations,
 production-TTL/automatic expired-root sweeping, scheduled ACME renewal and
