@@ -1,0 +1,162 @@
+{
+  "approved_revision": "68351e7bbe655544c95ba9d845e1045cecf5aa6c",
+  "platform": "linux/amd64",
+  "tools": {
+    "kind": {
+      "url": "https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-linux-amd64",
+      "sha256": "sha256:aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d",
+      "release_url": "https://github.com/kubernetes-sigs/kind/releases/tag/v0.33.0",
+      "release_tag": "v0.33.0",
+      "bytes": 10530942
+    },
+    "istio": {
+      "url": "https://github.com/istio/istio/releases/download/1.31.1/istio-1.31.1-linux-amd64.tar.gz",
+      "sha256": "sha256:cb4af2e8a099acfc51368c1d15d4deab8321ae628554d4ee5c74f62ebe775857",
+      "release_url": "https://github.com/istio/istio/releases/tag/1.31.1",
+      "release_tag": "1.31.1",
+      "bytes": 29786135
+    },
+    "kubectl": {
+      "url": "https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubectl",
+      "sha256": "sha256:874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf",
+      "checksum_url": "https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubectl.sha256",
+      "release_tag": "v1.35.8"
+    }
+  },
+  "upstream_manifests": {
+    "calico": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/calico.yaml",
+      "sha256": "sha256:2de8f47595fb9c41b3f47d7b767a1f8e72ecf84057af834738ff12689a234da5"
+    },
+    "spiffe-csi-example": {
+      "url": "https://raw.githubusercontent.com/spiffe/spiffe-csi/v0.2.13/example/config/spiffe-csi-driver.yaml",
+      "sha256": "sha256:d2ad595862d6dfbff35b45ebdced13185c7695090685ac00a623a0a2aa5c0cd2"
+    }
+  },
+  "images": [
+    {
+      "reference": "apache/kafka:4.0.2@sha256:836cafdad9f4825880d7cf1d5a21202915ae2527bd0ef1c3600c526ed7814d1f",
+      "registry": "registry-1.docker.io",
+      "repository": "apache/kafka",
+      "index_digest": "sha256:836cafdad9f4825880d7cf1d5a21202915ae2527bd0ef1c3600c526ed7814d1f",
+      "platform_manifest_digest": "sha256:29a81359d19e2fc90b38bba622244e7f85eb4c06affd975de5d1576393ef8a9d",
+      "config_digest": "sha256:63077b1420ad7118709c5cfb1c9ed1a5258bdc40d0e4b2ffbeff275fe4606677",
+      "platform": "linux/amd64",
+      "immutable_reference": "apache/kafka:4.0.2@sha256:836cafdad9f4825880d7cf1d5a21202915ae2527bd0ef1c3600c526ed7814d1f"
+    },
+    {
+      "reference": "ghcr.io/spiffe/spiffe-csi-driver:0.2.13",
+      "registry": "ghcr.io",
+      "repository": "spiffe/spiffe-csi-driver",
+      "index_digest": "sha256:6f1ba5d635ba9bf55ae69ba11d71bf169c8fa3e0139a5063738cbc227c8b5546",
+      "platform_manifest_digest": "sha256:f2021bc5705741ad926ccb73619c65bd3ba3385b24c9fa63ab5b87701ad8a3a6",
+      "config_digest": "sha256:371e415671c1e98006d0b309f53925c04f97869bb2b2560b355449e3c86f8224",
+      "platform": "linux/amd64",
+      "immutable_reference": "ghcr.io/spiffe/spiffe-csi-driver:0.2.13@sha256:6f1ba5d635ba9bf55ae69ba11d71bf169c8fa3e0139a5063738cbc227c8b5546"
+    },
+    {
+      "reference": "ghcr.io/spiffe/spire-agent:1.14.0",
+      "registry": "ghcr.io",
+      "repository": "spiffe/spire-agent",
+      "index_digest": "sha256:77bb87d2c8bfdce4072863a904edfd5af30021a866540c8c0e891c5ba238b16e",
+      "platform_manifest_digest": "sha256:3aba51f62a75d7a5a84780ab19055b5f887a1b22d788909dd6c129ca3247e5fd",
+      "config_digest": "sha256:afc1a5625a28210e9b79aa3267c07a2d8275ffb3da8d2511004b4f4e60c09a54",
+      "platform": "linux/amd64",
+      "immutable_reference": "ghcr.io/spiffe/spire-agent:1.14.0@sha256:77bb87d2c8bfdce4072863a904edfd5af30021a866540c8c0e891c5ba238b16e"
+    },
+    {
+      "reference": "ghcr.io/spiffe/spire-server:1.14.0",
+      "registry": "ghcr.io",
+      "repository": "spiffe/spire-server",
+      "index_digest": "sha256:c0f0aefa9924c4ffdc5a295391a612d88be9270df972869abc6b9d024d507832",
+      "platform_manifest_digest": "sha256:4c359d4fa3247febe8d7bab11975ec5442fe5f93d463e51d4560574ad52cde45",
+      "config_digest": "sha256:2295291b8dbc3d27200def86d799692586d05e9ae3326404599a2f0f958189f4",
+      "platform": "linux/amd64",
+      "immutable_reference": "ghcr.io/spiffe/spire-server:1.14.0@sha256:c0f0aefa9924c4ffdc5a295391a612d88be9270df972869abc6b9d024d507832"
+    },
+    {
+      "reference": "istio/install-cni:1.31.1",
+      "registry": "registry-1.docker.io",
+      "repository": "istio/install-cni",
+      "index_digest": "sha256:49140cc9a9d742cea829f452d93956896e85c4f47bbc7b69cf76484b63cce8b1",
+      "platform_manifest_digest": "sha256:5b749f2148dea452f37f00443e4fffa61e280e05d124eba53ecdc1727f76123b",
+      "config_digest": "sha256:9694c0c44a85bbe1abe967065087b866c6539b60cb43cdfdcabcf3b0ba4f4feb",
+      "platform": "linux/amd64",
+      "immutable_reference": "istio/install-cni:1.31.1@sha256:49140cc9a9d742cea829f452d93956896e85c4f47bbc7b69cf76484b63cce8b1"
+    },
+    {
+      "reference": "istio/pilot:1.31.1",
+      "registry": "registry-1.docker.io",
+      "repository": "istio/pilot",
+      "index_digest": "sha256:212ca088ada22f48be1576e6b688972b8aa7495710abb7c5f1febca856a15577",
+      "platform_manifest_digest": "sha256:aeda10476eecca07f7d3a2776eda30d0452c133ea87b40335bc6031fb01de789",
+      "config_digest": "sha256:5a9f9a0edbfe987fe6542507803efbc7f9529ccbd612519ef296d8e0c2176b2d",
+      "platform": "linux/amd64",
+      "immutable_reference": "istio/pilot:1.31.1@sha256:212ca088ada22f48be1576e6b688972b8aa7495710abb7c5f1febca856a15577"
+    },
+    {
+      "reference": "istio/proxyv2:1.31.1",
+      "registry": "registry-1.docker.io",
+      "repository": "istio/proxyv2",
+      "index_digest": "sha256:d86cba0dd1eb15c00b6901c69ce5ae3d2d5f8427a47751098cf8c3ab2a4a62e9",
+      "platform_manifest_digest": "sha256:dc3e45795272bf93b30b8b1968e279fbfd5dcc05154cc35e0d13734d23c5b524",
+      "config_digest": "sha256:b363e6c7a01423d91da6a83ccbbc1332f7530419aabb8ea4df299897b44e8ed0",
+      "platform": "linux/amd64",
+      "immutable_reference": "istio/proxyv2:1.31.1@sha256:d86cba0dd1eb15c00b6901c69ce5ae3d2d5f8427a47751098cf8c3ab2a4a62e9"
+    },
+    {
+      "reference": "kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0",
+      "registry": "registry-1.docker.io",
+      "repository": "kindest/node",
+      "index_digest": "sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0",
+      "platform_manifest_digest": "sha256:0c58cebbb66d7fa5fd497235dfae1e4e722ff84104e24a6f736ce8cd607cbe7c",
+      "config_digest": "sha256:194068f84949f79dca8527c1e0578d9cd90f0bcd82a359bdb0d2d5bfe9d61185",
+      "platform": "linux/amd64",
+      "immutable_reference": "kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0"
+    },
+    {
+      "reference": "quay.io/calico/calico:v3.33.0",
+      "registry": "quay.io",
+      "repository": "calico/calico",
+      "index_digest": "sha256:4ebc20730127bc9e8bf1db5f5a2d8b58cf37fe0e891b3c7b5471992221d213e5",
+      "platform_manifest_digest": "sha256:3eba6eb95b51b337bf255ecaf5c669b4b2ba04f9f813aa89785aa6853ecf9817",
+      "config_digest": "sha256:4ad92d437c956a625db81b6d3d669956a5a275e9db3966abbb2e92718de4dfd4",
+      "platform": "linux/amd64",
+      "immutable_reference": "quay.io/calico/calico:v3.33.0@sha256:4ebc20730127bc9e8bf1db5f5a2d8b58cf37fe0e891b3c7b5471992221d213e5"
+    },
+    {
+      "reference": "quay.io/calico/node:v3.33.0",
+      "registry": "quay.io",
+      "repository": "calico/node",
+      "index_digest": "sha256:565d8db3200e443955557f8f28ff44ab8a4a456754bc74a19c4f2f3444af9b1c",
+      "platform_manifest_digest": "sha256:224903e17a8d0588a6b9781331bd64935b0ef741a4208043f7dd9fcc834fc7cd",
+      "config_digest": "sha256:93e6f0b640645b62626a00c55e5252c361bc3166bf695c4b385cbea4d045fb69",
+      "platform": "linux/amd64",
+      "immutable_reference": "quay.io/calico/node:v3.33.0@sha256:565d8db3200e443955557f8f28ff44ab8a4a456754bc74a19c4f2f3444af9b1c"
+    },
+    {
+      "reference": "quay.io/calico/third-party-cni-plugins:v3.33.0",
+      "registry": "quay.io",
+      "repository": "calico/third-party-cni-plugins",
+      "index_digest": "sha256:0f32f48279484c0d6f0e0d0e767b2d0e1a6c6ca34cb3421a61b989d992f3df41",
+      "platform_manifest_digest": "sha256:ae6464c7d8ffae03f2f26ed411a5b69e91baf31d8d538923645459f4f301a917",
+      "config_digest": "sha256:d4cd73c87e181c2243e4a13b5e0eaae461b6588e439f5d5148517f5b0986bc24",
+      "platform": "linux/amd64",
+      "immutable_reference": "quay.io/calico/third-party-cni-plugins:v3.33.0@sha256:0f32f48279484c0d6f0e0d0e767b2d0e1a6c6ca34cb3421a61b989d992f3df41"
+    },
+    {
+      "reference": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.0",
+      "registry": "registry.k8s.io",
+      "repository": "sig-storage/csi-node-driver-registrar",
+      "index_digest": "sha256:f1c25991bac2fbb7f5fcf91ed9438df31e30edee6bed5a780464238aa09ad24c",
+      "platform_manifest_digest": "sha256:7caa903cf3f8d1d70c3b7bb3e23223685b05e4f342665877eabe84ae38b92ecc",
+      "config_digest": "sha256:88ef14a257f4247460be80e11f16d5ed7cc19e765df128c71515d8d7327e64c1",
+      "platform": "linux/amd64",
+      "immutable_reference": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.0@sha256:f1c25991bac2fbb7f5fcf91ed9438df31e30edee6bed5a780464238aa09ad24c"
+    }
+  ],
+  "resolution_failures": [],
+  "status": "resolved",
+  "runtime_compatibility": "NOT RUN",
+  "registrar_basis": "v2.6.0 from the pinned v0.2.13 CSI example; compatibility/security still requires review."
+}
