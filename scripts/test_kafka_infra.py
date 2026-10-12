@@ -16,6 +16,9 @@ class KafkaInfrastructureTests(unittest.TestCase):
         env=os.environ.copy();env.update(POC_PROJECT='poc-kafka-render-test',POC_IMAGE='poc-kafka-render-test:apps',POC_WORK='/tmp/poc-kafka-render-test',POC_SOCKET_DIR='/tmp/poc-kafka-render-test/workload',POC_PORT='18088',POC_ORIGIN='https://127.0.0.1:18088',POC_STREAM='a'*32)
         value=json.loads(run(['docker','compose','-f',str(ROOT/'infra/kafka-signing/compose.yaml'),'--profile','bootstrap','config','--format','json'],env=env).stdout)
         verify_compose(value)
+        value['services']['money']['deploy']={'replicas':2}
+        with self.assertRaises(RuntimeError):verify_compose(value)
+        value['services']['money'].pop('deploy')
         value['services']['kafka']['tmpfs']=['/tmp:uid=1000','gid=1000']
         with self.assertRaises(RuntimeError):verify_compose(value)
 

@@ -57,6 +57,9 @@ func run() error {
 			return browserCertificate(*tlsCert, *tlsKey, *origin)
 		}}
 	}
+	if fixtureBeforeSource(ctx) {
+		return nil
+	}
 	startup, stop := context.WithTimeout(ctx, 20*time.Second)
 	source, err := identity.Source(startup, "unix:///workload/api.sock")
 	stop()

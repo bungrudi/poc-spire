@@ -10,15 +10,21 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
+	"github.com/twmb/franz-go/pkg/kerr"
 	"io"
 	"math/big"
+	"net"
+	"net/http"
 	"net/url"
 	"os"
+	"poc-spire/internal/kafkacaller"
 	"strings"
 	"time"
 
@@ -35,7 +41,104 @@ import (
 var command = flag.String("fixture-case", "", "fixed acceptance case; test build only")
 var config = flag.String("fixture-config", "", "own test broker configuration")
 var requestID = flag.String("fixture-id", "fixture", "logical acceptance ID")
+var created = flag.Int64("fixture-created", 0, "retained original creation; test build only")
+var deadline = flag.Int64("fixture-deadline", 0, "retained original deadline; test build only")
 var digest = flag.String("fixture-digest", "", "exact receipt digest")
+
+func BeforeSource(ctx context.Context) bool {
+	if *command == "attestation-denied" {
+		connection, err := (&net.Dialer{Timeout: 2 * time.Second}).DialContext(ctx, "tcp", "money:8443")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "fixture Money unreachable")
+			os.Exit(1)
+		}
+		connection.Close()
+		if err := kafkacaller.NoIdentity("/workload/api.sock")(ctx); err != nil {
+			fmt.Fprintln(os.Stderr, "fixture expected reachable no-identity denial")
+			os.Exit(1)
+		}
+		json.NewEncoder(os.Stdout).Encode(map[string]any{"socket_reachable": true, "money_reachable": true, "identity_eligibility": "no_matching_identity"})
+		return true
+	}
+	if !strings.HasPrefix(*command, "broker-") {
+		return false
+	}
+	cfg, err := kafkaio.LoadConfig(*config)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "fixture broker configuration unavailable")
+		os.Exit(1)
+	}
+	if *command == "broker-wrong-host" {
+		raw, err := os.ReadFile(cfg.CA)
+		if err != nil {
+			os.Exit(1)
+		}
+		roots := x509.NewCertPool()
+		roots.AppendCertsFromPEM(raw)
+		pair, err := tls.LoadX509KeyPair(cfg.Certificate, cfg.Key)
+		if err != nil {
+			os.Exit(1)
+		}
+		tlsConfig := &tls.Config{MinVersion: tls.VersionTLS13, RootCAs: roots, Certificates: []tls.Certificate{pair}, ServerName: "kafka"}
+		healthy, err := tls.DialWithDialer(&net.Dialer{Timeout: 2 * time.Second}, "tcp", "kafka:9093", tlsConfig)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "correct-name broker TLS infrastructure failed")
+			os.Exit(1)
+		}
+		healthy.Close()
+		tlsConfig = tlsConfig.Clone()
+		tlsConfig.ServerName = "wrong.invalid"
+		connection, err := tls.DialWithDialer(&net.Dialer{Timeout: 2 * time.Second}, "tcp", "kafka:9093", tlsConfig)
+		if err == nil {
+			connection.Close()
+			fmt.Fprintln(os.Stderr, "wrong broker hostname accepted")
+			os.Exit(1)
+		}
+		var hostnameError x509.HostnameError
+		if !errors.As(err, &hostnameError) {
+			fmt.Fprintln(os.Stderr, "broker hostname probe failed for another reason")
+			os.Exit(1)
+		}
+		json.NewEncoder(os.Stdout).Encode(map[string]any{"tls_hostname_rejected": true})
+		return true
+	}
+	client, err := kafkaio.Producer(cfg)
+	if err != nil {
+		os.Exit(1)
+	}
+	defer client.Close()
+	if *command == "broker-group-denied" {
+		// Reuse the role's own TLS client files, but construct a real group client.
+		group, err := kafkaio.NewConsumer(cfg, ledger.New(10), nil, nil)
+		if err != nil {
+			os.Exit(1)
+		}
+		defer group.Close()
+		probe, stop := context.WithTimeout(ctx, 5*time.Second)
+		defer stop()
+		fetches := groupFixturePoll(probe, group)
+		if !errors.Is(fetches, kerr.GroupAuthorizationFailed) {
+			fmt.Fprintln(os.Stderr, "expected exact group authorization denial")
+			os.Exit(1)
+		}
+		json.NewEncoder(os.Stdout).Encode(map[string]any{"broker_group_denied": true})
+		return true
+	}
+	topic := cfg.Policy().Topic
+	if *command == "broker-topic-denied" {
+		topic = "poc.spire.forbidden." + cfg.StreamID
+	}
+	err = kafkaio.Publish(ctx, client, kafkacmd.Record{Topic: topic, Key: []byte("broker-negative"), Value: []byte("unsigned")})
+	if !errors.Is(err, kerr.TopicAuthorizationFailed) {
+		fmt.Fprintln(os.Stderr, "expected exact topic authorization denial")
+		os.Exit(1)
+	}
+	json.NewEncoder(os.Stdout).Encode(map[string]any{"broker_topic_denied": true, "idempotent_write_disabled": true})
+	return true
+}
+func groupFixturePoll(ctx context.Context, consumer *kafkaio.Consumer) error {
+	return consumer.FixtureGroupPoll(ctx)
+}
 
 func Run(ctx context.Context, source *workloadapi.X509Source) bool {
 	if *command == "" {
@@ -43,6 +146,47 @@ func Run(ctx context.Context, source *workloadapi.X509Source) bool {
 	}
 	result := map[string]any{"case": *command}
 	fail := func(reason string) { result["error"] = reason; json.NewEncoder(os.Stdout).Encode(result); os.Exit(1) }
+	if *command == "no-certificate-reader" {
+		config := identity.NoCertificateTLS(source, identity.Money)
+		verified := false
+		verify := config.VerifyPeerCertificate
+		config.VerifyPeerCertificate = func(raw [][]byte, chains [][]*x509.Certificate) error {
+			err := verify(raw, chains)
+			if err == nil {
+				verified = true
+			}
+			return err
+		}
+		client, transport := identity.HTTPClient(config)
+		defer transport.CloseIdleConnections()
+		request, _ := http.NewRequestWithContext(ctx, "GET", "https://money:8443/kafka/outcomes", nil)
+		request.Header.Set("X-Spiffe-ID", identity.Observer.String())
+		response, err := client.Do(request)
+		if response != nil {
+			response.Body.Close()
+			fail("no_certificate_obtained_http_response")
+		}
+		if err == nil || !verified || !strings.Contains(err.Error(), "tls: certificate required") {
+			fail("no_certificate_probe_not_tls_denial")
+		}
+		json.NewEncoder(os.Stdout).Encode(map[string]any{"server_verified": true, "money_http_status_present": false, "outcome": "tls_client_rejected"})
+		return true
+	}
+	if *command == "wrong-reader" {
+		client, transport := identity.HTTPClient(identity.ClientTLS(source, source, identity.Money))
+		defer transport.CloseIdleConnections()
+		request, _ := http.NewRequestWithContext(ctx, "GET", "https://money:8443/kafka/outcomes", nil)
+		response, err := client.Do(request)
+		if err != nil {
+			fail("wrong_reader_transport_failed")
+		}
+		defer response.Body.Close()
+		if response.StatusCode != 403 {
+			fail("wrong_reader_permitted")
+		}
+		json.NewEncoder(os.Stdout).Encode(map[string]any{"query_http_status": 403, "server_verified": true})
+		return true
+	}
 	if *command == "metadata" || *command == "receipt" {
 		observer := moneyreader.Observer{Target: "https://money:8443", SVID: source, Bundle: source}
 		if *command == "metadata" {
@@ -99,6 +243,14 @@ func Run(ctx context.Context, source *workloadapi.X509Source) bool {
 	}
 	policy := cfg.Policy()
 	message := kafkacmd.Message{Context: policy.Context(now), Transfer: ledger.Fixed(*requestID), IssuedAt: now.Unix(), ExpiresAt: min(now.Unix()+30, svid.Certificates[0].NotAfter.Unix()-5)}
+	if *created != 0 {
+		if *deadline <= *created || *deadline-*created > 120 {
+			fail("invalid_retained_context")
+		}
+		message.Context.CreatedAt = *created
+		message.Context.Deadline = *deadline
+		message.ExpiresAt = min(message.ExpiresAt, *deadline)
+	}
 	header := map[jose.HeaderKey]any{jose.HeaderKey("typ"): kafkacmd.Type, jose.HeaderKey("x5c"): []string{base64.StdEncoding.EncodeToString(svid.Certificates[0].Raw)}}
 	signerKey := svid.PrivateKey
 	key := []byte(*requestID)
@@ -215,6 +367,7 @@ func Run(ctx context.Context, source *workloadapi.X509Source) bool {
 	if err := kafkaio.Publish(ctx, client, record); err != nil {
 		fail("fixture_broker_publication_failed")
 	}
+	result["context"] = message.Context
 	result["digest"] = kafkacmd.Digest(record)
 	result["request_id"] = *requestID
 	result["expires_at"] = message.ExpiresAt

@@ -1,10 +1,11 @@
 // Independent JOSE codec fixture. Private keys remain non-extractable in this
 // process; the test exchanges public certificates and command wire bytes by pipe.
+import {readFileSync} from 'node:fs';
 import {createInterface} from 'node:readline';
 import {CompactSign, compactVerify, decodeProtectedHeader, generateKeyPair, exportSPKI, importX509, importJWK} from 'jose';
 const pair=await generateKeyPair('ES256',{extractable:false});
 const send=value=>process.stdout.write(JSON.stringify(value)+'\n');
-send({spki:await exportSPKI(pair.publicKey),version:'6.1.0'});
+send({spki:await exportSPKI(pair.publicKey),version:JSON.parse(readFileSync(new URL('../node_modules/jose/package.json',import.meta.url),'utf8')).version});
 const lines=createInterface({input:process.stdin,crlfDelay:Infinity});
 for await(const line of lines){
  try{

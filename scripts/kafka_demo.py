@@ -21,6 +21,7 @@ from identity import IdentityRuntime, private_write
 
 def verify_compose(value):
     services=value['services']
+    if services['money'].get('deploy',{}).get('replicas',1)!=1 or services['money'].get('scale',1)!=1:raise RuntimeError('One Money instance is required; replicas have independent in-memory ledgers')
     expected={'kafka':['/tmp:uid=1000,gid=1000,mode=700,size=64m','/opt/kafka/logs:uid=1000,gid=1000,mode=700,size=32m'],'admin':['/tmp:uid=1000,gid=1000,mode=700,size=32m']}
     for name,mounts in expected.items():
         if services[name].get('tmpfs')!=mounts:raise RuntimeError('Rendered temporary mounts do not match owned UID/destinations')
@@ -82,6 +83,12 @@ class KafkaStack:
         if self.metadata.exists():raise RuntimeError('Owned descriptor already exists; no overwrite')
         self.stage="native-runtime-initialization"
         self.runtime=IdentityRuntime(ephemeral_root=self.work,ca_ttl=600,isolated=True)
+        if self.test_build:
+            (self.work/'money-fault').mkdir(mode=0o700)
+            override=self.work/'fixture-compose.yaml'
+            private_write(override,'services:\n  money:\n    command: [-listen, ":8443", -kafka-config, /kafka/client.json, -fixture-ack-block, /fixture/block-ack, -fixture-processing-block, /fixture/block-processing]\n    volumes:\n      - '+str(self.work/'money-fault')+':/fixture:ro\n')
+            self.compose+=['-f',str(override)]
+
         spec=importlib.util.spec_from_file_location('kafka_fixture_pki',ROOT/'infra/kafka-signing/broker-pki.py')
         pki=importlib.util.module_from_spec(spec);spec.loader.exec_module(pki)
         ca=pki.generate(self.work,self.stream);self.context=ssl.create_default_context(cafile=str(ca))

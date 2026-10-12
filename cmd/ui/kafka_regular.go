@@ -8,3 +8,5 @@ import (
 )
 
 func fixtureRun(context.Context, *workloadapi.X509Source) bool { return false }
+
+func fixtureBeforeSource(context.Context) bool { return false }

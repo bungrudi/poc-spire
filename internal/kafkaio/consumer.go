@@ -15,11 +15,12 @@ import (
 )
 
 type Consumer struct {
-	client *kgo.Client
-	book   *ledger.Ledger
-	cfg    Config
-	engine Engine
-	held   *Delivery
+	beforeCommit func(context.Context, *Delivery) error
+	client       *kgo.Client
+	book         *ledger.Ledger
+	cfg          Config
+	engine       Engine
+	held         *Delivery
 }
 
 func NewConsumer(cfg Config, book *ledger.Ledger, source x509bundle.Source, audit io.Writer) (*Consumer, error) {
@@ -33,11 +34,12 @@ func NewConsumer(cfg Config, book *ledger.Ledger, source x509bundle.Source, audi
 		pause(client)
 		book.SetKafkaAssignment(false)
 	}
-	opts = append(opts, kgo.ConsumerGroup(cfg.Group()), kgo.ConsumeTopics(cfg.Policy().Topic), kgo.DisableAutoCommit(), kgo.BlockRebalanceOnPoll(), kgo.Balancers(kgo.RangeBalancer()), kgo.FetchMaxBytes(65536), kgo.FetchMaxPartitionBytes(65536), kgo.MaxConcurrentFetches(1), kgo.FetchMaxWait(250*time.Millisecond), kgo.OnPartitionsAssigned(func(_ context.Context, client *kgo.Client, partitions map[string][]int32) {
+	opts = append(opts, kgo.ConsumerGroup(cfg.Group()), kgo.ConsumeTopics(cfg.Policy().Topic), kgo.DisableAutoCommit(), kgo.BlockRebalanceOnPoll(), kgo.Balancers(kgo.RangeBalancer()), kgo.SessionTimeout(6*time.Second), kgo.HeartbeatInterval(2*time.Second), kgo.RebalanceTimeout(10*time.Second), kgo.FetchMaxBytes(65536), kgo.FetchMaxPartitionBytes(65536), kgo.MaxConcurrentFetches(1), kgo.FetchMaxWait(250*time.Millisecond), kgo.OnPartitionsAssigned(func(_ context.Context, client *kgo.Client, partitions map[string][]int32) {
 		pause(client)
 		assigned := len(partitions) == 1 && len(partitions[cfg.Policy().Topic]) == 1 && partitions[cfg.Policy().Topic][0] == 0
 		book.SetKafkaAssignment(assigned)
 	}), kgo.OnPartitionsRevoked(revoke), kgo.OnPartitionsLost(revoke))
+	configureFixtureFaults(consumer)
 	consumer.client, err = kgo.NewClient(opts...)
 	if err != nil {
 		return nil, err
@@ -116,6 +118,11 @@ func (c *Consumer) Assigned(d *Delivery) bool {
 func (c *Consumer) Commit(ctx context.Context, d *Delivery) error {
 	if !c.Assigned(d) {
 		return errors.New("assignment_lost")
+	}
+	if c.beforeCommit != nil {
+		if err := c.beforeCommit(ctx, d); err != nil {
+			return err
+		}
 	}
 	request := kmsg.NewPtrOffsetCommitRequest()
 	request.Group = c.cfg.Group()

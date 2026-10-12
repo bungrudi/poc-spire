@@ -1,6 +1,7 @@
 package ledger
 
 import (
+	"fmt"
 	"reflect"
 	"sync"
 	"testing"
@@ -166,5 +167,86 @@ func TestHistoryCapacityDoesNotLeaveBindingOrReceipt(t *testing.T) {
 	}
 	if len(l.kafka.bindings) != 0 || len(l.kafka.receipts) != 0 {
 		t.Fatal("capacity failure left state")
+	}
+}
+
+func TestExactReceiptAndHistoryCapacityLimits(t *testing.T) {
+	l, epoch, now := kafkaBook(t, 10000)
+	positive, fail := l.KafkaTransfer("first", "trusted", "original-context", Fixed("original"), epoch, currentGuard)
+	if fail != nil {
+		t.Fatal(fail)
+	}
+	for i := 1; i < 4096; i++ {
+		if _, fail := l.RejectKafka(fmt.Sprintf("negative-%d", i), "malformed_jws", "", epoch); fail != nil {
+			t.Fatal("4096-slot boundary too small", i, fail)
+		}
+	}
+	if len(l.kafka.receipts) != 4096 {
+		t.Fatal("receipt count")
+	}
+	if _, fail := l.KafkaTransfer("overflow", "trusted", "c", Fixed("new"), epoch, currentGuard); fail == nil || fail.Reason != "receipt_capacity_exhausted" {
+		t.Fatal("4097th receipt accepted", fail)
+	}
+	if _, bound := l.kafka.bindings[key{"trusted", "new"}]; bound {
+		t.Fatal("capacity reserved context")
+	}
+	if first, ok := l.KafkaReceipt("first"); !ok || !reflect.DeepEqual(first, positive) {
+		t.Fatal("fresh receipt evicted")
+	}
+	*now = now.Add(179 * time.Second)
+	if _, ok := l.KafkaReceipt("first"); !ok {
+		t.Fatal("180-second retention shortened")
+	}
+	*now = now.Add(time.Second)
+	if _, ok := l.KafkaReceipt("first"); ok {
+		t.Fatal("receipt persisted at expiry")
+	}
+	// Fill actual 10000-key history/context capacities with fixed business
+	// rejections after the 1000 available successful transfers; no eviction.
+	for i := 1; i < 10000; i++ {
+		id := fmt.Sprintf("key-%d", i)
+		r, fail := l.KafkaTransfer(fmt.Sprintf("digest-%d", i), "trusted", "c", Fixed(id), epoch, currentGuard)
+		if fail != nil { // Receipts expire independently of persistent logical history.
+			if fail.Reason != "receipt_capacity_exhausted" {
+				t.Fatal(fail)
+			}
+			*now = now.Add(180 * time.Second)
+			r, fail = l.KafkaTransfer(fmt.Sprintf("digest-%d", i), "trusted", "c", Fixed(id), epoch, currentGuard)
+		}
+		if fail != nil || r.BusinessResult == nil {
+			t.Fatal("history ended before 10000", i, fail)
+		}
+	}
+	if len(l.history) != 10000 || len(l.kafka.bindings) != 10000 {
+		t.Fatal("exact history/context count")
+	}
+	if _, fail := l.KafkaTransfer("extra", "trusted", "c", Fixed("extra"), epoch, currentGuard); fail == nil || fail.Reason != "context_capacity_exhausted" {
+		t.Fatal("10001st context accepted", fail)
+	}
+	*now = now.Add(180 * time.Second)
+	replay, fail := l.KafkaTransfer("fresh-replay", "trusted", "original-context", Fixed("original"), epoch, currentGuard)
+	if fail != nil || !replay.BusinessResult.Replay || l.Snapshot().Version != 1000 {
+		t.Fatal("existing history failed at full capacity", replay, fail)
+	}
+	if len(l.history) != 10000 || len(l.kafka.bindings) != 10000 {
+		t.Fatal("full replay evicted state")
+	}
+}
+
+func TestOriginalKafkaBusinessRejectionReplaysAcrossIngresses(t *testing.T) {
+	l, epoch, _ := kafkaBook(t, 10)
+	request := Fixed("rejected-business")
+	request.Amount = 200
+	first, fail := l.KafkaTransfer("rejection-a", "trusted", "context", request, epoch, currentGuard)
+	if fail != nil || first.Disposition != "business_rejected" || first.BusinessCode != 400 {
+		t.Fatal("original business rejection", first, fail)
+	}
+	sync, status := l.Transfer("trusted", request)
+	if status != 400 || !sync.Replay || sync.Error != "invalid_fixed_transfer" {
+		t.Fatal("Sync failed stable rejected replay")
+	}
+	again, fail := l.KafkaTransfer("rejection-b", "trusted", "context", request, epoch, currentGuard)
+	if fail != nil || again.BusinessCode != 400 || !again.BusinessResult.Replay || l.Snapshot().Version != 0 {
+		t.Fatal("new Kafka bytes bypassed original rejection", again, fail)
 	}
 }

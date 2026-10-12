@@ -98,7 +98,7 @@ func TestTrustedSignatureAndExactRecordBindings(t *testing.T) {
 	if verified.Message.Transfer != ledger.Fixed("one") {
 		t.Fatal("typed transfer changed")
 	}
-	for _, name := range []string{"topic", "key", "headers", "signature", "payload-byte"} {
+	for _, name := range []string{"topic", "key", "headers", "signature", "payload-byte", "protected-byte"} {
 		t.Run(name, func(t *testing.T) {
 			r := record
 			r.Key = append([]byte{}, record.Key...)
@@ -116,6 +116,11 @@ func TestTrustedSignatureAndExactRecordBindings(t *testing.T) {
 				sig[0] ^= 1
 				parts[2] = base64.RawURLEncoding.EncodeToString(sig)
 				r.Value = []byte(strings.Join(parts, "."))
+			case "protected-byte":
+				parts := strings.Split(string(r.Value), ".")
+				header, _ := base64.RawURLEncoding.DecodeString(parts[0])
+				parts[0] = base64.RawURLEncoding.EncodeToString(append([]byte(" "), header...))
+				r.Value = []byte(strings.Join(parts, "."))
 			case "payload-byte":
 				parts := strings.Split(string(r.Value), ".")
 				payload, _ := base64.RawURLEncoding.DecodeString(parts[1])
@@ -126,7 +131,7 @@ func TestTrustedSignatureAndExactRecordBindings(t *testing.T) {
 			if v != nil || fail == nil || fail.Transient {
 				t.Fatal("altered record accepted", name)
 			}
-			if (name == "signature" || name == "payload-byte") && fail.VerifiedID != "" {
+			if (name == "signature" || name == "payload-byte" || name == "protected-byte") && fail.VerifiedID != "" {
 				t.Fatal("invalid signature attributed to claimed producer")
 			}
 		})
@@ -450,4 +455,23 @@ func (s *switchingBundle) GetX509BundleForTrustDomain(spiffeid.TrustDomain) (*x5
 		return nil, errors.New("missing")
 	}
 	return s.bundle, nil
+}
+
+func TestSigningAndVerificationEnforceLeafNotBeforeWithoutGrace(t *testing.T) {
+	svid, bundle := fixture(t, identity.Trusted, elliptic.P256())
+	p := testPolicy(t)
+	start := svid.Certificates[0].NotBefore
+	if _, fail := Seal(svid, p.Context(start.Add(-time.Second)), ledger.Fixed("not-before"), start.Add(-time.Second)); fail == nil {
+		t.Fatal("signer used not-yet-valid leaf")
+	}
+	record, fail := Seal(svid, p.Context(start), ledger.Fixed("not-before"), start)
+	if fail != nil {
+		t.Fatal("leaf notBefore equality refused", fail)
+	}
+	if _, fail := Verify(record, p, bundle, start.Add(-time.Second)); fail == nil || fail.Transient || fail.VerifiedID != "" {
+		t.Fatal("verifier gave leaf a notBefore grace", fail)
+	}
+	if _, fail := Verify(record, p, bundle, start); fail != nil {
+		t.Fatal("leaf at notBefore rejected", fail)
+	}
 }

@@ -1,16 +1,25 @@
 #!/usr/bin/env python3
 """First isolated real-SPIRE/Kafka UI checkpoint, preserving the public stack."""
+import hashlib
 import json
 import time
-from attestation import ROOT
+from attestation import ROOT,run
 from kafka_demo import KafkaStack,require_complete_cleanup
 
 def main():
     report={'phase':'isolated-kafka-smoke','status':'running','checks':{},'public_deployment_changed':False,'full_acceptance':False}
+    report['source_revision']=run(['git','rev-parse','HEAD']).stdout.strip()
+    paths=run(['git','ls-files','--cached','--others','--exclude-standard','cmd','internal','scripts','infra','go.mod','go.sum','package.json','package-lock.json']).stdout.splitlines()
+    report['source_sha256']={path:hashlib.sha256((ROOT/path).read_bytes()).hexdigest() for path in sorted(set(paths)) if (ROOT/path).is_file()}
+    report['source_files_changed_from_revision']=bool(run(['git','diff','HEAD','--name-only','--','cmd','internal','scripts','infra','go.mod','go.sum','package.json','package-lock.json']).stdout.strip() or run(['git','ls-files','--others','--exclude-standard','cmd','internal','scripts','infra']).stdout.strip())
     stack=KafkaStack()
     try:
-        stack.start()
+        stack.start();report['build_profile']='normal';report['image_config_digest']=stack.image_digest;report['binary_sha256']=stack.binary_hashes
         report['checks']['complete_readiness']=True
+        for binary in ['money','trusted-caller','ui']:
+            denied=run([str(stack.work/binary),'-fixture-case','valid'],check=False,timeout=5)
+            if denied.returncode!=2 or 'flag provided but not defined' not in denied.stderr:raise RuntimeError('Acceptance controls leaked into normal build')
+        report['checks']['test_flags_absent']=True
         for scenario in ['trusted','unidentified','kafka-trusted','kafka-unidentified','kafka-tampered']:
             value,key=stack.attempt(scenario)
             if scenario.startswith('kafka-'):
@@ -33,7 +42,6 @@ def main():
         report['reason']=str(error)[-2000:]
         if stack.bootstrap_diagnostic:report['broker_bootstrap_diagnostic']=stack.bootstrap_diagnostic
         if stack.up:
-            from attestation import run
             logs=run(stack.compose+['logs','--no-color','--tail','80','kafka'],env=stack.env,check=False).stdout
             report['broker_errors']=[line[-300:] for line in logs.splitlines() if any(word in line for word in ['ERROR','Exception','Permission','Caused by'])][-20:]
         # Raw SPIRE diagnostics and native parent IDs may contain a join token.

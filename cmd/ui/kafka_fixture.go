@@ -11,3 +11,5 @@ import (
 func fixtureRun(ctx context.Context, source *workloadapi.X509Source) bool {
 	return kafkafixture.Run(ctx, source)
 }
+
+func fixtureBeforeSource(ctx context.Context) bool { return kafkafixture.BeforeSource(ctx) }

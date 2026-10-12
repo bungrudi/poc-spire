@@ -27,6 +27,9 @@ func main() {
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+	if fixtureBeforeSource(ctx) {
+		return
+	}
 	startup, stop := context.WithTimeout(ctx, 15*time.Second)
 	source, err := identity.Source(startup, "unix:///workload/api.sock")
 	stop()

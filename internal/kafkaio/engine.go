@@ -29,12 +29,13 @@ type Transport interface {
 	Commit(context.Context, *Delivery) error
 }
 type Engine struct {
-	Book         *ledger.Ledger
-	Policy       kafkacmd.Policy
-	Source       x509bundle.Source
-	Clock        func() time.Time
-	ClockHealthy func() bool
-	Audit        io.Writer
+	BeforeDecision func() bool
+	Book           *ledger.Ledger
+	Policy         kafkacmd.Policy
+	Source         x509bundle.Source
+	Clock          func() time.Time
+	ClockHealthy   func() bool
+	Audit          io.Writer
 }
 type Decision struct {
 	Receipt    *ledger.Receipt
@@ -50,6 +51,9 @@ func (e *Engine) now() time.Time {
 	return time.Now()
 }
 func (e *Engine) Decide(delivery *Delivery) Decision {
+	if e.BeforeDecision != nil && !e.BeforeDecision() {
+		return Decision{Reason: "fixture_processing_paused"}
+	}
 	if e.ClockHealthy != nil && !e.ClockHealthy() {
 		return Decision{Reason: "clock_unhealthy"}
 	}

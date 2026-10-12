@@ -57,6 +57,9 @@ class CleanupPropagationTests(unittest.TestCase):
         import kafka_smoke
         class Stack:
             stage='ready'
+            work=Path('/fixture')
+            image_digest='fixture'
+            binary_hashes={}
             def start(self):pass
             def attempt(self,scenario):
                 if scenario.startswith('kafka-'):return {'status':'done','kafka_evidence':{'outcome':'transfer_succeeded' if scenario=='kafka-trusted' else 'money_rejected','money_queries':[]}},'key'
@@ -64,7 +67,7 @@ class CleanupPropagationTests(unittest.TestCase):
             def close(self):return {'owned_cleanup_complete':False,'errors':[{'action':'native-runtime'}],'compose_exit_code':0,'image_exit_code':0,'ephemeral_state_removed':False}
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);(root/'docs/evidence').mkdir(parents=True)
-            with patch.object(kafka_smoke,'ROOT',root),patch.object(kafka_smoke,'KafkaStack',Stack):
+            with patch.object(kafka_smoke,'ROOT',root),patch.object(kafka_smoke,'KafkaStack',Stack),patch.object(kafka_smoke,'run',return_value=SimpleNamespace(stdout='',stderr='flag provided but not defined',returncode=2)):
                 with self.assertRaises(RuntimeError):kafka_smoke.main()
             report=json.loads((root/'docs/evidence/kafka-smoke-current.json').read_text())
             self.assertEqual(report['status'],'failed_cleanup')
