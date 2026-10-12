@@ -57,7 +57,7 @@ func main() {
 		}
 		return
 	}
-	if *role != "spire-server" || len(flag.Args()) == 0 || flag.Args()[0] != "/opt/spire/bin/spire-server" {
+	if len(flag.Args()) == 0 || (*role == "spire-server" && flag.Args()[0] != "/opt/spire/bin/spire-server") || (*role == "kafka" && (flag.Args()[0] != "/bin/bash" || len(flag.Args()) != 2 || flag.Args()[1] != "/config/kubernetes-broker-run.sh")) || (*role != "spire-server" && *role != "kafka") {
 		panic("unsupported startup role")
 	}
 	run, pod := os.Getenv("POC_RUN"), os.Getenv("POC_POD_UID")
@@ -65,8 +65,15 @@ func main() {
 	for {
 		g, err := readGuard(*path)
 		if err == nil && g.Run == run && g.Pods[*role] == pod && pod != "" {
-			if g.Phase == "running" {
-				for _, required := range []string{"/run/spire/data/keys.json", "/run/spire/data/database.sqlite3"} {
+			requiredFiles := []string{}
+			if *role == "kafka" {
+				requiredFiles = []string{"/var/lib/kafka/data/meta.properties", "/var/lib/kafka/data/owned-initialized"}
+			}
+			if g.Phase == "running" && *role == "spire-server" {
+				requiredFiles = []string{"/run/spire/data/keys.json", "/run/spire/data/database.sqlite3"}
+			}
+			if g.Phase == "running" || g.Phase == "bootstrap" {
+				for _, required := range requiredFiles {
 					info, err := os.Stat(required)
 					if err != nil || !info.Mode().IsRegular() || info.Size() == 0 {
 						panic("run_invalid")

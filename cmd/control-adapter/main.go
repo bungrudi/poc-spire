@@ -12,6 +12,8 @@ import (
 
 	"poc-spire/internal/controladapter"
 	"poc-spire/internal/identity"
+	"poc-spire/internal/kafkacaller"
+	"poc-spire/internal/readiness"
 	"poc-spire/internal/runguard"
 )
 
@@ -22,6 +24,7 @@ func main() {
 	guardPath := flag.String("run-guard", "", "required read-only Kubernetes run guard")
 	run := flag.String("run", "", "expected disposable run")
 	podUID := flag.String("pod-uid", os.Getenv("POC_POD_UID"), "expected current Pod UID")
+	readyPath := flag.String("readiness-file", "", "opt-in native readiness marker")
 	flag.Parse()
 	expected, err := controladapter.ID(*role)
 	if err != nil || *guardPath == "" || *run == "" || *podUID == "" || os.Geteuid() != 10002 || os.Getegid() != 1000 {
@@ -48,6 +51,14 @@ func main() {
 		fmt.Fprintln(os.Stderr, "control listener unavailable")
 		os.Exit(1)
 	}
+	guard := runguard.Config{Path: *guardPath, Run: *run, Role: "caller-" + *role, PodUID: *podUID}
+	readiness.Start(ctx, *readyPath, func(operation context.Context) bool {
+		if !identity.Current(source) || !guard.Valid() {
+			return false
+		}
+		m, status, err := kafkacaller.Call(operation, *socket, nil, "readiness")
+		return err == nil && status == 404 && m.Initialized
+	})
 	server := controladapter.Server(source, controladapter.Config{Role: *role, Socket: *socket, RunValid: (runguard.Config{Path: *guardPath, Run: *run, Role: "caller-" + *role, PodUID: *podUID}).Valid}, os.Stdout)
 	go func() {
 		<-ctx.Done()

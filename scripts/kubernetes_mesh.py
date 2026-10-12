@@ -14,7 +14,8 @@ def operator():
     pins = json.loads((runtime.ROOT / 'infra/kubernetes-baseline/artifacts.json').read_text())
     images = {i['reference']: i['immutable_reference'] for i in pins['images']}
     log_format = json.dumps({'start': '%START_TIME%', 'connection': '%CONNECTION_ID%',
-                             'downstream_remote': '%DOWNSTREAM_REMOTE_ADDRESS%', 'upstream': '%UPSTREAM_HOST%',
+                             'downstream_remote':'%DOWNSTREAM_REMOTE_ADDRESS%','downstream_local':'%DOWNSTREAM_LOCAL_ADDRESS%',
+                             'upstream':'%UPSTREAM_HOST%','upstream_local':'%UPSTREAM_LOCAL_ADDRESS%',
                              'downstream_tls': '%DOWNSTREAM_TLS_VERSION%', 'upstream_tls': '%UPSTREAM_TLS_VERSION%',
                              'downstream_peer': '%DOWNSTREAM_PEER_URI_SAN%', 'upstream_peer': '%UPSTREAM_PEER_URI_SAN%',
                              'flags': '%RESPONSE_FLAGS%'}, separators=(',', ':')) + '\n'

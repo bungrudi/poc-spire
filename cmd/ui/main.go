@@ -23,6 +23,7 @@ import (
 	"poc-spire/internal/identity"
 	"poc-spire/internal/kafkacaller"
 	"poc-spire/internal/moneyreader"
+	"poc-spire/internal/readiness"
 	"poc-spire/internal/runguard"
 	"poc-spire/internal/web"
 )
@@ -43,6 +44,7 @@ func run() error {
 	runID := flag.String("run", "", "expected Kubernetes run")
 	podUID := flag.String("pod-uid", os.Getenv("POC_POD_UID"), "expected UI Pod UID")
 	startupTimeout := flag.Duration("startup-timeout", 20*time.Second, "bounded identity startup wait")
+	readyPath := flag.String("readiness-file", "", "opt-in complete native readiness marker")
 	flag.Parse()
 	if *controlMode != "uds" && *controlMode != "mtls" {
 		return errors.New("invalid control transport")
@@ -166,6 +168,27 @@ func run() error {
 			return kafkacaller.Call(ctx, socketFor(scenario), &request, request.RequestID)
 		}}
 	}
+	readiness.Start(ctx, *readyPath, func(operation context.Context) bool {
+		if !identity.Current(source) || (deps.RunValid != nil && !deps.RunValid()) {
+			return false
+		}
+		if _, err := deps.Balances(operation); err != nil {
+			return false
+		}
+		if deps.Kafka != nil {
+			m, err := deps.Kafka.Metadata(operation)
+			if err != nil || m.StreamID != *kafkaStream || !m.ConsumerReady {
+				return false
+			}
+			for _, scenario := range []string{"kafka-trusted", "kafka-unidentified"} {
+				state, status, err := deps.Kafka.Lookup(operation, scenario, "readiness")
+				if err != nil || status != 404 || !state.Initialized {
+					return false
+				}
+			}
+		}
+		return true
+	})
 	app, err := web.New(ctx, config, deps)
 	if err != nil {
 		return err

@@ -307,7 +307,7 @@ def stop():
         if item['Labels'].get(OWNER) != value['run'] or item['Containers']:
             raise RuntimeError('cleanup refused foreign/in-use network')
         execute([DOCKER, 'network', 'rm', networks[0]])
-    for name in ('bootstrap-image.json', 'feasibility-image.json'):
+    for name in ('bootstrap-image.json','feasibility-image.json','normal-image.json','test-image.json'):
         image_record = Path(value['work']) / name
         if image_record.exists():
             built = json.loads(image_record.read_text())

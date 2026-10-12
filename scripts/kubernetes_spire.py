@@ -59,12 +59,50 @@ def ensure_fresh_issuer(value):
     return marker
 
 
+def full_server(value, source):
+    normal = json.loads((Path(value['work']) / 'normal-image.json').read_text())
+    ns = 'spire-' + value['run']; appns='poc-'+value['run']
+    items=list(yaml.safe_load_all(source))
+    for obj in items:
+        if obj['kind']=='ConfigMap' and obj['metadata']['name']=='spire-config':
+            conf=obj['data']['server.conf']
+            marker='  KeyManager "disk"'
+            conf=conf.replace(marker,'  Notifier "k8sbundle" { plugin_data { namespace = "'+ns+'" config_map = "spire-bundle" config_map_key = "bundle.pem" } }\n'+marker)
+            obj['data']['server.conf']=conf
+        if obj['kind']!='Pod':continue
+        spec=obj['spec'];init=spec['initContainers'][0]
+        init['image']=normal['immutable_reference'];init['imagePullPolicy']='Never'
+        init['command']=['/kubernetes-init'];init['args']=['-install','/guard-bin']
+        server=spec['containers'][0]
+        spec['containers'].append({'name':'bundle-publisher','image':server['image'],
+           'command':['/guard-bin/bundle-publisher'],'args':['-namespace',appns,'-run',value['run']],
+           'securityContext':server['securityContext'],
+           'resources':{'requests':{'cpu':'10m','memory':'16Mi'},'limits':{'cpu':'250m','memory':'64Mi'}},
+           'volumeMounts':[{'name':'guard-bin','mountPath':'/guard-bin','readOnly':True},
+                           {'name':'admin','mountPath':'/run/spire/admin','readOnly':True},
+                           {'name':'publisher-api','mountPath':'/run/publisher-api','readOnly':True}]})
+        spec['volumes'].append({'name':'publisher-api','projected':{'sources':[
+            {'serviceAccountToken':{'path':'token','expirationSeconds':600}},
+            {'configMap':{'name':'kube-root-ca.crt','items':[{'key':'ca.crt','path':'ca.crt'}]}}]}})
+    extra=[{'apiVersion':'v1','kind':'Namespace','metadata':{'name':appns,'labels':{'istio-injection':'enabled','poc-run':value['run']}}}]
+    for namespace in (ns,appns):
+        extra.append({'apiVersion':'v1','kind':'ConfigMap','metadata':{'name':'spire-bundle','namespace':namespace,'labels':{'poc-run':value['run']}},'data':{'bundle.pem':''}})
+        extra.append({'apiVersion':'rbac.authorization.k8s.io/v1','kind':'Role','metadata':{'name':'public-bundle','namespace':namespace},
+                      'rules':[{'apiGroups':[''],'resources':['configmaps'],'resourceNames':['spire-bundle'],
+                                'verbs':['get','patch'] if namespace==ns else ['get','update']}]})
+        extra.append({'apiVersion':'rbac.authorization.k8s.io/v1','kind':'RoleBinding','metadata':{'name':'public-bundle','namespace':namespace},
+                      'subjects':[{'kind':'ServiceAccount','name':'spire-server','namespace':ns}],
+                      'roleRef':{'apiGroup':'rbac.authorization.k8s.io','kind':'Role','name':'public-bundle'}})
+    return yaml.safe_dump_all([*extra,*items],sort_keys=False)
+
+
 def main():
     value = runtime.descriptor()
     work = Path(value['work'])
     namespace = 'spire-' + value['run']
     marker = ensure_fresh_issuer(value)
     server = rendered(value, 'spire-server.yaml.tmpl')
+    if (work/'normal-image.json').exists():server=full_server(value,server)
     existing = json.loads(runtime.kube(value, '-n', namespace, 'get', 'pods', '-o', 'json'))['items']
     if any(p['metadata']['name'] == 'spire-server' for p in existing):
         raise RuntimeError('refuse issuer adoption/recreation; use owned explicit fresh run')
@@ -79,7 +117,7 @@ def main():
     if '-----BEGIN CERTIFICATE-----' not in bundle or 'PRIVATE KEY' in bundle:
         raise RuntimeError('authentic public bundle unavailable')
     # Initial bounded private administration; recurring restricted publisher is a later gate.
-    cm = {'apiVersion': 'v1', 'kind': 'ConfigMap', 'metadata': {'name': 'spire-bundle', 'namespace': namespace}, 'data': {'bundle.pem': bundle}}
+    cm = {'apiVersion': 'v1', 'kind': 'ConfigMap', 'metadata': {'name': 'spire-bundle', 'namespace': namespace, 'labels': {'poc-run':value['run']}}, 'data': {'bundle.pem': bundle}}
     runtime.kube(value, 'apply', '-f', '-', data=yaml.safe_dump(cm))
     runtime.private_json(marker, {'run': value['run'], 'namespace': namespace, 'phase': 'initialized', 'server_pod_uid': pod['metadata']['uid']})
     guard['phase'] = 'running'

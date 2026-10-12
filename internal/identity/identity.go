@@ -71,3 +71,19 @@ func HTTPClient(config *tls.Config) (*http.Client, *http.Transport) {
 	return &http.Client{Transport: transport, Timeout: 8 * time.Second,
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, transport
 }
+
+// Current checks cached source material without equating a disconnected issuer watch with revocation.
+func Current(source *workloadapi.X509Source) bool {
+	svid, err := source.GetX509SVID()
+	if err != nil || len(svid.Certificates) == 0 {
+		return false
+	}
+	now := time.Now()
+	for _, cert := range svid.Certificates {
+		if now.Before(cert.NotBefore) || !now.Before(cert.NotAfter) {
+			return false
+		}
+	}
+	_, err = source.GetX509BundleForTrustDomain(svid.ID.TrustDomain())
+	return err == nil
+}

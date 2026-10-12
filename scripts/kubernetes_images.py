@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build static development apps and import a real immutable OCI manifest into the owned node."""
+import argparse
 import gzip
 import hashlib
 import io
@@ -99,20 +100,21 @@ def descriptor_graph(source, inspected):
                 'config_digest': obj['config']['digest'], 'filesystem_diff_ids': config['rootfs']['diff_ids']}
 
 
-def main():
+def main(profile="feasibility"):
     value = runtime.descriptor()
     work = Path(value['work'])
-    marker = work / 'feasibility-image.json'
+    marker = work / (profile+'-image.json')
     if marker.exists():
         raise RuntimeError('refuse silent replacement of built feasibility artifact')
-    directory = work / 'feasibility-image'
+    directory = work / (profile+'-image')
     if directory.is_symlink():
         raise RuntimeError('aliased build directory')
     directory.mkdir(mode=0o700, exist_ok=True)
     env = {**os.environ, 'CGO_ENABLED': '0', 'GOTOOLCHAIN': 'local', 'GOMAXPROCS': '2', 'GOFLAGS': '-p=2'}
-    names = ['money', 'trusted-caller', 'untrusted-caller', 'ui', 'kafka-init', 'control-client', 'security-client']
+    names = ['money','trusted-caller','untrusted-caller','ui','kafka-init','control-client','security-client']
+    if profile != 'feasibility': names += ['control-adapter','kubernetes-init','bundle-publisher','kubernetes-run-guard','kubernetes-ready']
     for name in names:
-        runtime.execute(['go', 'build', '-trimpath', '-o', directory / name, './cmd/' + name], env=env, timeout=120)
+        runtime.execute(['go','build','-trimpath',*(['-tags','kafkatest'] if profile=='test' else []),'-o',directory/name,'./cmd/'+name], env=env, timeout=120)
     for role in ('approved', 'ineligible'):
         name = 'attestation-' + role
         runtime.execute(['go', 'build', '-trimpath', '-ldflags', '-X main.buildRole=' + role,
@@ -120,12 +122,12 @@ def main():
         names.append(name)
     (directory / 'Dockerfile').write_text('FROM scratch\nCOPY ' + ' '.join(names) + ' /\nUSER 1000:1000\nENTRYPOINT ["/money"]\n')
     (directory / '.dockerignore').write_text('*\n!Dockerfile\n' + ''.join('!' + n + '\n' for n in names))
-    tag = 'poc-k8s-feasibility:' + value['run']
+    tag = 'poc-k8s-'+profile+':' + value['run']
     runtime.execute([runtime.DOCKER, 'build', '--network', 'none', '--label', runtime.OWNER + '=' + value['run'], '-t', tag, directory], timeout=120)
     saved = directory / 'docker.tar'
     runtime.execute([runtime.DOCKER, 'image', 'save', '--output', saved, tag], timeout=120)
     archive = directory / 'image.oci.tar'
-    reference = 'docker.io/poc-spire/feasibility:' + value['run']
+    reference = 'docker.io/poc-spire/'+profile+':' + value['run']
     records = docker_to_oci(saved, archive, reference)
     image_config = runtime.execute([runtime.DOCKER, 'image', 'inspect', tag, '--format', '{{.Id}}']).strip()
     inspected = runtime.docker_json('image', 'inspect', tag)[0]
@@ -157,11 +159,13 @@ def main():
                     'binary_sha256': {n: hashlib.sha256((directory / n).read_bytes()).hexdigest() for n in names},
                     'source_revision': runtime.execute(['git', 'rev-parse', 'HEAD']).strip(),
                     'source_dirty': bool(runtime.execute(['git', 'status', '--porcelain']).strip()),
-                    'purpose': 'development attestation gate; final images/source freeze remain pending'})
+                    'profile':profile,'purpose':'development artifact; final source freeze remains pending'})
     runtime.private_json(marker, records)
     print(json.dumps({'immutable_reference': records['immutable_reference'], 'config_digest': records['config_digest'],
                       'source_revision': records['source_revision'], 'source_dirty': records['source_dirty']}, indent=2))
 
 
 if __name__ == '__main__':
-    main()
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--profile',choices=('feasibility','normal','test'),default='feasibility')
+    main(parser.parse_args().profile)

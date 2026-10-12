@@ -59,6 +59,10 @@ def register(value, parent, sid, item, container, image_id, binary_hash, uid):
                  'k8s:container-name:' + container, 'k8s:container-image:' + image_id,
                  'k8s:pod-uid:' + item['metadata']['uid'],
                  'k8s:pod-label:poc-run:' + value['run'], 'k8s:pod-label:poc-role:' + item['metadata']['labels']['poc-role']]
+    owners=item['metadata'].get('ownerReferences',[])
+    if owners:
+        if len(owners)!=1 or not owners[0].get('controller') or owners[0]['kind']!='ReplicaSet':raise RuntimeError('unexpected requesting-Pod owner')
+        selectors.append('k8s:pod-owner-uid:'+owners[0]['uid'])
     entries = json.loads(admin(value, 'entry', 'show', '-socketPath', '/run/spire/admin/api.sock', '-output', 'json')).get('entries', [])
     matching = [entry for entry in entries if sid in spiffe_ids(entry.get('spiffe_id', {}))]
     if matching:
