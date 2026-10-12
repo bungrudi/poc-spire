@@ -41,6 +41,7 @@ type Ledger struct {
 	version  uint64
 	history  map[key]record
 	capacity int
+	kafka    *kafkaState
 }
 
 var requestID = regexp.MustCompile(`^[A-Za-z0-9_-]{1,128}$`)
@@ -62,6 +63,11 @@ func clone(r Result) Result {
 func (l *Ledger) Transfer(caller string, req Request) (Result, int) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	return l.transfer(caller, req)
+}
+
+// transfer runs under the shared acceptance lock for either ingress.
+func (l *Ledger) transfer(caller string, req Request) (Result, int) {
 	r := Result{RequestID: req.RequestID, Caller: caller, Amount: req.Amount, Currency: req.Currency, Snapshot: l.snapshot()}
 	if caller == "" || !requestID.MatchString(req.RequestID) {
 		r.Error = "invalid_request_id"

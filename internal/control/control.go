@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"golang.org/x/sys/unix"
@@ -52,7 +53,7 @@ func PeerUID(conn net.Conn) (uint32, error) {
 	return credentials.Uid, nil
 }
 
-func endpoint(operatorUID uint32, execute Executor) http.Handler {
+func endpoint(operatorUID uint32, execute Executor, kafka ...http.Handler) http.Handler {
 	limit := make(chan struct{}, 2)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -60,6 +61,23 @@ func endpoint(operatorUID uint32, execute Executor) http.Handler {
 		uid, ok := r.Context().Value(uidKey{}).(uint32)
 		if !ok || uid != operatorUID {
 			http.Error(w, "control peer denied", 403)
+			return
+		}
+		if len(kafka) > 0 && kafka[0] != nil && (r.URL.Path == "/attempt/kafka" || strings.HasPrefix(r.URL.Path, "/attempt/kafka/")) {
+			select {
+			case limit <- struct{}{}:
+				defer func() { <-limit }()
+			default:
+				http.Error(w, "caller busy", 429)
+				return
+			}
+			timeout := 10 * time.Second
+			if r.Method == "GET" {
+				timeout = 2 * time.Second
+			}
+			ctx, cancel := context.WithTimeout(r.Context(), timeout)
+			defer cancel()
+			kafka[0].ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 		if r.Method != "POST" || r.URL.Path != "/attempt" {
@@ -92,7 +110,7 @@ func endpoint(operatorUID uint32, execute Executor) http.Handler {
 	})
 }
 
-func Serve(ctx context.Context, path string, operatorUID uint32, execute Executor) error {
+func Serve(ctx context.Context, path string, operatorUID uint32, execute Executor, kafka ...http.Handler) error {
 	listener, err := net.Listen("unix", path)
 	if err != nil {
 		return err
@@ -101,7 +119,7 @@ func Serve(ctx context.Context, path string, operatorUID uint32, execute Executo
 	if err = os.Chmod(path, 0o660); err != nil {
 		return err
 	}
-	server := &http.Server{Handler: endpoint(operatorUID, execute), ReadHeaderTimeout: time.Second,
+	server := &http.Server{Handler: endpoint(operatorUID, execute, kafka...), ReadHeaderTimeout: time.Second,
 		ReadTimeout: 2 * time.Second, WriteTimeout: 12 * time.Second, MaxHeaderBytes: 2048,
 		ConnContext: func(ctx context.Context, conn net.Conn) context.Context {
 			uid, err := PeerUID(conn)

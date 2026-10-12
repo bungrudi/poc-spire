@@ -12,7 +12,9 @@ import (
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"poc-spire/internal/identity"
+	"poc-spire/internal/kafkacmd"
 	"poc-spire/internal/ledger"
+	"strings"
 )
 
 func permitted(method, path, id string) bool {
@@ -56,8 +58,33 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		write(403, map[string]string{"error": "credential_not_current"})
 		return
 	}
-	if !permitted(r.Method, r.URL.Path, id) {
+	metadata, kafkaEnabled := h.ledger.KafkaMetadata()
+	kafkaRoute := kafkaEnabled && r.Method == "GET" && id == identity.Observer.String() && (r.URL.Path == "/kafka/outcomes" || strings.HasPrefix(r.URL.Path, "/kafka/outcomes/") && kafkacmd.Hex64.MatchString(strings.TrimPrefix(r.URL.Path, "/kafka/outcomes/")))
+	if !permitted(r.Method, r.URL.Path, id) && !kafkaRoute {
 		write(403, map[string]string{"error": "forbidden"})
+		return
+	}
+	if kafkaRoute {
+		body, err := io.ReadAll(io.LimitReader(r.Body, 1))
+		if r.URL.RawQuery != "" || err != nil || len(body) != 0 {
+			write(400, map[string]string{"error": "unsupported_outcome_input"})
+			return
+		}
+		if !credentialCurrent(r) {
+			write(403, map[string]string{"error": "credential_not_current"})
+			return
+		}
+		if r.URL.Path == "/kafka/outcomes" {
+			write(200, metadata)
+			return
+		}
+		digest := strings.TrimPrefix(r.URL.Path, "/kafka/outcomes/")
+		receipt, ok := h.ledger.KafkaReceipt(digest)
+		if !ok {
+			write(404, metadata)
+			return
+		}
+		write(200, receipt)
 		return
 	}
 	if r.URL.Path == "/balances" {

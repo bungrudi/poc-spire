@@ -5,8 +5,8 @@ and explicit owner approval; the prior published draft PASS is historical.
 
 ## 1. Approval and assessed dependencies
 
-- [ ] 1.1 Obtain explicit owner approval of this expanded delta/profile and short plan; record message/date and artifact manifest in review.md, including receipt/deadline/reset limits. Verify no prior agent PASS or publication is substituted.
-- [ ] 1.2 Assess/pin go-jose 4.1.5, franz-go 1.19.5, Kafka 4.0.2 image digest and independent JOSE test candidate; verify Go 1.24.2 compatibility/security and baseline tests, documenting exact versions without global installation.
+- [x] 1.1 Obtain explicit owner approval of this expanded delta/profile and short plan; record message/date and artifact manifest in review.md, including receipt/deadline/reset limits. Verify no prior agent PASS or publication is substituted.
+- [x] 1.2 Assess/pin go-jose 4.1.5, franz-go 1.19.5, Kafka 4.0.2 image digest and independent JOSE test candidate; verify Go 1.24.2 compatibility/security and baseline tests, documenting exact versions without global installation.
 
 ## 2. Signed commands and shared effects
 
