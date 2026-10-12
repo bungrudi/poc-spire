@@ -28,6 +28,7 @@ type Config struct {
 	Capacity, Concurrent, Rate int
 }
 type Dependencies struct {
+	RunValid func() bool
 	Kafka    *KafkaDependencies
 	Execute  func(context.Context, string, string) control.Result
 	Balances func(context.Context) (any, error)
@@ -261,6 +262,10 @@ func (a *App) create(w http.ResponseWriter, r *http.Request, p Principal) {
 }
 
 func (a *App) dispatch(w http.ResponseWriter, r *http.Request, p Principal, id, caller, scenario, stream string) {
+	if a.deps.RunValid != nil && !a.deps.RunValid() {
+		reply(w, 503, map[string]string{"error": "run_invalid"})
+		return
+	}
 	now := a.now()
 	a.mu.Lock()
 	old, exists := a.attempts[id]
@@ -320,7 +325,10 @@ func (a *App) dispatch(w http.ResponseWriter, r *http.Request, p Principal, id, 
 		}
 		ctx, cancel := context.WithTimeout(a.ctx, 12*time.Second)
 		defer cancel()
-		result := a.deps.Execute(ctx, caller, id)
+		result := control.Result{RequestID: id, Stage: "run_guard", Outcome: "unknown_commit"}
+		if a.deps.RunValid == nil || a.deps.RunValid() {
+			result = a.deps.Execute(ctx, caller, id)
+		}
 		if result.RequestID != id {
 			result = control.Result{RequestID: id, Stage: "caller_control", Outcome: "unknown_commit"}
 		}

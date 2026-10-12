@@ -19,9 +19,11 @@ import (
 	"time"
 
 	"poc-spire/internal/control"
+	"poc-spire/internal/controladapter"
 	"poc-spire/internal/identity"
 	"poc-spire/internal/kafkacaller"
 	"poc-spire/internal/moneyreader"
+	"poc-spire/internal/runguard"
 	"poc-spire/internal/web"
 )
 
@@ -34,7 +36,23 @@ func run() error {
 	tlsCert := flag.String("tls-cert", "", "provisioned remote browser certificate file")
 	tlsKey := flag.String("tls-key", "", "provisioned remote browser private key file")
 	kafkaStream := flag.String("kafka-stream", "", "opt-in combined demo stream (no broker credentials)")
+	controlMode := flag.String("control-transport", "uds", "uds or opt-in Kubernetes mtls")
+	trustedControl := flag.String("trusted-control", "https://trusted-control:9001", "fixed private trusted adapter origin")
+	unidentifiedControl := flag.String("unidentified-control", "https://unidentified-control:9001", "fixed private unidentified adapter origin")
+	guardPath := flag.String("run-guard", "", "Kubernetes read-only run guard")
+	runID := flag.String("run", "", "expected Kubernetes run")
+	podUID := flag.String("pod-uid", os.Getenv("POC_POD_UID"), "expected UI Pod UID")
+	startupTimeout := flag.Duration("startup-timeout", 20*time.Second, "bounded identity startup wait")
 	flag.Parse()
+	if *controlMode != "uds" && *controlMode != "mtls" {
+		return errors.New("invalid control transport")
+	}
+	if *startupTimeout <= 0 || *startupTimeout > 180*time.Second {
+		return errors.New("invalid startup bound")
+	}
+	if *controlMode == "mtls" && (*mode != "demo" || *kafkaStream == "" || *guardPath == "" || *runID == "" || *podUID == "") {
+		return errors.New("Kubernetes control requires explicit guarded full profile")
+	}
 	if *mode != "local" && *mode != "demo" {
 		return errors.New("unknown UI profile")
 	}
@@ -60,7 +78,7 @@ func run() error {
 	if fixtureBeforeSource(ctx) {
 		return nil
 	}
-	startup, stop := context.WithTimeout(ctx, 20*time.Second)
+	startup, stop := context.WithTimeout(ctx, *startupTimeout)
 	source, err := identity.Source(startup, "unix:///workload/api.sock")
 	stop()
 	if err != nil {
@@ -74,8 +92,22 @@ func run() error {
 	if fixtureRun(ctx, source) {
 		return nil
 	}
+	remotes := map[string]controladapter.Remote{}
+	if *controlMode == "mtls" {
+		for role, endpoint := range map[string]string{"trusted": *trustedControl, "unidentified": *unidentifiedControl} {
+			remote, err := controladapter.NewRemote(source, role, endpoint)
+			if err != nil {
+				return err
+			}
+			remotes[role] = remote
+			defer remote.Transport.CloseIdleConnections()
+		}
+	}
 	deps := web.Dependencies{
 		Execute: func(ctx context.Context, kind, id string) control.Result {
+			if remote, ok := remotes[kind]; ok {
+				return control.CallHTTP(ctx, remote.Client, remote.Origin, id)
+			}
 			socket := "/trusted-control/api.sock"
 			if kind == "unidentified" {
 				socket = "/untrusted-control/api.sock"
@@ -103,6 +135,9 @@ func run() error {
 			value["expected_server_id"] = identity.Money.String()
 			return value, nil
 		}}
+	if *controlMode == "mtls" {
+		deps.RunValid = (runguard.Config{Path: *guardPath, Run: *runID, Role: "ui", PodUID: *podUID}).Valid
+	}
 	if *kafkaStream != "" {
 		observer := moneyreader.Observer{Target: *target, SVID: source, Bundle: source}
 		socketFor := func(scenario string) string {
@@ -112,8 +147,22 @@ func run() error {
 			return "/trusted-control/api.sock"
 		}
 		deps.Kafka = &web.KafkaDependencies{Metadata: observer.Metadata, Receipt: observer.Receipt, Lookup: func(ctx context.Context, scenario, id string) (kafkacaller.Metadata, int, error) {
+			role := "trusted"
+			if scenario == "kafka-unidentified" {
+				role = "unidentified"
+			}
+			if remote, ok := remotes[role]; ok {
+				return kafkacaller.CallHTTP(ctx, remote.Client, remote.Origin, nil, id)
+			}
 			return kafkacaller.Call(ctx, socketFor(scenario), nil, id)
 		}, Publish: func(ctx context.Context, scenario string, request kafkacaller.PublishRequest) (kafkacaller.Metadata, int, error) {
+			role := "trusted"
+			if scenario == "kafka-unidentified" {
+				role = "unidentified"
+			}
+			if remote, ok := remotes[role]; ok {
+				return kafkacaller.CallHTTP(ctx, remote.Client, remote.Origin, &request, request.RequestID)
+			}
 			return kafkacaller.Call(ctx, socketFor(scenario), &request, request.RequestID)
 		}}
 	}

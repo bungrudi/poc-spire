@@ -273,6 +273,14 @@ nodes:
         raise
 
 
+def owned_image_id(record):
+    if 'docker_image_id' in record:
+        return record['docker_image_id']
+    if 'docker_config_digest' in record:
+        return record['docker_config_digest']
+    return record['config_digest']
+
+
 def stop():
     value = descriptor()
     before = json.loads((Path(value['work']) / 'protected-baseline.json').read_text())
@@ -299,14 +307,15 @@ def stop():
         if item['Labels'].get(OWNER) != value['run'] or item['Containers']:
             raise RuntimeError('cleanup refused foreign/in-use network')
         execute([DOCKER, 'network', 'rm', networks[0]])
-    image_record = Path(value['work']) / 'bootstrap-image.json'
-    if image_record.exists():
-        built = json.loads(image_record.read_text())
-        probe = subprocess.run([DOCKER, 'image', 'inspect', built['tag'], '--format', '{{.Id}}'], text=True, capture_output=True)
-        if probe.returncode == 0:
-            if probe.stdout.strip() != built['config_digest']:
-                raise RuntimeError('cleanup refused reassigned image tag; ownership retained')
-            execute([DOCKER, 'image', 'rm', built['tag']])
+    for name in ('bootstrap-image.json', 'feasibility-image.json'):
+        image_record = Path(value['work']) / name
+        if image_record.exists():
+            built = json.loads(image_record.read_text())
+            probe = subprocess.run([DOCKER, 'image', 'inspect', built['tag'], '--format', '{{.Id}}'], text=True, capture_output=True)
+            if probe.returncode == 0:
+                if probe.stdout.strip() != owned_image_id(built):
+                    raise RuntimeError('cleanup refused reassigned image tag; ownership retained')
+                execute([DOCKER, 'image', 'rm', built['tag']])
     checks = continuity(before)
     if not all(checks.values()):
         raise RuntimeError('protected continuity failure; descriptor retained')

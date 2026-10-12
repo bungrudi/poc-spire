@@ -24,7 +24,7 @@ spec:
           seccompProfile: {type: RuntimeDefault}
           capabilities: {drop: [ALL], add: [SYS_PTRACE]}
         resources: {requests: {cpu: 25m, memory: 32Mi}, limits: {cpu: 500m, memory: 128Mi}}
-        readinessProbe: {exec: {command: [/opt/spire/bin/spire-agent, healthcheck]}, initialDelaySeconds: 3, periodSeconds: 3}
+        readinessProbe: {exec: {command: [/opt/spire/bin/spire-agent, healthcheck, -socketPath, /run/spire/sockets/api.sock]}, initialDelaySeconds: 3, periodSeconds: 3}
         volumeMounts:
         - {name: config, mountPath: /run/config, readOnly: true}
         - {name: data, mountPath: /run/spire/data}

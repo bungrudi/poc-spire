@@ -92,3 +92,52 @@ A lost or incomplete issuer therefore requires explicit fresh run. The startup
 helper checks the expected run/Pod UID and existing initialized issuer files;
 apps have no write/API authority for that guard. Real destructive issuer/state
 and all application guard behavior still require final acceptance.
+
+## Actual early executable/CSI proof and application work
+
+Fresh development run `b481f7eb59f6` has ready in-cluster SPIRE 1.14/PSAT,
+Agent root+SYS_PTRACE, CSI 0.2.13 and verified kubelet. The native SPIRE readiness
+commands now use their configured private socket paths; a healthy issuer was
+not previously recognized by an incorrect default-socket probe. Explicit full
+owned cleanup/fresh run preserved all protected continuity checks.
+
+The actual UID1000 trusted-caller executable obtained its exact trusted SVID
+under Unix SHA+K8s requesting-container image/name/namespace/SA/run/role/Pod UID
+and exact PSAT node-parent conjunction. It performed a direct verified-Money
+transfer (200, one 100-minor debit/credit). A separately registered UID10002
+process with only the control ID received Money403. Same-container ineligible
+executables received explicit Workload API PermissionDenied.
+
+Bare early Pods have no controller-owner selector; this is NOT full KB-06/07.
+The real adapter executable, wrong-deployment approved executable, final owner
+conjunction, normal policy enforcement and full layer/migration proof remain.
+The raw TCP boolean in the old fixture means local connectivity only: a closed
+upstream through Envoy can also accept it. The controlled destination probe now
+verifies exact Money using authentic public trust and requires the precise TLS
+certificate-required alert with no HTTP. Its closed `money:65534` control keeps
+local TCP success but fails destination verification. Temporary helper/public
+bundle files in the owned caller control volume are removed afterward.
+
+Docker29 .Id is an OCI index descriptor on this store, not a config. The stable
+saved descriptor graph is decoded and hash/size verified through selected
+linux/amd64 platform/config. Reconstructed OCI uses the verified filesystem,
+User/entrypoint/labels and same config, with distinct actual index/platform
+hashes. A digest alias is created only for the matching imported descriptor.
+Actual CRI ImageID and final artifact provenance remain separate freeze inputs.
+
+The new exact-ID adapter is work in progress: UID10002/own source, current UI
+credential checks before/after bounded body, exact fixed fields/caller role,
+shared two slots and original deadlines, own UDS only, bounded correlated reply,
+and no redirects/reuse. Focused tests cover wrong peers, duplicate/extra/case-
+alias input, expiry/run loss during body and original-ID unknown response.
+UI transport selection is opt-in, uses only observer SVIDs, preserves UDS defaults
+and shared parsers/quotas. Kubernetes-only guard checks stop Sync/Kafka creation/
+retry and caller publication; historical status remains readable. The public-
+bundle path flag retains its old default. Whole-directory projection, complete
+readiness, state initialization/replacement/reset and all final real acceptance
+remain pending. The new publisher parses complete current CA material and uses
+verified API HTTPS with one named owned ConfigMap update; it is not deployed yet.
+
+No task beyond approval/artifact resolution is checked by these development
+observations. Final source/configuration and exact normal/test artifacts must
+still be committed before the final acceptance run and independent review.

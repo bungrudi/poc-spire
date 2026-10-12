@@ -103,6 +103,16 @@ func New(configPath, role, workloadSocket string, source x509svid.Source) (*Send
 
 // Private calls return diagnostics only. They never report a Money disposition.
 func Call(ctx context.Context, socket string, request *PublishRequest, id string) (Metadata, int, error) {
+	transport := &http.Transport{DisableKeepAlives: true, DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+		return (&net.Dialer{Timeout: time.Second}).DialContext(ctx, "unix", socket)
+	}}
+	defer transport.CloseIdleConnections()
+	client := &http.Client{Transport: transport, Timeout: 10 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	return CallHTTP(ctx, client, "http://unix", request, id)
+}
+
+// CallHTTP preserves lookup/publication deadlines and all private metadata correlation checks.
+func CallHTTP(ctx context.Context, client *http.Client, origin string, request *PublishRequest, id string) (Metadata, int, error) {
 	timeout := 2 * time.Second
 	if request != nil {
 		timeout = 10 * time.Second
@@ -112,11 +122,6 @@ func Call(ctx context.Context, socket string, request *PublishRequest, id string
 	if request != nil && request.RequestID != id {
 		return Metadata{}, 400, errors.New("mismatched_control_id")
 	}
-	transport := &http.Transport{DisableKeepAlives: true, DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-		return (&net.Dialer{Timeout: time.Second}).DialContext(ctx, "unix", socket)
-	}}
-	defer transport.CloseIdleConnections()
-	client := &http.Client{Transport: transport, Timeout: 10 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	method, path := http.MethodGet, "/attempt/kafka/"+id
 	var body io.Reader
 	if request != nil {
@@ -127,7 +132,7 @@ func Call(ctx context.Context, socket string, request *PublishRequest, id string
 	if !kafkacmd.RequestID.MatchString(id) {
 		return Metadata{}, 400, errors.New("invalid_request_id")
 	}
-	req, err := http.NewRequestWithContext(ctx, method, "http://unix"+path, body)
+	req, err := http.NewRequestWithContext(ctx, method, origin+path, body)
 	if err != nil {
 		return Metadata{}, 0, err
 	}

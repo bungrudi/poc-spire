@@ -172,6 +172,10 @@ func (a *App) kafkaWorker(attempt *Attempt) {
 		}
 		a.active--
 	}()
+	if a.deps.RunValid != nil && !a.deps.RunValid() {
+		result.Stage = "run_guard"
+		return
+	}
 	a.kafkaStage(attempt, result)
 	deps := a.deps.Kafka
 	readMeta := func() (ledger.KafkaMetadata, error) {
@@ -184,6 +188,9 @@ func (a *App) kafkaWorker(attempt *Attempt) {
 		return m, nil
 	}
 	lookup := func() (kafkacaller.Metadata, int, error) {
+		if a.deps.RunValid != nil && !a.deps.RunValid() {
+			return kafkacaller.Metadata{}, 503, errors.New("run_invalid")
+		}
 		query, stop := context.WithTimeout(ctx, 2*time.Second)
 		defer stop()
 		return deps.Lookup(query, attempt.Scenario, attempt.ID)
@@ -273,6 +280,10 @@ func (a *App) kafkaWorker(attempt *Attempt) {
 	// original deadline, changed Money nonce, or unavailable store never creates one.
 	if !metadata.Exists || a.now().Unix() < metadata.Deadline {
 		if money.ConsumerReady {
+			if a.deps.RunValid != nil && !a.deps.RunValid() {
+				result.Stage = "run_guard"
+				return
+			}
 			publish, stop := context.WithTimeout(ctx, 10*time.Second)
 			m, status, err := deps.Publish(publish, attempt.Scenario, kafkacaller.PublishRequest{RequestID: attempt.ID, Scenario: attempt.Scenario, MoneyInstanceID: money.InstanceID})
 			stop()

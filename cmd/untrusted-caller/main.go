@@ -18,6 +18,7 @@ func main() {
 	target := flag.String("money", "https://money:8443", "fixed private money target")
 	uid := flag.Uint("operator-uid", 10002, "private control peer UID (1000 local UI or 10002 baseline)")
 	kafkaConfig := flag.String("kafka-config", "", "opt-in isolated Kafka configuration")
+	bundlePath := flag.String("public-bundle", "/workload/bundle.pem", "authentic public SPIRE trust file")
 	flag.Parse()
 	if *uid != 1000 && *uid != 10002 {
 		fmt.Fprintln(os.Stderr, "unsupported control peer layout")
@@ -35,7 +36,7 @@ func main() {
 		defer closeKafka()
 		kafkaHandlers = append(kafkaHandlers, kafkacaller.Handler(sender))
 	}
-	if err := control.Serve(ctx, *path, uint32(*uid), caller.Unidentified("/workload/api.sock", "/workload/bundle.pem", *target), kafkaHandlers...); err != nil {
+	if err := control.Serve(ctx, *path, uint32(*uid), caller.Unidentified("/workload/api.sock", *bundlePath, *target), kafkaHandlers...); err != nil {
 		fmt.Fprintln(os.Stderr, "unidentified control unavailable")
 		os.Exit(1)
 	}

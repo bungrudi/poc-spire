@@ -10,6 +10,11 @@ import kubernetes_demo as runtime
 
 
 class OwnershipTests(unittest.TestCase):
+    def test_typed_store_descriptor_cleanup_record_needs_no_config_alias(self):
+        record = {'docker_image_id': 'sha256:index', 'native_descriptor_graph': {'config_digest': 'sha256:config'}}
+        self.assertEqual(runtime.owned_image_id(record), 'sha256:index')
+        self.assertEqual(runtime.owned_image_id({'config_digest': 'historical-store-id'}), 'historical-store-id')
+
     def test_foreign_marker_cannot_be_adopted_or_deleted(self):
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
