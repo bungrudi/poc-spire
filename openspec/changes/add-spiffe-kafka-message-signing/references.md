@@ -1,5 +1,13 @@
 # Checked standards and implementation grounding
 
+The reviewed planning body below records the scope frozen at `735b80f`.
+[Actual owner approval](review.md) followed on 12 October 2026; draft/unrun
+statements in that historical body refer to the time before approval and tests.
+Current implementation rules and measured coverage are in the
+[stable profile](../../../docs/kafka-signing-profile.md) and
+[acceptance/evidence](../../../docs/kafka-signing-acceptance.md).
+
+
 Checked 12 October 2026. These are primary sources; the v1 application choices
 in [profile.md](profile.md) are proposed policy, not requirements imposed by JWS.
 

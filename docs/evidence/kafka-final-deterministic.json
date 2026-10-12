@@ -1,0 +1,118 @@
+{
+  "phase": "kafka-final-deterministic",
+  "source_revision": "81fdb50ecc4879b027c584fc3a87d1802cffccdf",
+  "started_at_utc": "2026-10-12T07:54:32Z",
+  "checks": [
+    {
+      "command": [
+        "go",
+        "test",
+        "-json",
+        "-count=1",
+        "./..."
+      ],
+      "exit_code": 0,
+      "result": "passed",
+      "passed_named_tests": 144,
+      "skipped_named_tests": [
+        "TestIndependentJOSEBidirectionalES256"
+      ]
+    },
+    {
+      "command": [
+        "go",
+        "test",
+        "-race",
+        "-json",
+        "-count=1",
+        "./..."
+      ],
+      "exit_code": 0,
+      "result": "passed",
+      "passed_named_tests": 144,
+      "skipped_named_tests": [
+        "TestIndependentJOSEBidirectionalES256"
+      ]
+    },
+    {
+      "command": [
+        "go",
+        "vet",
+        "./..."
+      ],
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "command": [
+        "go",
+        "test",
+        "-tags",
+        "kafkatest",
+        "-json",
+        "-count=1",
+        "./..."
+      ],
+      "exit_code": 0,
+      "result": "passed",
+      "passed_named_tests": 144,
+      "skipped_named_tests": [
+        "TestIndependentJOSEBidirectionalES256"
+      ]
+    },
+    {
+      "command": [
+        "go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/kafkacmd",
+        "-run",
+        "TestIndependentJOSE"
+      ],
+      "exit_code": 0,
+      "result": "passed",
+      "passed_named_tests": 1,
+      "skipped_named_tests": []
+    },
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_*.py"
+      ],
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "command": [
+        "node",
+        "scripts/kafka_browser_controls.cjs"
+      ],
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "result": "passed"
+    }
+  ],
+  "status": "passed",
+  "versions": {
+    "node": "v22.23.0",
+    "go": "go version go1.24.2 linux/amd64",
+    "independent_jose": "6.1.0"
+  },
+  "formatting_clean": true,
+  "finished_at_utc": "2026-10-12T07:55:03Z"
+}

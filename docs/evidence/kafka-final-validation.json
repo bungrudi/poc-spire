@@ -1,0 +1,137 @@
+{
+  "phase": "kafka-final-validation",
+  "status": "passed",
+  "full_approved_acceptance": true,
+  "owner_acceptance": "pending",
+  "independent_final_review": "pending",
+  "tested_source_revision": "81fdb50ecc4879b027c584fc3a87d1802cffccdf",
+  "source_manifest_sha256": "6783832c23ba1e20730c68e3d88ddea2fc9341ef00c38ecbd4d92a94bcb6b667",
+  "source_file_count": 115,
+  "source_matches_frozen_revision": true,
+  "same_source_normal_and_test_build": true,
+  "js_matrix": {
+    "JS-01": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-02": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-03": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-04": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-05": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-06": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-07": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-08": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-09": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-10": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-11": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-12": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-13": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-14": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-15": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-16": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-17": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-18": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-19": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-20": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-21": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-22": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    },
+    "JS-23": {
+      "result": "passed",
+      "proof_mapping": "docs/kafka-signing-acceptance.md"
+    }
+  },
+  "real_check_count": 43,
+  "reports": [
+    "docs/evidence/kafka-acceptance-current.json",
+    "docs/evidence/kafka-smoke-current.json",
+    "docs/evidence/kafka-final-deterministic.json"
+  ],
+  "cleanup_complete": true,
+  "retained_identity_unchanged": true,
+  "live_service_continuity": true,
+  "not_run": [
+    "rendered-browser visual/manual QA",
+    "long-lived public root rollover/removal or automatic expired-root sweep",
+    "production-TTL observations",
+    "scheduled ACME renewal",
+    "arbitrary kernel packet-loss injection",
+    "public Kafka deployment"
+  ],
+  "finished_at_utc": "2026-10-12T08:00:05Z",
+  "strict_validation": {
+    "result": "passed",
+    "specs": 8,
+    "changes": 1
+  },
+  "local_link_check": {
+    "result": "passed",
+    "checked": 330
+  },
+  "sanitized_evidence_check": {
+    "result": "passed",
+    "files": 35
+  }
+}

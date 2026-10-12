@@ -1,5 +1,13 @@
 # Proposed normative profile: SPIFFE JWS Kafka commands v1
 
+The reviewed planning body below records the scope frozen at `735b80f`.
+[Actual owner approval](review.md) followed on 12 October 2026; draft/unrun
+statements in that historical body refer to the time before approval and tests.
+Current implementation rules and measured coverage are in the
+[stable profile](../../../docs/kafka-signing-profile.md) and
+[acceptance/evidence](../../../docs/kafka-signing-acceptance.md).
+
+
 Status: **draft, owner approval pending**. RFC 7515/7518 provide JWS/ES256;
 the fields, limits and admission policy below are this application's proposed
 profile, not a new industry standard. See [references](references.md).

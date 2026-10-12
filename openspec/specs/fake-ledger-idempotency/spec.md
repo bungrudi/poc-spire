@@ -18,7 +18,7 @@ The ledger SHALL start demo-a and demo-b at 100000 integer minor units each and 
 - **THEN** it is rejected atomically with 400 for invalid fixed fields or 409 for funds/overflow
 
 ### Requirement: FL-02 Identity-bound stable replay
-Idempotency MUST be keyed by verified caller ID and a request ID matching [A-Za-z0-9_-] of length 1–128. The same key and canonical payload SHALL return the original result/status with replay=true; the same key with a different payload MUST return 409. Unknown outcomes MUST be retried using the same request ID.
+After ingress authentication/validity and Kafka immutable-context checks, idempotency MUST use the shared original producer ID and request_id ([A-Za-z0-9_-], length 1–128). Matching canonical business fields SHALL replay the original status/result; differing fields MUST return 409. Kafka-only context metadata MUST NOT change a valid synchronous replay. Signature/certificate/envelope time/offset MUST NOT create another key; unknown outcomes MUST retain the ID.
 
 #### Scenario: Concurrent duplicates or lost response
 - **WHEN** the same identity and request ID repeat the same transfer, including concurrently or after response loss
@@ -32,6 +32,10 @@ Idempotency MUST be keyed by verified caller ID and a request ID matching [A-Za-
 - **WHEN** ledger-level requests use the same request ID under different caller IDs
 - **THEN** their records remain separate; Money's route policy still decides which identities can access the ledger
 
+#### Scenario: Same operation across sync and Kafka
+- **WHEN** current valid submissions use the same authenticated producer ID, request_id and business fields across either ingress, including concurrently
+- **THEN** one mutation occurs in the Money lifetime and the other retrieves its original result as replay
+
 ### Requirement: FL-03 Bounded history without eviction
 The ledger MUST retain successful results and deterministic business rejections within a configured bounded history. At capacity it SHALL reject a new key with 503 rather than evicting a record. Existing same-key replays MUST remain available at capacity.
 
@@ -44,7 +48,7 @@ The ledger MUST retain successful results and deterministic business rejections 
 - **THEN** it receives 503 history_capacity_exhausted and neither balances nor old records change
 
 ### Requirement: FL-04 Process-lifetime accounting and reset
-Money SHALL keep balances and retry history in memory only. A Money restart MUST reset both to their initial state together. A UI-only restart MUST NOT reset Money's ledger. The demo MUST NOT claim durable exactly-once processing across Money/full-demo restart.
+Money SHALL keep one shared sync/Kafka ledger, retry history and Kafka context bindings in memory only. A Money restart MUST reset them to initial state together. A UI-only restart MUST NOT reset Money. Kafka offsets are delivery progress, not ledger recovery; the demo MUST NOT claim durable exactly-once processing across Money/full-demo restart.
 
 #### Scenario: UI restarts while Money continues
 - **WHEN** the browser renews its session and repeats a logical request after a UI-only restart
@@ -54,6 +58,12 @@ Money SHALL keep balances and retry history in memory only. A Money restart MUST
 - **WHEN** Money restarts and a previous request ID is submitted again
 - **THEN** balances/version start fresh and that ID is a new operation in the new process lifetime
 
+#### Scenario: Kafka redelivery after Money restart
+- **WHEN** a still-valid unacknowledged or resent signed operation arrives after Money restarted with the same stream configured
+- **THEN** its previous ledger/history no longer exists and it can be a new operation in the new Money lifetime, regardless of retained broker offsets
+
 ## Traceability and limitations
 
 See [FL-01–FL-04 sources, checks and evidence](../../../docs/spec-baseline.md#fake-ledger-and-idempotency). This is fake USD, without storage, banking integration or production accounting. New user-selected keys are independent operations. Recorded post-commit connection/TLS-record loss is bounded application transport testing, not arbitrary kernel packet-loss/retransmission testing.
+
+The approved opt-in Kafka extension is mapped in [JS coverage](../../../docs/kafka-signing-acceptance.md). Its full wire/receipt/retry rules are in the [stable profile](../../../docs/kafka-signing-profile.md).

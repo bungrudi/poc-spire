@@ -58,3 +58,13 @@ these dependency rules:
 - Missing or invalid browser HTTPS configuration: fail startup. Human authentication is explicitly assumed only in this approved profile.
 - Trusted/unidentified behavior differs only because of socket mounts, DNS, or network policy: fix the test rather than claim process authentication works.
 - A transfer based on a claimed header, broad trust-domain membership, unverified workload or exposed caller network trigger blocks acceptance. The owner-approved public browser session deliberately assumes its human.
+
+## Approved Kafka iteration — 12 October 2026
+
+The isolated OpenSpec iteration implements signing/shared guards and receipts,
+private retained recovery, fixed combined UI, native-SPIRE/Kafka Compose and
+serial real/deterministic acceptance. See [coverage](kafka-signing-acceptance.md)
+and [tasks/review](../openspec/changes/add-spiffe-kafka-message-signing/tasks.md).
+Final source is frozen before the evidence run; documentation/evidence are
+reconciled afterward and sent for independent review. No public rollout is
+included, and the original durable-state/production limitations remain.

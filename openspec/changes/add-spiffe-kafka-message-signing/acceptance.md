@@ -1,5 +1,13 @@
 # Proposed acceptance matrix
 
+The reviewed planning body below records the scope frozen at `735b80f`.
+[Actual owner approval](review.md) followed on 12 October 2026; draft/unrun
+statements in that historical body refer to the time before approval and tests.
+Current implementation rules and measured coverage are in the
+[stable profile](../../../docs/kafka-signing-profile.md) and
+[acceptance/evidence](../../../docs/kafka-signing-acceptance.md).
+
+
 Every JS case below, including added UI/receipt/Compose cases, is **unrun**. Structural draft validation is not a signature,
 Kafka, SPIRE or crash test. Existing [baseline evidence](../../../docs/spec-baseline.md)
 is reference coverage only. Future evidence must record versions, tested revision,

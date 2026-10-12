@@ -23,11 +23,28 @@
 - Setup: [workflow and reproducible tooling](spec-workflow.md). No bulk RFC
   conversion or synthetic feature apply/archive was performed.
 
-The [six capability contracts](../openspec/specs/) describe the implemented
-profile at useful behavioral granularity. [RFC 0001](rfcs/0001-process-identity.md)
+The original six baseline capability contracts describe the synchronous
+profile at useful behavioral granularity. [Current specs](../openspec/specs/)
+also include the approved isolated Kafka extension described below. [RFC 0001](rfcs/0001-process-identity.md)
 retains architectural rationale and T01–T23; [WORKSPACE.md](../WORKSPACE.md)
 retains R1–R8. These indexes are references, not separate competing contracts.
 Each stable requirement ID below appears in its capability's heading.
+
+## Approved isolated Kafka implementation — 12 October 2026
+
+The current development contracts now include eight capabilities: the original
+six plus SPIFFE JWS signing and embedded Kafka consumption. The source-derived
+11 October baseline remains historical below; its old counts and recorded
+coverage are not new Kafka evidence. Actual owner approval precedes this
+implementation and is recorded in the [change review](../openspec/changes/add-spiffe-kafka-message-signing/review.md).
+
+The [stable Kafka profile](kafka-signing-profile.md),
+[JS-01–JS-23 mapping](kafka-signing-acceptance.md) and
+[final evidence](evidence/kafka-final-validation.json) identify new source,
+real/deterministic checks and their practical limits. Shared ledger/HTTP,
+private caller controls, observer-only outcome routes and fixed combined UI
+are reflected in their existing capability specs. This is isolated development
+behavior; the owner-approved public deployment remains the synchronous profile.
 
 ## Coverage legend
 

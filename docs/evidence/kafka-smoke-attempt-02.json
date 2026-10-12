@@ -1,0 +1,55 @@
+{
+  "phase": "isolated-kafka-smoke",
+  "status": "passed_bounded_smoke",
+  "checks": {
+    "complete_readiness": true,
+    "trusted": {
+      "status": "done",
+      "outcome": "transfer_succeeded"
+    },
+    "unidentified": {
+      "status": "done",
+      "outcome": "tls_rejected"
+    },
+    "kafka-trusted": {
+      "status": "done",
+      "outcome": "transfer_succeeded",
+      "query_http_statuses": [
+        200
+      ],
+      "receipt_reasons": [
+        "transfer_applied"
+      ]
+    },
+    "kafka-unidentified": {
+      "status": "done",
+      "outcome": "money_rejected",
+      "query_http_statuses": [
+        200
+      ],
+      "receipt_reasons": [
+        "malformed_jws"
+      ]
+    },
+    "kafka-tampered": {
+      "status": "done",
+      "outcome": "money_rejected",
+      "query_http_statuses": [
+        200
+      ],
+      "receipt_reasons": [
+        "invalid_signature"
+      ]
+    }
+  },
+  "public_deployment_changed": false,
+  "full_acceptance": false,
+  "cleanup": {
+    "owned_cleanup_complete": true,
+    "compose_exit_code": 0,
+    "image_exit_code": 0,
+    "ephemeral_state_removed": true,
+    "errors": []
+  },
+  "finished_at_utc": "2026-10-12T06:52:20Z"
+}

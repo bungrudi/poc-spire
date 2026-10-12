@@ -106,3 +106,15 @@ These do not block writing the design. They do block final configuration and dep
 3. OIDC issuer, client registration, callback URI, and explicit authorized operator subjects/groups. If none exists, choose a dev identity provider in Compose with non-default credentials, not an unauthenticated fallback.
 4. Pinned SPIRE/Go/SDK versions and verified executable attestor behavior. Exact selectors are intentionally not invented in these documents.
 5. Formal owner review of remaining recommendations; implementation is now explicitly authorized. Protected PoC SPIRE CA/agent state retention was approved and implemented. M5's different-UID UI/agent privilege layout and browser/identity-provider configuration remain owner decisions.
+
+## Approved isolated Kafka extension — 12 October 2026
+
+Rudi approved the frozen OpenSpec delta/short plan before implementation; see
+[actual approval](openspec/changes/add-spiffe-kafka-message-signing/review.md).
+The isolated combined profile retains the public demo's assumed human model,
+adds three fixed Async (Kafka) scenarios, validates original SPIFFE JWS inside
+Money and shares the current fixed integer ledger with Sync HTTP/mTLS.
+[Stable contracts](openspec/specs/), [profile](docs/kafka-signing-profile.md) and
+[coverage](docs/kafka-signing-acceptance.md) define the bounded receipt/retry and
+memory-only reset behavior. No public deployment or persistent host change is
+part of this approval.

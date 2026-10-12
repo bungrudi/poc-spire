@@ -1,0 +1,41 @@
+{
+  "phase": "serial-kafka-acceptance",
+  "status": "failed",
+  "build_profile": "kafkatest",
+  "source_revision": "18b7435458a03c98f2a82ede57e4d9f59b3e82e7",
+  "started_at_utc": "2026-10-12T07:06:18Z",
+  "checks": [],
+  "live_before": {
+    "service_state": "active",
+    "service_pid": "3309950",
+    "https_health_status": 200
+  },
+  "image_config_digest": "sha256:4853a80f37758f441dbb3d5bbd58727f70b1701bef9709efd2e07d2e5be54d75",
+  "binary_sha256": {
+    "money": "f8e4c81825247839a09227f89d1d5d7607f35d1ee082c83a3027727dfe3599cf",
+    "trusted-caller": "530c80862cfba8acf3eb6cd0c6e81a686e74e1016126f636d57836179556cabc",
+    "untrusted-caller": "8ade59d489aed0a576b4890341ddaf3f8f5864efb6ad7c74edfc985d9872c290",
+    "ui": "bf3f57d824f7c4b06e827a4ed8886c0d7c4f78ea6cea5616937fde8fdaa0de29",
+    "security-client": "21b0152b3d82e013459929e836a4bb64d27753b7230b8c89bb62ee015715ad24",
+    "control-client": "fd04a3628626d70bdd17f89ca4ab8e6d8e54c7f766208a5ee0e2da30b72eb4d7",
+    "kafka-init": "0c663892779f259e5896c59ce1df11d9ef8bb064ed4be3fc9bffa747ebadd3e3"
+  },
+  "failed_stage": "complete-readiness",
+  "error_type": "RuntimeError",
+  "reason": "Negative record classification failed: stripped",
+  "cleanup": {
+    "owned_cleanup_complete": true,
+    "compose_exit_code": 0,
+    "image_exit_code": 0,
+    "ephemeral_state_removed": true,
+    "errors": []
+  },
+  "live_after": {
+    "service_state": "active",
+    "service_pid": "3309950",
+    "https_health_status": 200
+  },
+  "retained_identity_unchanged": true,
+  "live_service_continuity": true,
+  "finished_at_utc": "2026-10-12T07:07:21Z"
+}

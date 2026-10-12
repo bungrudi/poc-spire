@@ -7,7 +7,7 @@ Define direct workload authentication and exact route permissions at the Go Mone
 ## Requirements
 
 ### Requirement: MT-01 Mandatory direct workload mTLS
-Money SHALL terminate caller TLS inside the Go service and require a trusted X.509-SVID on every route. It MUST use SPIFFE verification with TLS 1.3 or later and MUST NOT accept plaintext, optional client certificates, forwarded identity or application verification bypasses.
+For every existing HTTP route, Money SHALL terminate caller TLS inside the Go service and require a trusted X.509-SVID. It MUST use SPIFFE verification with TLS 1.3 or later and MUST NOT accept plaintext, optional client certificates, forwarded identity or application verification bypasses. Opt-in Kafka ingestion separately validates signed original-producer identity inside Money.
 
 #### Scenario: Trusted caller connects directly
 - **WHEN** a caller presents a valid current SVID from the accepted trust domain
@@ -22,7 +22,7 @@ Money SHALL terminate caller TLS inside the Go service and require a trusted X.5
 - **THEN** TLS rejects it and balances remain unchanged
 
 ### Requirement: MT-02 Exact identity method and route policy
-Money MUST authorize the verified exact SPIFFE ID, method and route before parsing transfer input or consulting history. Only spiffe://poc.internal/caller/trusted SHALL POST /transfer; only spiffe://poc.internal/ui SHALL GET /balances. All other combinations MUST receive HTTP 403 after authentication.
+For HTTP, Money MUST authorize exact verified ID/method/path before history. Only spiffe://poc.internal/caller/trusted SHALL POST /transfer. Only spiffe://poc.internal/ui SHALL GET /balances and enabled GET /kafka/outcomes or GET /kafka/outcomes/{64-hex-digest}. Other authenticated HTTP combinations MUST receive 403. Kafka separately verifies its signed producer; observer reads MUST NOT trigger transfer.
 
 #### Scenario: Allowed transfer and observer read
 - **WHEN** the trusted ID posts a valid transfer or the UI ID requests balances
@@ -36,8 +36,12 @@ Money MUST authorize the verified exact SPIFFE ID, method and route before parsi
 - **WHEN** a trusted caller requests balances or any verified ID uses an unsupported method/path
 - **THEN** Money denies the operation before business logic
 
+#### Scenario: Observer reads Kafka receipts
+- **WHEN** the UI's exact observer SVID requests enabled Kafka outcome metadata or a digest receipt
+- **THEN** Money serves bounded read-only evidence; trusted/wrong-ID clients are denied and transfer/balance route permissions remain unchanged
+
 ### Requirement: MT-03 Clients verify Money's exact identity
-Every workload client, including the UI and unidentified no-certificate probe, MUST verify the exact server SPIFFE ID spiffe://poc.internal/money using trusted SPIFFE verification. Trust-domain membership, DNS or a supplied identity string alone MUST NOT authorize the server.
+Every workload client of Money's HTTP API, including the UI and unidentified no-certificate probe, MUST verify the exact server SPIFFE ID spiffe://poc.internal/money using trusted SPIFFE verification. Trust-domain membership, DNS or a supplied identity string alone MUST NOT authorize the server. Kafka broker TLS admission is separate from Money's original-signer validation.
 
 #### Scenario: Expected Money identity
 - **WHEN** the Money server presents a trusted valid SVID with the exact expected ID
@@ -48,7 +52,7 @@ Every workload client, including the UI and unidentified no-certificate probe, M
 - **THEN** the client rejects server verification without a successful transfer
 
 ### Requirement: MT-04 Bounded input and current credential guards
-After authorization, Money MUST accept one bounded JSON transfer object with no unknown fields or trailing values and a maximum 4096-byte body. It MUST check the peer credential's validity before authorization and again after body parsing. Requests crossing expiry MUST NOT mutate the ledger.
+For POST /transfer, after authorization, Money MUST accept one bounded JSON transfer object with no unknown fields or trailing values and a maximum 4096-byte body. It MUST check the peer credential's validity before authorization and again after body parsing. Requests crossing expiry MUST NOT mutate the ledger. Kafka uses its separate signed-message limits and guarded acceptance; these HTTP checks remain unchanged.
 
 #### Scenario: Current credential with valid bounded body
 - **WHEN** an authorized request supplies the fixed transfer before credential expiry
@@ -65,3 +69,5 @@ After authorization, Money MUST accept one bounded JSON transfer object with no 
 ## Traceability and limitations
 
 See [MT-01–MT-04 sources, checks and evidence](../../../docs/spec-baseline.md#money-transport-and-authorization). Handler unit tests use constructed TLS state and do not prove a handshake; the recorded real-SPIRE suite supplies that proof. A post-handshake expiry 403 differs from the no-certificate TLS failure. Browser/Nginx web PKI is separate from workload mTLS.
+
+The approved opt-in Kafka extension is mapped in [JS coverage](../../../docs/kafka-signing-acceptance.md). Its full wire/receipt/retry rules are in the [stable profile](../../../docs/kafka-signing-profile.md).

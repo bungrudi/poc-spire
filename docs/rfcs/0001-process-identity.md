@@ -29,6 +29,33 @@ with approved behavioral changes; retain explicitly historical decisions as
 history. Follow [the workflow](../spec-workflow.md) for owner review of each spec
 delta and short plan before future behavior-changing implementation.
 
+## Approved Kafka extension — 12 October 2026
+
+The isolated combined profile adds three **Async (Kafka)** scenarios alongside
+the existing **Sync (HTTP/mTLS)** scenarios. Money embeds the consumer and
+validates the original producer's compact ES256/x5c JWS against its own updating
+SPIFFE trust source, then authorizes the exact trusted ID. Stock broker TLS/DN
+ACLs supply separate admission; no relay, sidecar identity or transfer forwarding
+is involved. Existing direct HTTP mTLS guards and route permissions remain.
+
+Both ingresses share the same identity/request-ID/business-field ledger history.
+Kafka additionally binds the immutable original context/deadline and guards
+current time/assignment under that ledger lock. One consumer/member/partition
+manually acknowledges terminal decisions in order. Caller-only bounded per-run
+state and observer-only exact-Money mTLS digest receipts support safe retry/UI
+recovery; they do not make Money durable. A Money crash resets all business state
+and a still-valid retained record can apply again. The UI labels the human as
+assumed and never treats a broker ack or claimed identity as Money success.
+
+The [stable profile](../kafka-signing-profile.md),
+[current capability specs](../../openspec/specs/) and
+[JS-01–JS-23 coverage](../kafka-signing-acceptance.md) define the extension.
+[Actual owner approval](../../openspec/changes/add-spiffe-kafka-message-signing/review.md)
+identifies the frozen reviewed scope. Native SPIRE, conventional broker/browser
+PKI, containers and state are fully isolated; this extension is not deployed to
+the public demo and adds no persistent host credentials or security changes.
+Original T01–T23 and historical OIDC material below retain their original scope.
+
 ## 1. Summary
 
 Build a remote HTTPS learning demo with an assumed operator with two buttons: **Transfer as trusted process** and **Transfer as unidentified process**. Each button tells the selected Go process to initiate its own direct connection to a money service. The money service requires SPIFFE mTLS and authorizes the exact caller SPIFFE ID in Go. It does not trust browser-supplied identities, network location, or a sidecar's forwarded identity headers.

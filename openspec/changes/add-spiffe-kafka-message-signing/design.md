@@ -1,5 +1,13 @@
 # Design
 
+The reviewed planning body below records the scope frozen at `735b80f`.
+[Actual owner approval](review.md) followed on 12 October 2026; draft/unrun
+statements in that historical body refer to the time before approval and tests.
+Current implementation rules and measured coverage are in the
+[stable profile](../../../docs/kafka-signing-profile.md) and
+[acceptance/evidence](../../../docs/kafka-signing-acceptance.md).
+
+
 ## Context
 
 See [proposal](proposal.md). Existing browser jobs already run in the background,

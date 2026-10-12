@@ -41,7 +41,7 @@ Demo sessions MUST be opaque in-memory sessions with Secure/HttpOnly/SameSite=La
 - **THEN** the UI rejects before dispatching a caller command, with 403 for the boundary or 401 for missing/expired session
 
 ### Requirement: UI-04 Fixed asynchronous attempts and stable retry
-UI SHALL accept only trusted/unidentified caller choices and a browser_key matching [A-Za-z0-9_-] of length 32–128, derive a deterministic ID from issuer/subject/key and return 202 for accepted attempts. Pending/done repeats SHALL reuse the attempt; retryable failures SHALL redispatch the same ID. Result ownership MUST follow the principal, shared by all public demo sessions.
+Existing POST /api/attempts SHALL accept only trusted/unidentified caller and browser_key [A-Za-z0-9_-]{32,128}, derive IDs from issuer/subject/key and return 202. Pending/done repeats SHALL reuse attempts; retryable failures SHALL retain IDs. These scenarios SHALL be labeled Sync (HTTP/mTLS). Separate Kafka creation SHALL retain the ID derivation/ownership boundary and original deadline; public ownership remains shared.
 
 #### Scenario: Repeat after UI restart and renewed session
 - **WHEN** a visitor repeats the same key after a UI-only restart while Money continues
@@ -57,7 +57,7 @@ UI SHALL accept only trusted/unidentified caller choices and a browser_key match
 - **AND** public demo sessions are all the same assumed principal and have no such per-human separation
 
 ### Requirement: UI-05 Read-only workload identity and bounded resources
-UI MUST read balances using only its own observer SVID and verify Money's exact ID, while triggering callers over private sockets. Defaults SHALL bound attempt history to 64, concurrent dispatch to 2, dispatch rate to 8 per minute per principal and sessions to 128. New work at limits MUST be rejected without unsafe history eviction; browser attempt bodies MUST be at most 1024 bytes.
+UI MUST read balances and enabled Kafka metadata/receipts only with its own observer SVID, verifying exact Money identity, and trigger callers only over private sockets. All scenarios SHALL share 64 attempts, two active workers, eight dispatches/minute per principal and 128 sessions; bounded bodies and no unsafe history eviction remain. UI MUST receive no Kafka/admin credentials or producer private keys.
 
 #### Scenario: Verified balance display and existing attempt lookup
 - **WHEN** UI reads Money or an existing pending/done attempt is repeated at history capacity
@@ -81,8 +81,55 @@ The optional local profile SHALL use a private UI Unix socket behind a literal l
 - **THEN** login/configuration is rejected without caller dispatch
 - **AND** demo mode does not enable the local admin listener
 
+### Requirement: UI-07 Fixed Sync and Async scenario groups
+The combined UI SHALL keep existing trusted/unidentified scenarios labeled Sync (HTTP/mTLS) and add only kafka-trusted, kafka-unidentified and kafka-tampered labeled Async (Kafka). POST /api/kafka-attempts MUST accept only scenario/browser_key/current stream_id under existing CSRF/origin/session/operator/body limits. Existing browser/private Sync schemas MUST remain unchanged; arbitrary payloads and destinations are forbidden.
+
+#### Scenario: Existing Sync attempts remain intact
+- **WHEN** an operator chooses either existing Sync scenario
+- **THEN** the same HTTP/mTLS caller path and background attempt/polling UX execute with their original outcomes
+
+#### Scenario: Fixed Kafka scenario is selected
+- **WHEN** the configured combined profile accepts one allowed Async scenario and current stream ID
+- **THEN** it creates a bounded background attempt using only that caller's fixed private Kafka control
+
+#### Scenario: Unsupported scenario or stale stream
+- **WHEN** input supplies another scenario, extra payload/destination fields, stale stream or a rejected browser boundary
+- **THEN** UI rejects before dispatch; a new stream cannot silently retry an old attempt with a refreshed deadline
+
+### Requirement: UI-08 Authenticated correlated Money outcomes
+Kafka terminal UI evidence MUST come from exact-Money mTLS observer reads matched to retained complete-record digests. Broker ack, balances, logs and claimed producer/request IDs MUST NOT imply success. Invalid-JWS rejection SHALL remain unattributed to a producer. Any applied/replayed authenticated expected result can settle success; rejection requires every potentially submitted variant settled with no effect.
+
+#### Scenario: Authenticated successful receipt
+- **WHEN** Money returns a matching-instance/digest terminal applied/replayed result for the expected trusted producer, request ID and fixed transfer
+- **THEN** the UI shows verified success separately from queued broker/control diagnostics and the outcome-query HTTP status
+
+#### Scenario: Invalid JWS rejection is correlated by bytes
+- **WHEN** Money returns a terminal signature/missing-JWS rejection matching the exact submitted record digest
+- **THEN** UI shows Money-verified rejection without trusting its claimed producer or request ID; caller diagnostics remain separately labeled
+
+#### Scenario: Earlier variant is unresolved
+- **WHEN** a newer variant is rejected but an earlier potentially published variant has missing/expired evidence
+- **THEN** the logical attempt stays unknown rather than declaring rejection; every retained digest is queried
+
+### Requirement: UI-09 Bounded recovery without deadline refresh
+Kafka polling SHALL use a 30-second worker budget, bounded one-second/variant polling and existing quotas. UI restart MUST recover initialized caller state and retain browser key/stream, original deadline and all potentially submitted digests. Timeout/404/evidence expiry/reset MUST remain unknown. After deadline or state loss, UI MUST NOT recreate/re-sign a retry or auto-republish under a changed Money instance.
+
+#### Scenario: UI restart after ambiguous submission
+- **WHEN** UI restarts or a control response is lost while callers/Money continue
+- **THEN** same-key lookup recovers the original descriptor/digests and authenticates Money receipts without a new command deadline
+
+#### Scenario: Evidence timeout or receipt expiry
+- **WHEN** the poll budget expires or no retained Money evidence is available
+- **THEN** UI preserves the unresolved ID as queued/unknown and permits only safe bounded same-ID recovery, never inferring non-commit
+
+#### Scenario: State loss or Money reset
+- **WHEN** initialized sender state is absent/corrupt or the authenticated process-instance nonce changes
+- **THEN** UI reports unknown/reset and stops automatic republishing; an explicit new logical attempt is not presented as retry
+
 ## Traceability and limitations
 
 See [UI-01–UI-06 sources, checks and evidence](../../../docs/spec-baseline.md#https-demo-ui). Browser keys are deduplication inputs, not authorization credentials. Full restart resets trust/ledger/history; UI-only restart is different. Actual scheduled ACME renewal is still unobserved: issuance, manual renewal-hook continuity and atomic PEM tests are recorded. Local unit fixtures exercise viewer/owner policies and do not prove public human authentication.
 
 The [UI handler](../../../internal/web/app.go) returns HTTP 200 with `status: alive` for GET `/healthz`. This reports application liveness; it does not check Money/SPIRE dependency readiness.
+
+The approved opt-in Kafka extension is mapped in [JS coverage](../../../docs/kafka-signing-acceptance.md). Its full wire/receipt/retry rules are in the [stable profile](../../../docs/kafka-signing-profile.md).

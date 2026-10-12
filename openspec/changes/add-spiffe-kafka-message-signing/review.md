@@ -22,7 +22,7 @@ rules; initialized bounded caller state retaining original deadline/instance;
 receipt capacity/retention/rejection memory; single-node Compose isolation/native
 SPIRE; existing shared-ledger, short credential validity and Money-reset limits.
 
-**Current independent review: PASS**, 12 October 2026, by parent chat
+**Approved planning-artifact independent review: PASS**, 12 October 2026, by parent chat
 `01a12b31-9ead-7e92-a024-23860cfe5d8f`. It reviewed the completed profile,
 capability deltas, JS-16–JS-23 cases, references, design, tasks and records;
 independently confirmed strict 7/7 validation, scoped whitespace, 29 preserved
@@ -80,3 +80,16 @@ records excluded):
   "tasks.md": "516dbae20126a5270c2cec2a70e136477052ff42d358db33dbf26747b3d8864e"
 }
 ```
+
+## Implementation review handoff — 12 October 2026
+
+Implementation tasks are complete. Final tested source is
+`81fdb50ecc4879b027c584fc3a87d1802cffccdf`; subsequent evidence/documentation
+contains no application/runner/dependency/fixture source change. See
+[verification](verification.md), [coverage](../../../docs/kafka-signing-acceptance.md)
+and [aggregate evidence](../../../docs/evidence/kafka-final-validation.json).
+Independent **implementation** review by the parent remains **pending**;
+the earlier planning-artifact PASS does not count. Owner acceptance of the
+finished implementation is also pending. The original approved normative
+revision/manifest above remains the authorization record, and no Kafka public
+deployment is authorized or performed.

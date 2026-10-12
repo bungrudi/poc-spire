@@ -18,6 +18,20 @@ The Go + Docker Compose demo has a web UI with two buttons. On 11 October 2026 t
 | [Baseline and traceability](docs/spec-baseline.md) | Source/test/evidence mappings, current versus historical coverage and limits |
 | [OpenSpec workflow](docs/spec-workflow.md) | Pinned local tooling, document authority and owner approval before behavior changes |
 
+## Isolated Kafka signing extension
+
+The combined learning profile adds three **Async (Kafka)** cases alongside the
+existing **Sync (HTTP/mTLS)** trusted/unidentified scenarios. Money verifies the
+original SPIFFE-backed JWS producer and updates the same fake ledger; the UI
+reads authenticated digest receipts and preserves retry IDs/deadlines.
+Money remains memory-only across restart. This extension is on the isolated
+implementation branch and is not installed at the live public URL.
+
+Start with the [runner runbook](infra/kafka-signing/README.md),
+[normative profile](docs/kafka-signing-profile.md),
+[acceptance coverage](docs/kafka-signing-acceptance.md) and
+[actual approval](openspec/changes/add-spiffe-kafka-message-signing/review.md).
+
 ## Spec-driven development
 
 The current features are documented directly as a baseline in `openspec/specs/`.

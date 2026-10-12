@@ -81,3 +81,22 @@ state and propagate incomplete cleanup to failed reports/nonzero exit. Full
 JS-01–JS-23 real/deterministic evidence mapping, crash/restart/offset scenarios,
 document/spec reconciliation and independent final revision review remain open.
 The checklist retains only evidence-complete tasks; smoke is not full acceptance.
+
+## Final isolated implementation — 12 October 2026
+
+All 18 tasks are complete. Source is frozen at
+`81fdb50ecc4879b027c584fc3a87d1802cffccdf`; [final evidence](../../../docs/evidence/kafka-final-validation.json)
+records 43 real checks, normal-build five-case smoke/test-flag absence, fresh Go
+format/test/race/vet/test-build, 21 Python checks, deterministic shipped-JS
+controls and actual Node 22.23.0 / jose 6.1.0 interoperability. Ordinary Go test
+runs skip JOSE explicitly; the separately enabled exchange passes. Source-file
+manifests match both real build profiles and the frozen tree.
+
+[Stable JS coverage](../../../docs/kafka-signing-acceptance.md) maps every
+JS-01–JS-23 proof with its real or controlled fixture mode. Earlier checkpoints
+above remain historical and do not describe the final completion state. Main
+specs/RFC/current docs are reconciled; [verification](verification.md) records
+implementation mapping and limits. Actual SIGKILL/offset and private-control
+rotation/outage checks pass. Cleanup, live service/PID/HTTPS continuity and
+retained private-state equality pass. Independent final review and owner
+acceptance remain pending. No public runtime deployment or archive occurs.

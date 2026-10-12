@@ -1,0 +1,367 @@
+{
+  "phase": "serial-kafka-acceptance",
+  "status": "passed_real_integration_increment",
+  "build_profile": "kafkatest",
+  "source_revision": "18b7435458a03c98f2a82ede57e4d9f59b3e82e7",
+  "started_at_utc": "2026-10-12T07:32:04Z",
+  "checks": [
+    {
+      "check": "fixed-trusted",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "outcome": "transfer_succeeded"
+      }
+    },
+    {
+      "check": "fixed-unidentified",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "outcome": "tls_rejected"
+      }
+    },
+    {
+      "check": "fixed-kafka-trusted",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "outcome": "transfer_succeeded"
+      }
+    },
+    {
+      "check": "fixed-kafka-unidentified",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "outcome": "money_rejected"
+      }
+    },
+    {
+      "check": "fixed-kafka-tampered",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "outcome": "money_rejected"
+      }
+    },
+    {
+      "check": "attestation-wrong-executable",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "identity_eligibility": "no_matching_identity",
+        "money_reachable": true,
+        "socket_reachable": true
+      }
+    },
+    {
+      "check": "attestation-wrong-deployment",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "identity_eligibility": "no_matching_identity",
+        "money_reachable": true,
+        "socket_reachable": true
+      }
+    },
+    {
+      "check": "broker-principal-denied",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "broker_topic_denied": true,
+        "idempotent_write_disabled": true
+      }
+    },
+    {
+      "check": "broker-topic-denied",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "broker_topic_denied": true,
+        "idempotent_write_disabled": true
+      }
+    },
+    {
+      "check": "broker-group-denied",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "broker_group_denied": true
+      }
+    },
+    {
+      "check": "broker-wrong-host",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "tls_hostname_rejected": true
+      }
+    },
+    {
+      "check": "observer-resource-wrong-reader",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "query_http_status": 403,
+        "server_verified": true
+      }
+    },
+    {
+      "check": "negative-tampered",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "invalid_signature",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-fake-root",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "untrusted_svid",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-wrong-type",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "context_mismatch",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-wrong-environment",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "context_mismatch",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-wrong-audience",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "context_mismatch",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-wrong-stream",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "context_mismatch",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-wrong-topic",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "context_mismatch",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-wrong-key",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "context_mismatch",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-headers",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "unsupported_kafka_headers",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-stripped",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "malformed_signature",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-none",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "unsupported_header",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-hs256",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "unsupported_header",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-es384",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "unsupported_header",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-der",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "malformed_signature",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-unknown-header",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "malformed_header",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "negative-expired-message",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "receipt_reason": "message_expired",
+        "no_ledger_effect": true
+      }
+    },
+    {
+      "check": "wrong-valid-original-signer",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "authenticated_id": "spiffe://poc.internal/ui",
+        "reason": "unauthorized_signer",
+        "broker_admitted": true
+      }
+    },
+    {
+      "check": "sync-kafka-shared-id-and-conflict",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "one_effect": true,
+        "changed_payload_business_code": 409
+      }
+    },
+    {
+      "check": "ui-caller-restart-recovery",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "original_deadline_and_variants_preserved": true,
+        "no_second_effect": true
+      }
+    },
+    {
+      "check": "money-restart-offsets-and-ui-nonce",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "new_instance": true,
+        "ledger_reset": true,
+        "no_automatic_republication": true
+      }
+    },
+    {
+      "check": "reused-stream-new-money-lifetime",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "same_original_id_can_apply_anew": true,
+        "durable_replay_guarantee": false
+      }
+    },
+    {
+      "check": "sigkill-after-ledger-before-ack",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "exact_original_digest": "e6a8e3e63d5251f2f870d4057c997024d583698f52839cef6251f5c5796d5b7b",
+        "old_and_new_money_instances_differ": true,
+        "new_lifetime_version": 1,
+        "committed_offset_before": 24,
+        "committed_offset_after": 25,
+        "same_record_redelivered_without_republish": true
+      }
+    },
+    {
+      "check": "sigkill-before-decision",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "exact_original_digest": "c463e0711ad90b35db3f5038a3c16d23ac9290048149be754923355b3890ea7b",
+        "no_precrash_effect": true,
+        "new_lifetime_version": 1,
+        "committed_offset_before": 25,
+        "committed_offset_after": 26
+      }
+    },
+    {
+      "check": "actual-container-boundaries",
+      "mode": "real-spire-kafka",
+      "result": "passed",
+      "details": {
+        "ui_no_kafka_network_or_credential": true,
+        "app_no_admin_mount": true
+      }
+    }
+  ],
+  "live_before": {
+    "service_state": "active",
+    "service_pid": "3309950",
+    "https_health_status": 200
+  },
+  "image_config_digest": "sha256:b0fae15ff7d01f2d79d7e3196dd4da9eff88650d0edcd2af8675776acc36d595",
+  "binary_sha256": {
+    "money": "6523b9de5ac8bf107cd44be52ba1709a00ea512bf49dd48d94a5891db7a2d9de",
+    "trusted-caller": "b3a9da1a8ae3e9c2d621316fc53cea19f0fee8676489f6de4a3d3b46c217a33e",
+    "untrusted-caller": "1aa0179c73989e7c88d323c95251689fa994862bb2cbbcf38bbbb4670da8a02d",
+    "ui": "3d657461f2df58ab16a2f98b06d219fca54f4792095f2f0703018d21e701ff07",
+    "security-client": "21b0152b3d82e013459929e836a4bb64d27753b7230b8c89bb62ee015715ad24",
+    "control-client": "fd04a3628626d70bdd17f89ca4ab8e6d8e54c7f766208a5ee0e2da30b72eb4d7",
+    "kafka-init": "2bd5df82f198f46cfd24edb52fff344e893cf33f96e41e58d1964dbf27fb0897"
+  },
+  "cleanup": {
+    "owned_cleanup_complete": true,
+    "compose_exit_code": 0,
+    "image_exit_code": 0,
+    "ephemeral_state_removed": true,
+    "errors": []
+  },
+  "live_after": {
+    "service_state": "active",
+    "service_pid": "3309950",
+    "https_health_status": 200
+  },
+  "retained_identity_unchanged": true,
+  "live_service_continuity": true,
+  "finished_at_utc": "2026-10-12T07:33:57Z"
+}

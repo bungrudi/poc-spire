@@ -49,6 +49,22 @@ verified-human or original full Gate F/G acceptance is claimed.
 - [ ] Obtain owner acceptance of baseline correctness; source inspection and structural validation do not imply acceptance.
 - [x] Parent records the directly authorized standing commit/push permission after the single-writer handoff, separately from future behavior-change review.
 
+## Approved isolated Kafka iteration — 12 October 2026
+
+[Actual owner approval](openspec/changes/add-spiffe-kafka-message-signing/review.md)
+identifies the reviewed `735b80f` scope; [tasks](openspec/changes/add-spiffe-kafka-message-signing/tasks.md)
+track its 18 implementation checks. [Coverage](docs/kafka-signing-acceptance.md)
+distinguishes real integration, injected clock/bundle/capacity faults and unrun
+observations. The synchronous public deployment remains unchanged.
+
+- [x] Record actual owner approval before implementation and assess/pin dependencies.
+- [x] Implement bounded JWS/SVID validation, shared-ledger guards/context/receipts and ordered captured-generation consumption.
+- [x] Add initialized private caller recovery and the fixed combined UI with authenticated all-variant outcomes.
+- [x] Implement isolated Compose/native SPIRE, separate broker/browser PKI, exact ACLs, readiness and owned cleanup.
+- [x] Complete the frozen-source JS-01–JS-23 acceptance run and sanitized final evidence.
+- [ ] Complete independent review of the final source/evidence revision.
+- [ ] Obtain owner acceptance of the implemented learning profile based on evidence.
+
 ## Original milestone checklist — historical
 
 The P0–P6 entries below preserve the 5 October implementation sequence and its

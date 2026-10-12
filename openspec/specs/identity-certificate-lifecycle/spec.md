@@ -7,15 +7,19 @@ Define workload credential rotation, trust-bundle refresh and explicit lifecycle
 ## Requirements
 
 ### Requirement: IC-01 Rotating sources and fresh workload connections
-Eligible Money, trusted caller and UI workloads SHALL obtain SVIDs and trust through updating X.509-SVID sources and close sources at shutdown. Internal operations MUST use fresh TLS handshakes without connection reuse, session resumption or HTTP/2. Current credentials SHALL rotate without an unauthenticated fallback; stale credentials MUST NOT authorize a transfer.
+Eligible Money, trusted caller and UI workloads SHALL obtain SVIDs and trust through updating X.509-SVID sources and close sources at shutdown. Existing internal HTTP operations MUST use fresh TLS handshakes without reuse, resumption or HTTP/2. Opt-in Kafka uses separate broker TLS connections and validates the original command SVID per delivery. Credential rotation MUST NOT enable unauthenticated fallback; expired credentials MUST NOT transfer.
 
 #### Scenario: Source rotates during operation
 - **WHEN** SPIRE renews an eligible workload's SVID
 - **THEN** new operations use the current credential and verify Money without resetting the ledger
 
 #### Scenario: Frozen expired credential or reuse attempt
-- **WHEN** a client attempts an operation with a frozen expired credential or tries to reuse/resume an internal connection
-- **THEN** an expired credential cannot transfer and supported requests use fresh nonresumed TLS handshakes
+- **WHEN** an existing internal HTTP client attempts an operation with a frozen expired credential or tries to reuse/resume its connection
+- **THEN** an expired credential cannot transfer and supported HTTP requests use fresh nonresumed TLS handshakes
+
+#### Scenario: Kafka connection survives signer rotation
+- **WHEN** a broker connection remains open while the producer SVID rotates
+- **THEN** each command still requires its own current-validity SVID/JWS verification; broker admission cannot authorize an expired original signer
 
 ### Requirement: IC-02 Validated atomic public trust bundle
 The unidentified caller SHALL obtain no SVID and load the published public trust bundle separately per probe to verify Money without a client certificate. Bundle publication MUST validate fetched PEM and replace complete files atomically with public-read permissions set before replacement. Failed refresh MUST preserve the last validated bundle.
@@ -59,3 +63,5 @@ Normal restart of the approved retained identity substrate SHALL preserve its CA
 ## Traceability and limitations
 
 See [IC-01–IC-04 sources, checks and evidence](../../../docs/spec-baseline.md#identity-and-certificate-lifecycle). Short-TTL rollover and administrative old-root taint/removal have recorded evidence. Automatic expired-root sweeping, production-duration 24-hour rollover and immediate revocation remain unproven; the SPIRE pruning grace/timer cannot be inferred from short-TTL tests. Browser certificate replacement is specified in HTTPS UI.
+
+The approved opt-in Kafka extension is mapped in [JS coverage](../../../docs/kafka-signing-acceptance.md). Its full wire/receipt/retry rules are in the [stable profile](../../../docs/kafka-signing-profile.md).
