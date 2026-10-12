@@ -20,6 +20,8 @@ import (
 
 	"poc-spire/internal/control"
 	"poc-spire/internal/identity"
+	"poc-spire/internal/kafkacaller"
+	"poc-spire/internal/moneyreader"
 	"poc-spire/internal/web"
 )
 
@@ -31,6 +33,7 @@ func run() error {
 	target := flag.String("money", "https://money:8443", "fixed Money address")
 	tlsCert := flag.String("tls-cert", "", "provisioned remote browser certificate file")
 	tlsKey := flag.String("tls-key", "", "provisioned remote browser private key file")
+	kafkaStream := flag.String("kafka-stream", "", "opt-in combined demo stream (no broker credentials)")
 	flag.Parse()
 	if *mode != "local" && *mode != "demo" {
 		return errors.New("unknown UI profile")
@@ -44,7 +47,7 @@ func run() error {
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
-	config := web.Config{Origin: *origin, Local: local}
+	config := web.Config{Origin: *origin, Local: local, KafkaStream: *kafkaStream}
 	var browserTLS *tls.Config
 	if !local {
 		if _, err := browserCertificate(*tlsCert, *tlsKey, *origin); err != nil {
@@ -64,6 +67,9 @@ func run() error {
 	svid, err := source.GetX509SVID()
 	if err != nil || svid.ID != identity.Observer {
 		return errors.New("unexpected UI workload identity")
+	}
+	if fixtureRun(ctx, source) {
+		return nil
 	}
 	deps := web.Dependencies{
 		Execute: func(ctx context.Context, kind, id string) control.Result {
@@ -94,6 +100,20 @@ func run() error {
 			value["expected_server_id"] = identity.Money.String()
 			return value, nil
 		}}
+	if *kafkaStream != "" {
+		observer := moneyreader.Observer{Target: *target, SVID: source, Bundle: source}
+		socketFor := func(scenario string) string {
+			if scenario == "kafka-unidentified" {
+				return "/untrusted-control/api.sock"
+			}
+			return "/trusted-control/api.sock"
+		}
+		deps.Kafka = &web.KafkaDependencies{Metadata: observer.Metadata, Receipt: observer.Receipt, Lookup: func(ctx context.Context, scenario, id string) (kafkacaller.Metadata, int, error) {
+			return kafkacaller.Call(ctx, socketFor(scenario), nil, id)
+		}, Publish: func(ctx context.Context, scenario string, request kafkacaller.PublishRequest) (kafkacaller.Metadata, int, error) {
+			return kafkacaller.Call(ctx, socketFor(scenario), &request, request.RequestID)
+		}}
+	}
 	app, err := web.New(ctx, config, deps)
 	if err != nil {
 		return err

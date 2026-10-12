@@ -4,9 +4,11 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"math/big"
 	"net/url"
 	"strings"
@@ -19,6 +21,7 @@ import (
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"poc-spire/internal/identity"
 	"poc-spire/internal/ledger"
+	"poc-spire/internal/testpki"
 )
 
 var testNow = time.Unix(1791780000, 0)
@@ -338,4 +341,113 @@ func TestRFC7515AppendixA3ES256(t *testing.T) {
 	if _, f := Parse(Record{Topic: "topic", Key: []byte("rfc"), Value: []byte(compact)}); f == nil {
 		t.Fatal("codec vector confused with valid application profile")
 	}
+}
+
+func TestInboundCurveDERAndEveryWireBound(t *testing.T) {
+	svid, bundle := fixture(t, identity.Trusted, elliptic.P256())
+	p := testPolicy(t)
+	good := seal(t, svid, p, "bounds")
+	parts := strings.Split(string(good.Value), ".")
+	headerRaw, _ := base64.RawURLEncoding.DecodeString(parts[0])
+	payloadRaw, _ := base64.RawURLEncoding.DecodeString(parts[1])
+	var original map[string]any
+	json.Unmarshal(headerRaw, &original)
+	repack := func(header, payload []byte, signature string) Record {
+		return Record{Topic: good.Topic, Key: good.Key, Value: []byte(base64.RawURLEncoding.EncodeToString(header) + "." + base64.RawURLEncoding.EncodeToString(payload) + "." + signature)}
+	}
+	cases := map[string]Record{
+		"header-decoded-16385":           repack(append(headerRaw, []byte(strings.Repeat(" ", MaxHeader+1-len(headerRaw)))...), payloadRaw, parts[2]),
+		"payload-decoded-4097":           repack(headerRaw, append(payloadRaw, []byte(strings.Repeat(" ", MaxPayload+1-len(payloadRaw)))...), parts[2]),
+		"header-duplicate-escaped-name":  repack([]byte(strings.Replace(string(headerRaw), `"alg":"ES256"`, `"alg":"ES256","\u0061lg":"ES256"`, 1)), payloadRaw, parts[2]),
+		"payload-duplicate-escaped-name": repack(headerRaw, []byte(strings.Replace(string(payloadRaw), `"request_id":"bounds"`, `"request_id":"bounds","\u0072equest_id":"other"`, 1)), parts[2]),
+		"payload-unknown":                repack(headerRaw, []byte(strings.Replace(string(payloadRaw), `"issued_at":`, `"unexpected":1,"issued_at":`, 1)), parts[2]),
+		"payload-trailing":               repack(headerRaw, append(payloadRaw, []byte(" {}")...), parts[2]),
+		"payload-exponent":               repack(headerRaw, []byte(strings.Replace(string(payloadRaw), `"amount_minor":100`, `"amount_minor":1e2`, 1)), parts[2]),
+	}
+	cases["key-129"] = Record{Topic: good.Topic, Key: []byte(strings.Repeat("a", 129)), Value: good.Value}
+	cases["value-32769"] = Record{Topic: good.Topic, Key: good.Key, Value: []byte(strings.Repeat("a", MaxValue+1))}
+	for _, c := range []struct {
+		name  string
+		chain any
+	}{{"zero-certificates", []string{}}, {"five-certificates", []string{"a", "b", "c", "d", "e"}}, {"der-2049", []string{base64.StdEncoding.EncodeToString(make([]byte, 2049))}}, {"aggregate-over-8192", []string{base64.StdEncoding.EncodeToString(make([]byte, 2049)), base64.StdEncoding.EncodeToString(make([]byte, 2049)), base64.StdEncoding.EncodeToString(make([]byte, 2049)), base64.StdEncoding.EncodeToString(make([]byte, 2049))}}, {"x5c-url-encoding", []string{base64.RawURLEncoding.EncodeToString(svid.Certificates[0].Raw)}}} {
+		h := map[string]any{"alg": "ES256", "typ": Type, "x5c": c.chain}
+		raw, _ := json.Marshal(h)
+		cases[c.name] = repack(raw, payloadRaw, parts[2])
+	}
+	hash := sha256.Sum256([]byte(parts[0] + "." + parts[1]))
+	der, err := ecdsa.SignASN1(rand.Reader, svid.PrivateKey.(*ecdsa.PrivateKey), hash[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	cases["asn1-der-signature"] = repack(headerRaw, payloadRaw, base64.RawURLEncoding.EncodeToString(der))
+	p384, _ := fixture(t, identity.Trusted, elliptic.P384())
+	curveHeader, _ := json.Marshal(map[string]any{"alg": "ES256", "typ": Type, "x5c": []string{base64.StdEncoding.EncodeToString(p384.Certificates[0].Raw)}})
+	cases["inbound-p384-labelled-es256"] = repack(curveHeader, payloadRaw, parts[2])
+	for name, record := range cases {
+		t.Run(name, func(t *testing.T) {
+			if verified, failure := Verify(record, p, bundle, testNow); verified != nil || failure == nil || failure.Transient || failure.VerifiedID != "" {
+				t.Fatal("invalid inbound representation accepted or attributed", failure)
+			}
+		})
+	}
+	// Aggregate 8192 is implied by four individual 2048-byte DER bounds; the
+	// overflow vector necessarily violates at least one constituent bound too.
+	if 4*2048 != 8192 {
+		t.Fatal("chain bounds incoherent")
+	}
+}
+
+func TestBundleSnapshotsRotationAndMissingTrustClassification(t *testing.T) {
+	now := time.Now()
+	firstCA, err := testpki.New(now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondCA, err := testpki.New(now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, _ := firstCA.SVID(identity.Trusted, now)
+	second, _ := secondCA.SVID(identity.Trusted, now)
+	p := testPolicy(t)
+	firstRecord, f := Seal(first, p.Context(now), ledger.Fixed("snapshot"), now)
+	if f != nil {
+		t.Fatal(f)
+	}
+	source := &switchingBundle{bundle: firstCA.Bundle()}
+	captured, f := Verify(firstRecord, p, source, now)
+	if f != nil {
+		t.Fatal(f)
+	}
+	source.bundle = secondCA.Bundle()
+	if f := captured.Guard(now.Add(time.Second), true); f != nil {
+		t.Fatal("later source update changed captured bounded path", f)
+	}
+	if _, f := Verify(firstRecord, p, source, now); f == nil || f.Transient || f.Reason != "untrusted_svid" {
+		t.Fatal("removed root accepted on later snapshot", f)
+	}
+	secondRecord, f := Seal(second, p.Context(now), ledger.Fixed("snapshot"), now)
+	if f != nil {
+		t.Fatal(f)
+	}
+	if _, f := Verify(secondRecord, p, source, now); f != nil {
+		t.Fatal("rotated matched leaf/key failed", f)
+	}
+	source.bundle = nil
+	if _, f := Verify(secondRecord, p, source, now); f == nil || !f.Transient || f.Reason != "trust_unavailable" {
+		t.Fatal("missing bundle treated as rejected trust", f)
+	}
+	source.bundle = secondCA.Bundle()
+	if _, f := Verify(secondRecord, p, source, now); f != nil {
+		t.Fatal("cached accepted local trust failed", f)
+	}
+}
+
+type switchingBundle struct{ bundle *x509bundle.Bundle }
+
+func (s *switchingBundle) GetX509BundleForTrustDomain(spiffeid.TrustDomain) (*x509bundle.Bundle, error) {
+	if s.bundle == nil {
+		return nil, errors.New("missing")
+	}
+	return s.bundle, nil
 }

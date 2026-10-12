@@ -11,7 +11,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
+	"poc-spire/internal/identity"
 	"poc-spire/internal/kafkacmd"
+	"poc-spire/internal/testpki"
 )
 
 func testStore(t *testing.T) (*Store, string, kafkacmd.Policy) {
@@ -158,5 +161,65 @@ func TestCallerMetadataNeverExportsRecordBytes(t *testing.T) {
 		if _, ok := fields[name]; ok {
 			t.Fatal("private state exported")
 		}
+	}
+}
+
+type rotatingSource struct {
+	values []*x509svid.SVID
+	calls  int
+}
+
+func (s *rotatingSource) GetX509SVID() (*x509svid.SVID, error) {
+	value := s.values[min(s.calls, len(s.values)-1)]
+	s.calls++
+	return value, nil
+}
+func TestMatchedSVIDRotationPreservesDescriptorAndFourVariantLimit(t *testing.T) {
+	now := time.Now().Truncate(time.Second)
+	policy, _ := kafkacmd.NewPolicy("0123456789abcdef0123456789abcdef")
+	dir := filepath.Join(t.TempDir(), "trusted")
+	if err := Initialize(dir, policy, "trusted"); err != nil {
+		t.Fatal(err)
+	}
+	store, err := Open(dir, policy, "trusted")
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstCA, _ := testpki.New(now)
+	first, _ := firstCA.SVID(identity.Trusted, now)
+	second, _ := firstCA.SVID(identity.Trusted, now)
+	source := &rotatingSource{values: []*x509svid.SVID{first, second}}
+	records := []kafkacmd.Record{}
+	sender := &Sender{Store: store, Source: source, Clock: func() time.Time { return now }, Publish: func(_ context.Context, record kafkacmd.Record) error { records = append(records, record); return nil }}
+	var original Metadata
+	for i := 0; i < 4; i++ {
+		m, code, err := sender.Send(context.Background(), "rotation", "kafka-trusted", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+		if err != nil || code != 200 || len(m.Variants) != i+1 {
+			t.Fatal("bounded re-sign failed", i, err)
+		}
+		if i == 0 {
+			original = m
+		} else if m.CreatedAt != original.CreatedAt || m.Deadline != original.Deadline || m.MoneyInstanceID != original.MoneyInstanceID {
+			t.Fatal("rotation renewed immutable descriptor")
+		}
+		v, f := kafkacmd.Verify(records[len(records)-1], policy, firstCA.Bundle(), now)
+		if f != nil || v.Message.Context.CreatedAt != original.CreatedAt {
+			t.Fatal("matched rotation failed verification", f)
+		}
+		if source.calls != i+1 {
+			t.Fatal("signing captured more than one SVID object")
+		}
+		now = now.Add(26 * time.Second)
+	}
+	if _, code, err := sender.Send(context.Background(), "rotation", "kafka-trusted", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"); err == nil || code != 503 || len(records) != 4 {
+		t.Fatal("fifth variant published")
+	}
+	reopened, err := Open(dir, policy, "trusted")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, code, err := reopened.Lookup("rotation")
+	if err != nil || code != 200 || len(m.Variants) != 4 || m.Deadline != original.Deadline {
+		t.Fatal("restart lost variants")
 	}
 }

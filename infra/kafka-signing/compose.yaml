@@ -1,0 +1,81 @@
+name: ${POC_PROJECT:?}
+x-app: &app
+  image: ${POC_IMAGE:?}
+  user: "1000:1000"
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  networks: [money, kafka]
+services:
+  kafka:
+    image: apache/kafka:4.0.2@sha256:836cafdad9f4825880d7cf1d5a21202915ae2527bd0ef1c3600c526ed7814d1f
+    user: "1000:1000"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [kafka]
+    entrypoint: [/bin/bash, /config/broker-start.sh]
+    environment: {KAFKA_HEAP_OPTS: "-Xms256m -Xmx512m"}
+    volumes:
+      - ${POC_WORK:?}/broker-config:/config:ro
+      - ${POC_WORK:?}/broker-pki:/pki:ro
+      - ${POC_WORK:?}/kafka-data:/var/lib/kafka/data
+    tmpfs: ["/tmp:uid=1000,gid=1000,mode=700,size=64m", "/opt/kafka/logs:uid=1000,gid=1000,mode=700,size=32m"]
+  admin:
+    image: apache/kafka:4.0.2@sha256:836cafdad9f4825880d7cf1d5a21202915ae2527bd0ef1c3600c526ed7814d1f
+    profiles: [bootstrap]
+    user: "1000:1000"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [kafka]
+    entrypoint: [/bin/bash, /config/acl-bootstrap.sh]
+    environment: {POC_STREAM: "${POC_STREAM:?}", KAFKA_HEAP_OPTS: "-Xms64m -Xmx256m"}
+    volumes:
+      - ${POC_WORK:?}/broker-config:/config:ro
+      - ${POC_WORK:?}/admin-pki:/pki:ro
+    tmpfs: ["/tmp:uid=1000,gid=1000,mode=700,size=32m"]
+  money:
+    <<: *app
+    entrypoint: [/money]
+    command: [-listen, ":8443", -kafka-config, /kafka/client.json]
+    labels: {poc-spire.role: kafka-money}
+    volumes:
+      - ${POC_SOCKET_DIR:?}:/workload:ro
+      - ${POC_WORK:?}/money-pki:/kafka:ro
+  trusted-caller:
+    <<: *app
+    entrypoint: [/trusted-caller]
+    command: [-operator-uid, "1000", -kafka-config, /kafka/client.json]
+    labels: {poc-spire.role: kafka-trusted}
+    volumes:
+      - ${POC_SOCKET_DIR:?}:/workload:ro
+      - ${POC_WORK:?}/trusted-control:/control
+      - ${POC_WORK:?}/trusted-state:/kafka-state
+      - ${POC_WORK:?}/trusted-pki:/kafka:ro
+  untrusted-caller:
+    <<: *app
+    entrypoint: [/untrusted-caller]
+    command: [-operator-uid, "1000", -kafka-config, /kafka/client.json]
+    labels: {poc-spire.role: kafka-unidentified}
+    volumes:
+      - ${POC_SOCKET_DIR:?}:/workload:ro
+      - ${POC_WORK:?}/untrusted-control:/control
+      - ${POC_WORK:?}/untrusted-state:/kafka-state
+      - ${POC_WORK:?}/untrusted-pki:/kafka:ro
+  ui:
+    <<: *app
+    entrypoint: [/ui]
+    command: [-mode, demo, -origin, "${POC_ORIGIN:?}", -listen, ":8443", -tls-cert, /browser/browser.pem, -tls-key, /browser/browser.pem, -kafka-stream, "${POC_STREAM:?}"]
+    labels: {poc-spire.role: kafka-ui}
+    networks: [money, browser]
+    ports: ["127.0.0.1:${POC_PORT:?}:8443"]
+    volumes:
+      - ${POC_SOCKET_DIR:?}:/workload:ro
+      - ${POC_WORK:?}/trusted-control:/trusted-control:ro
+      - ${POC_WORK:?}/untrusted-control:/untrusted-control:ro
+      - ${POC_WORK:?}/browser:/browser:ro
+networks:
+  money: {internal: true}
+  kafka: {internal: true}
+  browser: {}

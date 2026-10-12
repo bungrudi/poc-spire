@@ -52,6 +52,25 @@ func Verify(record Record, policy Policy, source x509bundle.Source, now time.Tim
 	if err != nil || len(paths) == 0 {
 		return nil, failure("untrusted_svid")
 	}
+	// Go x509 verification treats NotAfter equality inclusively; this profile
+	// requires the strict current interval before asserting a signer identity.
+	var path []*x509.Certificate
+	for _, candidate := range paths {
+		current := true
+		for _, cert := range candidate {
+			if now.Before(cert.NotBefore) || !now.Before(cert.NotAfter) {
+				current = false
+				break
+			}
+		}
+		if current {
+			path = candidate
+			break
+		}
+	}
+	if path == nil {
+		return nil, failure("credential_not_current")
+	}
 	jws, err := jose.ParseSignedCompact(parsed.Compact, []jose.SignatureAlgorithm{jose.ES256})
 	if err != nil {
 		return nil, failure("malformed_jws")
@@ -59,7 +78,7 @@ func Verify(record Record, policy Policy, source x509bundle.Source, now time.Tim
 	if _, err := jws.Verify(parsed.Certificates[0].PublicKey); err != nil {
 		return nil, failure("invalid_signature")
 	}
-	verified := &Verified{parsed.Message, id.String(), paths[0], started}
+	verified := &Verified{parsed.Message, id.String(), path, started}
 	reject := func(reason string) (*Verified, *Failure) {
 		return nil, &Failure{Reason: reason, VerifiedID: id.String()}
 	}

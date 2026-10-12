@@ -41,6 +41,9 @@ func main() {
 		fmt.Fprintln(os.Stderr, "wrong trusted identity")
 		os.Exit(1)
 	}
+	if fixtureRun(ctx, source) {
+		return
+	}
 	var kafkaHandlers []http.Handler
 	if *kafkaConfig != "" {
 		sender, closeKafka, err := kafkacaller.New(*kafkaConfig, "trusted", "/workload/api.sock", source)

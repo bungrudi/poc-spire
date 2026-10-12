@@ -18,25 +18,31 @@ import (
 	"time"
 
 	"poc-spire/internal/control"
+	"poc-spire/internal/kafkacmd"
 )
 
 type Config struct {
+	KafkaStream                string
 	Origin                     string
 	Local                      bool
 	Capacity, Concurrent, Rate int
 }
 type Dependencies struct {
+	Kafka    *KafkaDependencies
 	Execute  func(context.Context, string, string) control.Result
 	Balances func(context.Context) (any, error)
 }
 type Attempt struct {
-	ID      string          `json:"attempt_id"`
-	Caller  string          `json:"caller"`
-	Status  string          `json:"status"`
-	Created time.Time       `json:"created_at"`
-	Updated time.Time       `json:"updated_at"`
-	Result  *control.Result `json:"caller_evidence,omitempty"`
-	owner   string
+	Scenario string          `json:"scenario,omitempty"`
+	StreamID string          `json:"stream_id,omitempty"`
+	Kafka    *KafkaResult    `json:"kafka_evidence,omitempty"`
+	ID       string          `json:"attempt_id"`
+	Caller   string          `json:"caller"`
+	Status   string          `json:"status"`
+	Created  time.Time       `json:"created_at"`
+	Updated  time.Time       `json:"updated_at"`
+	Result   *control.Result `json:"caller_evidence,omitempty"`
+	owner    string
 }
 type App struct {
 	config   Config
@@ -75,6 +81,13 @@ func New(ctx context.Context, config Config, deps Dependencies) (*App, error) {
 	}
 	if deps.Execute == nil || deps.Balances == nil {
 		return nil, errors.New("authenticated workload dependencies required")
+	}
+	if config.KafkaStream != "" {
+		if !kafkacmd.Hex32.MatchString(config.KafkaStream) || deps.Kafka == nil || deps.Kafka.Metadata == nil || deps.Kafka.Receipt == nil || deps.Kafka.Lookup == nil || deps.Kafka.Publish == nil {
+			return nil, errors.New("authenticated Kafka outcome dependencies required")
+		}
+	} else if deps.Kafka != nil {
+		return nil, errors.New("Kafka stream required")
 	}
 	if config.Capacity == 0 {
 		config.Capacity = 64
@@ -168,7 +181,7 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	switch {
 	case r.Method == "GET" && r.URL.Path == "/":
-		page.Execute(w, map[string]any{"Local": a.config.Local, "Logged": true, "Role": s.Principal.Role})
+		a.render(w, r, s)
 		return
 	case r.Method == "GET" && r.URL.Path == "/api/session":
 		reply(w, 200, map[string]string{"role": s.Principal.Role, "csrf_token": s.CSRF, "auth_profile": map[bool]string{true: "local OS-owner login", false: "assumed demo operator; human not authenticated"}[a.config.Local]})
@@ -191,6 +204,13 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		reply(w, 200, value)
+		return
+	case r.Method == "POST" && r.URL.Path == "/api/kafka-attempts":
+		if s.Principal.Role != "operator" {
+			http.Error(w, "operator required", 403)
+			return
+		}
+		a.createKafka(w, r, s.Principal)
 		return
 	case r.Method == "POST" && r.URL.Path == "/api/attempts":
 		if s.Principal.Role != "operator" {
@@ -237,12 +257,15 @@ func (a *App) create(w http.ResponseWriter, r *http.Request, p Principal) {
 		http.Error(w, "invalid fixed attempt", 400)
 		return
 	}
-	id := RequestID(p, in.Key)
+	a.dispatch(w, r, p, RequestID(p, in.Key), in.Caller, "", "")
+}
+
+func (a *App) dispatch(w http.ResponseWriter, r *http.Request, p Principal, id, caller, scenario, stream string) {
 	now := a.now()
 	a.mu.Lock()
 	old, exists := a.attempts[id]
 	if exists {
-		if old.Caller != in.Caller || old.owner != p.key() {
+		if old.Caller != caller || old.Scenario != scenario || old.StreamID != stream || old.owner != p.key() {
 			a.mu.Unlock()
 			http.Error(w, "key conflicts with caller", 409)
 			return
@@ -278,21 +301,26 @@ func (a *App) create(w http.ResponseWriter, r *http.Request, p Principal) {
 	}
 	a.rates[p.key()] = append(valid, now)
 	if !exists {
-		old = &Attempt{ID: id, Caller: in.Caller, Created: now, owner: p.key()}
+		old = &Attempt{ID: id, Caller: caller, Scenario: scenario, StreamID: stream, Created: now, owner: p.key()}
 		a.attempts[id] = old
 	}
 	old.Status = "pending"
 	old.Updated = now
 	old.Result = nil
+	old.Kafka = nil
 	a.active++
 	copy := *old
 	a.workers.Add(1)
 	a.mu.Unlock()
 	go func() {
 		defer a.workers.Done()
+		if scenario != "" {
+			a.kafkaWorker(old)
+			return
+		}
 		ctx, cancel := context.WithTimeout(a.ctx, 12*time.Second)
 		defer cancel()
-		result := a.deps.Execute(ctx, in.Caller, id)
+		result := a.deps.Execute(ctx, caller, id)
 		if result.RequestID != id {
 			result = control.Result{RequestID: id, Stage: "caller_control", Outcome: "unknown_commit"}
 		}

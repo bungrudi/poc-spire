@@ -55,3 +55,29 @@ approval/dependency tasks 1.1/1.2 are complete (2/18).
 
 The current public service has not been rebuilt, restarted or deployed. The
 separate local-demo checkout and its dirty files have not been copied or modified.
+
+## Combined-stack checkpoint — 12 October 2026
+
+The opt-in combined UI and isolated Compose/native-SPIRE runner are implemented.
+Normal builds contain no acceptance CLI. The separate `kafkatest` build adds
+host-controlled fixed cases, without a browser or UDS arbitrary-payload route.
+The original checkout and public image were not modified.
+
+The real isolated normal-build smoke passed all five Sync/Kafka scenarios with
+complete readiness and owned cleanup; see `docs/evidence/kafka-smoke-current.json`.
+The earlier retained failed run is explicitly failed and not acceptance evidence.
+Node 22.23.0 / jose 6.1.0 bidirectional signatures, RFC vector, wrong curve and
+altered bytes pass. New Go coverage includes inbound P-384/DER and wire/chain
+bounds, independent bundle snapshots, expiry under an actually held ledger lock,
+real producer/consumer constructor option validation, and four-variant retention.
+Observer exact-Money mTLS, no-cert/wrong-server denial, UI recovery/all-variant
+settlement and concurrency/rate defenses pass. Deterministic shipped-JavaScript
+controls and 14 cleanup/isolation/rendered-PKI checks pass; this is not rendered
+browser/visual acceptance.
+
+Review-driven corrections separate browser and broker CAs, issue browser
+serverAuth only, assert actual Compose tmpfs options, retain safe cleanup retry
+state and propagate incomplete cleanup to failed reports/nonzero exit. Full
+JS-01–JS-23 real/deterministic evidence mapping, crash/restart/offset scenarios,
+document/spec reconciliation and independent final revision review remain open.
+The checklist retains only evidence-complete tasks; smoke is not full acceptance.

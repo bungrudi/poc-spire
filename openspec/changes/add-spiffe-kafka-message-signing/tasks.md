@@ -1,7 +1,10 @@
 # Tasks
 
-All tasks are unchecked. This expanded revision needs fresh independent review
-and explicit owner approval; the prior published draft PASS is historical.
+Implementation of the reviewed `735b80f` scope was explicitly approved by Rudi
+on 12 October 2026; the actual quote, message and frozen revision are recorded
+in [review.md](review.md). Checked tasks have completed evidence; integration
+dependent tasks remain open until their specified validation is complete.
+The earlier draft-only status and documentary PASS are historical.
 
 ## 1. Approval and assessed dependencies
 
@@ -46,5 +49,6 @@ and explicit owner approval; the prior published draft PASS is historical.
 
 - Present implementation evidence for independent and owner review. Sync/archive
   only after actual implementation and required approval.
-- This revision creates no running stack or live/public deployment. Enabling or
-  publishing the combined demo needs applicable later deployment authorization.
+- Isolated combined-stack implementation/testing is authorized. No live/public
+  deployment is included; publishing the combined runtime requires separate
+  deployment authorization.

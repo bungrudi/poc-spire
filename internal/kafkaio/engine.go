@@ -37,9 +37,10 @@ type Engine struct {
 	Audit        io.Writer
 }
 type Decision struct {
-	Receipt  *ledger.Receipt
-	Reason   string
-	Terminal bool
+	Receipt    *ledger.Receipt
+	Reason     string
+	Terminal   bool
+	VerifiedID string
 }
 
 func (e *Engine) now() time.Time {
@@ -64,36 +65,53 @@ func (e *Engine) Decide(delivery *Delivery) Decision {
 		if fail != nil {
 			return Decision{Reason: fail.Reason}
 		}
-		return Decision{&receipt, receipt.Reason, true}
+		return Decision{Receipt: &receipt, Reason: receipt.Reason, Terminal: true}
 	}
 	verified, fail := kafkacmd.Verify(r, e.Policy, e.Source, e.now())
+	reason, currentID := "", ""
 	var receipt ledger.Receipt
 	var guardFailure *ledger.GuardFailure
 	if fail != nil {
 		if fail.Transient {
 			return Decision{Reason: fail.Reason}
 		}
+		reason, currentID = fail.Reason, fail.VerifiedID
 		receipt, guardFailure = e.Book.RejectKafka(digest, fail.Reason, fail.VerifiedID, delivery.AssignmentEpoch)
 	} else {
 		contextBytes, _ := json.Marshal(verified.Message.Context)
-		receipt, guardFailure = e.Book.KafkaTransfer(digest, verified.Producer, string(contextBytes), verified.Message.Transfer, delivery.AssignmentEpoch, verified.LedgerGuard(e.now, func() bool { return true }))
+		currentID = verified.Producer
+		acceptanceGuard := verified.LedgerGuard(e.now, func() bool { return true })
+		guard := func() *ledger.GuardFailure {
+			failure := acceptanceGuard()
+			if failure != nil {
+				reason = failure.Reason
+			}
+			return failure
+		}
+		receipt, guardFailure = e.Book.KafkaTransfer(digest, verified.Producer, string(contextBytes), verified.Message.Transfer, delivery.AssignmentEpoch, guard)
 	}
 	if guardFailure != nil {
-		return Decision{Reason: guardFailure.Reason}
+		return Decision{Reason: guardFailure.Reason, VerifiedID: currentID}
 	}
-	return Decision{&receipt, receipt.Reason, true}
+	if reason == "" {
+		reason = "validated_shared_ledger_decision"
+	}
+	return Decision{Receipt: &receipt, Reason: reason, Terminal: true, VerifiedID: currentID}
 }
 func (e *Engine) audit(d Decision) {
 	if e.Audit == nil {
 		return
 	}
 	value := map[string]any{"event": "money_command", "ingress": "kafka", "stage": d.Reason, "terminal": d.Terminal}
+	if d.VerifiedID != "" {
+		value["authenticated_original_producer_id"] = d.VerifiedID
+	}
 	if d.Receipt != nil {
 		value["record_digest"] = d.Receipt.Digest
-		value["verified_producer_id"] = d.Receipt.VerifiedProducer
-		value["request_id"] = d.Receipt.RequestID
-		value["disposition"] = d.Receipt.Disposition
-		value["business_code"] = d.Receipt.BusinessCode
+		value["receipt_verified_producer_id"] = d.Receipt.VerifiedProducer
+		value["receipt_request_id"] = d.Receipt.RequestID
+		value["receipt_disposition"] = d.Receipt.Disposition
+		value["receipt_business_code"] = d.Receipt.BusinessCode
 	}
 	json.NewEncoder(e.Audit).Encode(value)
 }

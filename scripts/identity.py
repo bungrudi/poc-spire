@@ -8,6 +8,7 @@ from pathlib import Path
 import shutil
 import socket
 import ssl
+import stat
 import threading
 import subprocess
 import time
@@ -70,17 +71,46 @@ class BundlePublisher:
                 raise RuntimeError("Bundle publication did not stop within its command deadline")
 
 
+def validate_isolated_root(root):
+    root = Path(root)
+    if root.parent != Path("/tmp") or not root.name.startswith("poc-kafka-") or len(str(root / "identity/server/api.sock").encode()) > 103:
+        raise RuntimeError("Isolated root requires an owned short /tmp/poc-kafka- directory")
+    info = root.lstat()
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o700:
+        raise RuntimeError("Isolated root ownership/permissions differ")
+    marker = root / "isolated-runtime.json"
+    info = marker.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o600 or info.st_size > 1024:
+        raise RuntimeError("Isolated root requires its runner's private initialization marker")
+    value = json.loads(marker.read_text())
+    if value.get("version") != 1 or value.get("purpose") != "poc-spire-kafka" or value.get("ephemeral") is not True or value.get("root") != str(root) or not isinstance(value.get("instance"), str) or len(value["instance"]) != 32 or any(c not in "0123456789abcdef" for c in value["instance"]):
+        raise RuntimeError("Isolated initialization marker does not match the run")
+    for name in ["identity", "workload"]:
+        path = root / name
+        if path.is_symlink() or (path.exists() and not path.is_dir()):
+            raise RuntimeError("Isolated state/socket path collision")
+    return value
+
+
 class IdentityRuntime:
-    def __init__(self, *, ephemeral_root=None, ca_ttl=None):
+    def __init__(self, *, ephemeral_root=None, ca_ttl=None, isolated=False):
         if os.getuid() != 1000 or os.getgid() != 1000:
             raise RuntimeError("Measured identity runtime requires existing UID/GID 1000")
         os.umask(0o077)
         # Short-TTL rollover tests never overwrite approved retained state.
         retained = ROOT / ".runtime/identity"
         self.ca_ttl = None
+        isolated_marker = None
+        if isolated and ephemeral_root is None:
+            raise RuntimeError("Isolated identity requires a validated fully ephemeral root")
         if ephemeral_root is not None:
-            ephemeral_root = Path(ephemeral_root).resolve()
-            if ephemeral_root.parent != (ROOT / ".runtime").resolve() or not ephemeral_root.name.startswith("backend-") or not ephemeral_root.is_dir():
+            raw_root = Path(ephemeral_root)
+            if isolated and (raw_root.is_symlink() or raw_root.absolute() != raw_root.resolve()):
+                raise RuntimeError("Isolated root cannot use path aliases or symlinks")
+            ephemeral_root = raw_root.resolve()
+            if isolated:
+                isolated_marker = validate_isolated_root(ephemeral_root)
+            elif ephemeral_root.parent != (ROOT / ".runtime").resolve() or not ephemeral_root.name.startswith("backend-") or not ephemeral_root.is_dir():
                 raise RuntimeError("Ephemeral identity root must be this suite's project-local temporary directory")
             if ca_ttl is not None and (not isinstance(ca_ttl, int) or not 120 <= ca_ttl <= 600):
                 raise RuntimeError("Ephemeral CA TTL must be 120–600 seconds")
@@ -90,10 +120,18 @@ class IdentityRuntime:
         self.state = retained if ephemeral_root is None else ephemeral_root / "identity"
         self.state.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.state.chmod(0o700)
-        # Serialize tests against normal substrate runs, including ephemeral ones.
-        retained.mkdir(parents=True, exist_ok=True, mode=0o700)
-        self.lock = (retained / "runtime.lock").open("a")
-        fcntl.flock(self.lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        # Default/retained modes preserve the global substrate guard. Only the
+        # explicit validated ephemeral mode owns a separate lock; busy locks
+        # are never ignored and protected retained state is never reused.
+        lock_root = ephemeral_root if isolated else retained
+        lock_root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        descriptor = os.open(lock_root / "runtime.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+        self.lock = os.fdopen(descriptor, "a")
+        try:
+            fcntl.flock(self.lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BaseException:
+            self.lock.close()
+            raise
         self.public = ROOT / ".runtime/workload" if ephemeral_root is None else ephemeral_root / "workload"
         self.public.mkdir(exist_ok=True, mode=0o755)
         self.public.chmod(0o755)
@@ -103,6 +141,13 @@ class IdentityRuntime:
         self.publisher = None
         self.metadata_path = self.state / "runtime.json"
         self.metadata = json.loads(self.metadata_path.read_text()) if self.metadata_path.exists() else None
+        if isolated_marker is not None:
+            if self.metadata is not None and self.metadata.get("isolated_instance") != isolated_marker["instance"]:
+                self.lock.close()
+                raise RuntimeError("Existing ephemeral state belongs to another initialized run")
+            self.isolated_instance = isolated_marker["instance"]
+        else:
+            self.isolated_instance = None
         for name in ["server", "agent"]:
             (self.state / name).mkdir(exist_ok=True, mode=0o700)
             (self.state / name).chmod(0o700)
@@ -144,6 +189,8 @@ class IdentityRuntime:
                 listener.bind(("127.0.0.1", 0))
                 port = listener.getsockname()[1]
             self.metadata = {"port": port, "trust_domain": "poc.internal", "version": VERSION}
+            if self.isolated_instance is not None:
+                self.metadata["isolated_instance"] = self.isolated_instance
         if self.metadata["trust_domain"] != "poc.internal" or self.metadata["version"] != VERSION:
             raise RuntimeError("Existing identity state has a different trust domain/version; no automatic reset")
         server_config = self.state / "server.conf"
@@ -237,28 +284,42 @@ plugins {{
         return entry_id
 
     def close(self):
+        errors=[]
         if self.publisher is not None:
-            self.publisher.close()
+            try:
+                self.publisher.close();self.publisher=None
+            except Exception:
+                errors.append('bundle-publisher')
+        alive=[]
         for process in reversed(self.processes):
-            if process.poll() is None:
-                process.terminate()
-                try:
-                    process.wait(timeout=10)
-                except subprocess.TimeoutExpired:
-                    process.kill(); process.wait()
-        self.processes.clear()
+            try:
+                if process.poll() is None:
+                    process.terminate()
+                    try:process.wait(timeout=10)
+                    except subprocess.TimeoutExpired:
+                        process.kill();process.wait(timeout=5)
+            except Exception:
+                errors.append('owned-process')
+            if process.poll() is None:alive.append(process)
+        self.processes=list(reversed(alive))
+        remaining=[]
         for stream in self.streams:
-            stream.close()
-        self.streams.clear()
-        token = self.state / "join-token.once"
-        if token.exists():
-            token.unlink()
-        for path in self.state.rglob("*"):
-            if path.is_dir():
-                path.chmod(0o700)
-            elif path.is_file():
-                path.chmod(0o600)
-        self.lock.close()
+            try:stream.close()
+            except Exception:
+                errors.append('private-stream');remaining.append(stream)
+        self.streams=remaining
+        if not self.processes:
+            try:
+                token=self.state/'join-token.once'
+                if token.exists():token.unlink()
+                for path in self.state.rglob('*'):
+                    if path.is_dir():path.chmod(0o700)
+                    elif path.is_file():path.chmod(0o600)
+            except Exception:errors.append('state-permissions')
+            try:self.lock.close()
+            except Exception:errors.append('runtime-lock')
+        if errors:
+            raise RuntimeError('Owned native cleanup incomplete: '+','.join(errors))
 
 
 def main():
