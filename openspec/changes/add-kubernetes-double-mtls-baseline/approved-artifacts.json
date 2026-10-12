@@ -1,0 +1,31 @@
+{
+  "approved_revision": "68351e7bbe655544c95ba9d845e1045cecf5aa6c",
+  "owner": "Rudi",
+  "owner_message": "go implement",
+  "owner_message_id": "01a13221-82e9-72a0-a1ae-f3ed4505b4be",
+  "owner_message_date": "2026-10-13",
+  "owner_timezone": "Asia/Jakarta",
+  "source_parent_chat": "01a12b31-9ead-7e92-a024-23860cfe5d8f",
+  "artifact_hash_algorithm": "sha256",
+  "normative_artifacts": {
+    "openspec/changes/add-kubernetes-double-mtls-baseline/.openspec.yaml": "1dfdca412094f24473d8b842866201ec26f200b29b17064b03f1e4982c35a7b9",
+    "openspec/changes/add-kubernetes-double-mtls-baseline/acceptance.md": "68188cf01d4b8be5bab79c8e0ec0a2dd4cd3b431c80f7ddba1293162bb94a7ab",
+    "openspec/changes/add-kubernetes-double-mtls-baseline/design.md": "56b6e270cdc587496f724564a0e0032b6dc97b2199daedb56254c7cc75a36b03",
+    "openspec/changes/add-kubernetes-double-mtls-baseline/profile.md": "d523922aa502c58b85744ea2766c26d3f84bde300abb338de0f4eaf741023bbb",
+    "openspec/changes/add-kubernetes-double-mtls-baseline/proposal.md": "486f402a929bff83511c3a09e36f1d12b169224205690fcc6af4edbac0c87a44",
+    "openspec/changes/add-kubernetes-double-mtls-baseline/references.md": "18e2aaf68618b442c7809ef6261b3ac1fe95df3209b09cab2ea995a895e54574",
+    "openspec/changes/add-kubernetes-double-mtls-baseline/specs/https-demo-ui/spec.md": "d8e2b610f97521f12f5911c9d6858335bc4ad13799eb5805c818a50b01e96240",
+    "openspec/changes/add-kubernetes-double-mtls-baseline/specs/identity-certificate-lifecycle/spec.md": "79b1a6f96c1dc376edcd4bf903c58b3b303a2c435f19a0ea965b05f668b86a1a",
+    "openspec/changes/add-kubernetes-double-mtls-baseline/specs/kafka-signed-command-consumption/spec.md": "4133b3045728b8ea771d576db4c2fa1eb6e5fd7ce4d79aa9527a51fcabc7f8d7",
+    "openspec/changes/add-kubernetes-double-mtls-baseline/specs/kubernetes-demo-runtime/spec.md": "8355da2a02753c85ef2c73971e7f290fb57040cb6a4b3dc5d2d01fcb6c66b772",
+    "openspec/changes/add-kubernetes-double-mtls-baseline/specs/mesh-transport-security/spec.md": "d2d713dde917fd04ee980380e0bff158a34b077e71e5e4df35fbbf8a38601dbc",
+    "openspec/changes/add-kubernetes-double-mtls-baseline/specs/private-caller-controls/spec.md": "0765ae1c0de90e9d58c995f2a5862841f71157a2e9eaf655ee48b5d5210da59f",
+    "openspec/changes/add-kubernetes-double-mtls-baseline/specs/workload-attestation/spec.md": "6979a6f8907c7239c7153739c4c09be81549c1c0fe991525f7a7c65ec8348da5",
+    "openspec/changes/add-kubernetes-double-mtls-baseline/tasks.md": "655c33a567a8ab52a39e9aa9669a6794af07fe09e9fb8a4e1f36029262d86914"
+  },
+  "excluded_audit_records": [
+    "review.md",
+    "validation.md"
+  ],
+  "scope": "Reviewed steps 1\u20133 only; no public cutover, comparison or benchmark. Original frozen artifact text remains available at approved_revision."
+}

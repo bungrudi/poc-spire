@@ -1,6 +1,7 @@
 # Proposed Kubernetes double-mTLS baseline
 
-**Planning only; implementation approval pending. All Kubernetes proofs are NOT RUN.**
+**Owner approved implementation on 13 October 2026; see [review](review.md).
+Kubernetes proofs remain NOT RUN until their actual checks complete.**
 The [proposal](proposal.md), [short design](design.md), [deltas](specs/),
 [acceptance](acceptance.md), [tasks](tasks.md), [references](references.md) and
 [review](review.md) are one review unit. Existing main specs/approved artifacts

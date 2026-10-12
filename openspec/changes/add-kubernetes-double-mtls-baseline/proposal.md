@@ -7,9 +7,10 @@ SPIRE/Kafka scenarios, but does not measure Kubernetes attestation or a mesh.
 The owner requests a complete in-cluster migration, a validated application-plus-
 Istio mTLS baseline, then a reproducible freeze for a later controlled comparison.
 
-Planning is authorized; implementation approval is **pending**. This change
-covers steps 1–3 only. No installation, deployment, cluster run, benchmark,
-comparison worktree or public cutover is authorized by this draft.
+Rudi approved implementation of the published revision on 13 October 2026;
+see [approval and frozen artifact manifest](review.md). This change covers
+steps 1–3 only, including its owned disposable installation and isolated tests.
+Benchmarking, comparison worktrees and public cutover remain excluded.
 
 ## What Changes
 

@@ -1,6 +1,8 @@
 # Planning and owner review record
 
-Status: **planning authorized; implementation approval pending**.
+Status: **owner implementation approval recorded; implementation in progress**.
+Approval date: 13 October 2026, Asia/Jakarta.
+The 12 October planning review below is historical; it did not grant this approval.
 Date: 12 October 2026, Asia/Jakarta.
 Draft base: `98f0fa3bd1d26da80ca5cc283269533994315dfa`.
 Planning branch: `codex/kubernetes-double-mtls-baseline`.
@@ -57,17 +59,33 @@ This PASS authorizes publication of these planning artifacts on the named branch
 It does not approve implementation, installation, runtime testing, deployment,
 benchmarking or final baseline acceptance.
 
-## Approval fields — pending
+## Actual owner implementation approval — 13 October 2026
 
-- Actual owner implementation-approval message/date: **none yet**.
-- Approved artifact revision/manifest: **none yet**; planning publication is not implementation approval.
-- Runtime/host installation/deployment authorization: **not granted by planning**.
-- Material default/behavior rescope: requires review before dependent execution.
+Rudi replied to the published, independently reviewed change with:
 
-Before any implementation, present the full spec delta and short plan to Rudi,
-resolve relevant scope questions and record the actual approving message/date
-and frozen artifact revision. Parent PASS, a checked task, CLI apply readiness,
-structural validation or permission to publish docs cannot substitute. No source,
-main spec, prior approved artifact, primary checkout, public demo or retained
-identity was changed to prepare this new change. Documentation publication is authorized by the independent parent review above;
-implementation approval remains pending.
+> go implement
+
+- Direct owner message: `01a13221-82e9-72a0-a1ae-f3ed4505b4be`.
+- Date: **13 October 2026, Asia/Jakarta** (parent turn started 05:00:19 +07:00).
+- Source parent chat: `01a12b31-9ead-7e92-a024-23860cfe5d8f`.
+- Approved artifact revision: `68351e7bbe655544c95ba9d845e1045cecf5aa6c`.
+- Frozen normative artifact hashes: [approved-artifacts.json](approved-artifacts.json).
+  The 14 entries are read directly from that Git revision; historical review and
+  validation audit records are excluded. Progress/status edits do not replace
+  the frozen owner-reviewed scope.
+
+The parent explicitly relayed this approval and independently confirmed that it
+covers the complete reviewed steps 1–3: project-scoped artifact/tool resolution,
+owned disposable kind/Calico/Istio installation and isolated execution, in-cluster
+SPIRE/CSI and real executable/deployment attestation, private control adapters,
+full Kafka/application migration and all KB/JS acceptance, then reproducible
+known-good freeze. The parent’s subsequent instruction to resume confirms that
+the intervening progress question did not pause or cancel this approval.
+
+The approved maximum remains one 4 GiB/3 CPU node, with the documented host
+reserve. Physical-host firewall/sysctl/daemon changes, retained identity/public
+runtime mutation, persistent access, comparison/outer-TLS-disabled variants and
+benchmarking remain excluded. A material pin, privilege, budget or behavioral
+rescope requires review before dependent execution. Standing commit/push
+permission applies to authorized work on this branch. Independent final review
+is still required: task 7.1 remains pending until the parent actually passes it.

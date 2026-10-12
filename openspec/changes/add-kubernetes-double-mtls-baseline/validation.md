@@ -1,6 +1,7 @@
 # Draft validation — 12 October 2026
 
-Status: **structurally valid planning draft; implementation approval pending**.
+Historical status on 12 October: **structurally valid planning draft; implementation approval was pending**.
+Rudi subsequently approved implementation on 13 October; see [review](review.md).
 This record is not runtime/security acceptance. All KB-01–KB-28 and new
 Kubernetes executions of JS-01–JS-23 are **NOT RUN**. Independent parent drafting review passed; documentation publication is authorized.
 
