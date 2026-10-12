@@ -10,7 +10,7 @@ contracts/RFC/runbook and sanitized evidence as each approved task completes.
 ## 1. Approval and reproducible preflight
 
 - [x] 1.1 Obtain actual owner implementation approval of this complete profile/delta/short plan; record message/date and frozen artifact manifest, separate from parent drafting review/publication permission.
-- [ ] 1.2 Resolve/check exact proposed tools, images/charts/manifests and registry index/platform/config digests; assess current compatibility/security, keeping existing app dependency/connection pins; document KB-01/KB-26 assumptions and failure gates.
+- [x] 1.2 Resolve/check exact proposed tools, images/charts/manifests and registry index/platform/config digests; assess current compatibility/security, keeping existing app dependency/connection pins; document KB-01/KB-26 assumptions and failure gates.
 - [ ] 1.3 Verify capacity/reserve, unused ports/CIDRs/names, owned kubeconfig/context and declared kind/CNI/CSI/Agent privilege boundary; pass KB-01/KB-25 or stop without touching shared services.
 
 ## 2. Owned cluster and independent mesh substrate

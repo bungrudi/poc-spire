@@ -102,7 +102,9 @@ def preflight():
         raise RuntimeError('KB-01: existing descriptor; refuse overwrite/adoption')
     for port in (16443, 18089):
         with socket.socket() as listener:
+            listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             listener.bind(('127.0.0.1', port))
+            listener.listen(1)
     ranges = []
     for nid in execute([DOCKER, 'network', 'ls', '-q']).split():
         item = docker_json('network', 'inspect', nid)[0]
@@ -196,6 +198,9 @@ def start():
     pins = json.loads((ROOT / 'infra/kubernetes-baseline/artifacts.json').read_text())
     node = next(p['immutable_reference'] for p in pins['images'] if p['reference'].startswith('kindest/node:'))
     config = work / 'kind.yaml'
+    total_memory = int(dict(line.split(':', 1) for line in Path('/proc/meminfo').read_text().splitlines())['MemTotal'].split()[0]) * 1024
+    system_memory = max(0, (total_memory - MEMORY) // 1024)
+    system_cpu = max(0, os.cpu_count() - CPUS)
     config.write_text('''kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 networking:
@@ -219,6 +224,10 @@ nodes:
         enabled: true
     authorization:
       mode: Webhook
+    enforceNodeAllocatable: [pods]
+    systemReserved:
+      cpu: "SYSTEM_CPU"
+      memory: "SYSTEM_MEMORYKi"
     kubeReserved:
       cpu: "500m"
       memory: "512Mi"
@@ -226,7 +235,7 @@ nodes:
       memory.available: "150Mi"
       nodefs.available: "10%"
       imagefs.available: "15%"
-'''.replace('NODE_IMAGE', node))
+'''.replace('NODE_IMAGE', node).replace('SYSTEM_CPU', str(system_cpu)).replace('SYSTEM_MEMORY', str(system_memory)))
     env = os.environ.copy()
     env['PATH'] = str(wrapper(value)) + ':' + env['PATH']
     env['KIND_EXPERIMENTAL_DOCKER_NETWORK'] = value['network']
@@ -238,7 +247,10 @@ nodes:
         outcome = subprocess.run([str(TOOLS / 'kind'), 'create', 'cluster', '--name', cluster,
                                   '--image', node, '--config', str(config), '--kubeconfig', env['KUBECONFIG'],
                                   '--wait', '0s'], text=True, capture_output=True, env=env, timeout=600)
-        (work / 'kind-output.txt').write_text(outcome.stdout + outcome.stderr)
+        diagnostics = RUNTIME / 'diagnostics'
+        diagnostics.mkdir(mode=0o700, exist_ok=True)
+        # Bounded private diagnostics survive successful ownership cleanup.
+        (diagnostics / (run + '-kind.txt')).write_text((outcome.stdout + outcome.stderr)[-65536:])
         if outcome.returncode:
             raise RuntimeError('kind initialization failed; owned diagnostic output retained')
         (work / 'kubeconfig').chmod(0o600)
@@ -287,6 +299,14 @@ def stop():
         if item['Labels'].get(OWNER) != value['run'] or item['Containers']:
             raise RuntimeError('cleanup refused foreign/in-use network')
         execute([DOCKER, 'network', 'rm', networks[0]])
+    image_record = Path(value['work']) / 'bootstrap-image.json'
+    if image_record.exists():
+        built = json.loads(image_record.read_text())
+        probe = subprocess.run([DOCKER, 'image', 'inspect', built['tag'], '--format', '{{.Id}}'], text=True, capture_output=True)
+        if probe.returncode == 0:
+            if probe.stdout.strip() != built['config_digest']:
+                raise RuntimeError('cleanup refused reassigned image tag; ownership retained')
+            execute([DOCKER, 'image', 'rm', built['tag']])
     checks = continuity(before)
     if not all(checks.values()):
         raise RuntimeError('protected continuity failure; descriptor retained')

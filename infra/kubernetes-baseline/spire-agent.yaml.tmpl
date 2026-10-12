@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata: {name: spire-agent, namespace: '@SPIRE_NS@'}
+spec:
+  selector: {matchLabels: {poc-role: spire-agent}}
+  template:
+    metadata:
+      labels: {poc-role: spire-agent, poc-run: '@RUN@'}
+      annotations: {sidecar.istio.io/inject: 'false'}
+    spec:
+      hostPID: true
+      serviceAccountName: spire-agent
+      automountServiceAccountToken: false
+      containers:
+      - name: agent
+        image: '@SPIRE_AGENT_IMAGE@'
+        args: [-config, /run/config/agent.conf]
+        env: [{name: MY_NODE_NAME, valueFrom: {fieldRef: {fieldPath: spec.nodeName}}}]
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          seccompProfile: {type: RuntimeDefault}
+          capabilities: {drop: [ALL], add: [SYS_PTRACE]}
+        resources: {requests: {cpu: 25m, memory: 32Mi}, limits: {cpu: 500m, memory: 128Mi}}
+        readinessProbe: {exec: {command: [/opt/spire/bin/spire-agent, healthcheck]}, initialDelaySeconds: 3, periodSeconds: 3}
+        volumeMounts:
+        - {name: config, mountPath: /run/config, readOnly: true}
+        - {name: data, mountPath: /run/spire/data}
+        - {name: bundle, mountPath: /run/spire/bundle, readOnly: true}
+        - {name: socket, mountPath: /run/spire/sockets}
+        - {name: tokens, mountPath: /run/tokens, readOnly: true}
+        - {name: api, mountPath: /run/api, readOnly: true}
+      volumes:
+      - {name: config, configMap: {name: spire-config}}
+      - {name: data, emptyDir: {sizeLimit: 16Mi}}
+      - {name: bundle, configMap: {name: spire-bundle}}
+      - {name: socket, hostPath: {path: '/run/poc-spire/@RUN@/agent-sockets', type: DirectoryOrCreate}}
+      - name: tokens
+        projected:
+          sources:
+          - serviceAccountToken: {path: psat, expirationSeconds: 600, audience: spire-server}
+      - name: api
+        projected:
+          sources:
+          - serviceAccountToken: {path: token, expirationSeconds: 600}
+          - configMap: {name: kube-root-ca.crt, items: [{key: ca.crt, path: ca.crt}]}

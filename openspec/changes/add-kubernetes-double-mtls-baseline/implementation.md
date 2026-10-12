@@ -53,7 +53,42 @@ stay in the private run directory; sanitized evidence contains booleans only.
 
 ## Current gates
 
-Task 1.1 is complete. Artifact resolution is complete; actual node limits,
-Calico/mesh/CSI, secure kubelet and executable attestation are not yet verified.
-All KB/JS runtime acceptance remains NOT RUN. Source here is development source;
+Tasks 1.1 and 1.2 are complete. Development bootstrap verified Kubernetes
+1.35.8/containerd 2.3.4, ready Calico and Istio/CNI, root cgroup 4 GiB/3 CPU,
+and corrected scheduler allocation 2500m/3434Mi with Pod memory.max 3584Mi.
+Secure kubelet showed scoped token 200, valid unauthorized 403, malformed/
+anonymous 401 and wrong CA/hostname denial. Six ownership/CSR/issuer regression
+tests pass. Complete KB/JS runtime acceptance remains NOT RUN; actual executable
+attestation, all application components and final resource/layer proofs remain.
+Source here is development source;
 final source/configuration must still be committed before final acceptance.
+
+## Development corrections and honest pressure record
+
+Kubernetes initially reported physical host capacity despite the Docker cap.
+The owned kubelet now reserves the capacity above that cap for scheduling and
+enforces the Pod cgroup; no approved node budget was raised. Unused kind storage
+provisioner/StorageClass are removed because this profile uses no PVCs. Final
+aggregate workload budgets and pressure acceptance are still NOT RUN.
+
+The first disposable run (`994eea440006`) had a recorded memory.events max
+counter of 2253, with zero OOM/kill counters. This is evidence of memory-limit
+pressure/reclaim, not a no-pressure claim. Its development SPIRE startup failed
+because overriding the native entrypoint omitted `run`; no issuance proof was
+claimed. Explicit full-run cleanup passed public HTTPS, protected PID/start-time,
+retained identity/permission and default-context checks. The corrected fresh
+run (`ceb7d4978e30`) has independent trust/namespace/node ownership; its early
+budget record reports max 2619 with zero OOM/kill counters. These are development
+observations, not final known-good evidence.
+
+Private diagnostic tails are bounded to 64 KiB and kept separately from the
+cleanup target. One automatic permission review timed out before source/runtime
+execution; splitting source preparation from deployment succeeded within the
+same approved scope. No user approval or unsafe-action finding was involved.
+
+The issuer helper records initialization start before creating resources and
+refuses subsequent same-run bootstrap even if its Pod/namespace disappears.
+A lost or incomplete issuer therefore requires explicit fresh run. The startup
+helper checks the expected run/Pod UID and existing initialized issuer files;
+apps have no write/API authority for that guard. Real destructive issuer/state
+and all application guard behavior still require final acceptance.

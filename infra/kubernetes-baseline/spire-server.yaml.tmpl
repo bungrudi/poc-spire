@@ -1,0 +1,142 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: spire-server, namespace: '@SPIRE_NS@'}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: {name: '@CLUSTER@-psat'}
+rules:
+- {apiGroups: [authentication.k8s.io], resources: [tokenreviews], verbs: [create]}
+- {apiGroups: [''], resources: [nodes], resourceNames: ['@NODE@'], verbs: [get]}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: {name: '@CLUSTER@-psat'}
+subjects: [{kind: ServiceAccount, name: spire-server, namespace: '@SPIRE_NS@'}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: '@CLUSTER@-psat'}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: spire-psat-pods, namespace: '@SPIRE_NS@'}
+rules: [{apiGroups: [''], resources: [pods], verbs: [get]}]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: spire-psat-pods, namespace: '@SPIRE_NS@'}
+subjects: [{kind: ServiceAccount, name: spire-server, namespace: '@SPIRE_NS@'}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: spire-psat-pods}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: run-guard, namespace: '@SPIRE_NS@'}
+data:
+  run.json: '{"run":"@RUN@","phase":"bootstrap","pods":{}}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: spire-config, namespace: '@SPIRE_NS@'}
+data:
+  server.conf: |
+    server {
+      bind_address = "0.0.0.0"
+      bind_port = 8081
+      socket_path = "/run/spire/admin/api.sock"
+      data_dir = "/run/spire/data"
+      trust_domain = "poc.internal"
+      log_level = "INFO"
+      ca_ttl = "600s"
+      default_x509_svid_ttl = "90s"
+      agent_ttl = "300s"
+      disable_jwt_svids = true
+      ca_subject { country = ["ID"] organization = ["Owned Kubernetes SPIRE PoC"] common_name = "" }
+    }
+    plugins {
+      DataStore "sql" { plugin_data { database_type = "sqlite3" connection_string = "/run/spire/data/database.sqlite3" } }
+      KeyManager "disk" { plugin_data { keys_path = "/run/spire/data/keys.json" } }
+      NodeAttestor "k8s_psat" { plugin_data { clusters = { "@CLUSTER@" = {
+        service_account_allow_list = ["@SPIRE_NS@:spire-agent"]
+        audience = ["spire-server"]
+      } } } }
+    }
+    health_checks { listener_enabled = true bind_address = "127.0.0.1" bind_port = "8080" }
+  agent.conf: |
+    agent {
+      data_dir = "/run/spire/data"
+      server_address = "spire-server"
+      server_port = "8081"
+      socket_path = "/run/spire/sockets/api.sock"
+      trust_bundle_path = "/run/spire/bundle/bundle.pem"
+      trust_domain = "poc.internal"
+      log_level = "DEBUG"
+    }
+    plugins {
+      KeyManager "memory" { plugin_data {} }
+      NodeAttestor "k8s_psat" { plugin_data { cluster = "@CLUSTER@" token_path = "/run/tokens/psat" } }
+      WorkloadAttestor "unix" { plugin_data { discover_workload_path = true workload_size_limit = 67108864 } }
+      WorkloadAttestor "k8s" { plugin_data {
+        kubelet_secure_port = 10250
+        kubelet_ca_path = "/run/api/ca.crt"
+        token_path = "/run/api/token"
+        node_name_env = "MY_NODE_NAME"
+        use_new_container_locator = true
+      } }
+    }
+    health_checks { listener_enabled = true bind_address = "127.0.0.1" bind_port = "8080" }
+---
+apiVersion: v1
+kind: Service
+metadata: {name: spire-server, namespace: '@SPIRE_NS@'}
+spec:
+  selector: {poc-role: spire-server}
+  ports: [{name: tcp-spire, port: 8081, targetPort: 8081}]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: spire-server
+  namespace: '@SPIRE_NS@'
+  labels: {poc-role: spire-server, poc-run: '@RUN@'}
+  annotations: {sidecar.istio.io/inject: 'false'}
+spec:
+  serviceAccountName: spire-server
+  automountServiceAccountToken: false
+  securityContext: {seccompProfile: {type: RuntimeDefault}}
+  initContainers:
+  - name: guard-install
+    image: '@BOOTSTRAP_IMAGE@'
+    imagePullPolicy: Never
+    args: [-install, /guard-bin/run-guard]
+    securityContext: &secure {runAsUser: 0, runAsGroup: 0, readOnlyRootFilesystem: true, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+    resources: &resources {requests: {cpu: 25m, memory: 32Mi}, limits: {cpu: 500m, memory: 128Mi}}
+    volumeMounts: [{name: guard-bin, mountPath: /guard-bin}]
+  containers:
+  - name: server
+    image: '@SPIRE_SERVER_IMAGE@'
+    command: [/guard-bin/run-guard]
+    args: [-role, spire-server, --, /opt/spire/bin/spire-server, run, -config, /run/config/server.conf]
+    env:
+    - {name: POC_RUN, value: '@RUN@'}
+    - {name: POC_POD_UID, valueFrom: {fieldRef: {fieldPath: metadata.uid}}}
+    securityContext: *secure
+    resources: *resources
+    readinessProbe: {exec: {command: [/opt/spire/bin/spire-server, healthcheck]}, initialDelaySeconds: 3, periodSeconds: 3}
+    volumeMounts:
+    - {name: config, mountPath: /run/config, readOnly: true}
+    - {name: guard, mountPath: /run/guard, readOnly: true}
+    - {name: guard-bin, mountPath: /guard-bin, readOnly: true}
+    - {name: data, mountPath: /run/spire/data}
+    - {name: admin, mountPath: /run/spire/admin}
+    - {name: api, mountPath: /var/run/secrets/kubernetes.io/serviceaccount, readOnly: true}
+  volumes:
+  - {name: config, configMap: {name: spire-config}}
+  - {name: guard, configMap: {name: run-guard}}
+  - {name: guard-bin, emptyDir: {sizeLimit: 32Mi}}
+  - {name: data, emptyDir: {sizeLimit: 32Mi}}
+  - {name: admin, emptyDir: {sizeLimit: 1Mi}}
+  - name: api
+    projected:
+      sources:
+      - serviceAccountToken: {path: token, expirationSeconds: 1800}
+      - configMap: {name: kube-root-ca.crt, items: [{key: ca.crt, path: ca.crt}]}
+      - downwardAPI: {items: [{path: namespace, fieldRef: {fieldPath: metadata.namespace}}]}

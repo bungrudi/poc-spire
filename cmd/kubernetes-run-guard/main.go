@@ -1,0 +1,90 @@
+// kubernetes-run-guard gates isolated deployment startup; it has no identity or API credentials.
+package main
+
+import (
+	"encoding/json"
+	"flag"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"syscall"
+	"time"
+)
+
+type guard struct {
+	Run   string            `json:"run"`
+	Phase string            `json:"phase"`
+	Pods  map[string]string `json:"pods"`
+}
+
+func readGuard(path string) (guard, error) {
+	var g guard
+	f, err := os.Open(path)
+	if err != nil {
+		return g, err
+	}
+	defer f.Close()
+	b, err := io.ReadAll(io.LimitReader(f, 16385))
+	if err != nil || len(b) > 16384 {
+		return g, fmt.Errorf("invalid guard")
+	}
+	if err = json.Unmarshal(b, &g); err != nil {
+		return g, fmt.Errorf("invalid guard")
+	}
+	return g, nil
+}
+
+func main() {
+	install := flag.String("install", "", "copy this startup helper to an owned emptyDir")
+	path := flag.String("guard", "/run/guard/run.json", "read-only run guard")
+	role := flag.String("role", "", "fixed deployment component")
+	flag.Parse()
+	if *install != "" {
+		self, err := os.Executable()
+		if err != nil {
+			panic("startup helper unavailable")
+		}
+		data, err := os.ReadFile(self)
+		if err != nil {
+			panic("startup helper unavailable")
+		}
+		if filepath.Base(*install) != "run-guard" {
+			panic("invalid startup helper target")
+		}
+		if err := os.WriteFile(*install, data, 0555); err != nil {
+			panic("startup helper installation failed")
+		}
+		return
+	}
+	if *role != "spire-server" || len(flag.Args()) == 0 || flag.Args()[0] != "/opt/spire/bin/spire-server" {
+		panic("unsupported startup role")
+	}
+	run, pod := os.Getenv("POC_RUN"), os.Getenv("POC_POD_UID")
+	deadline := time.Now().Add(180 * time.Second)
+	for {
+		g, err := readGuard(*path)
+		if err == nil && g.Run == run && g.Pods[*role] == pod && pod != "" {
+			if g.Phase == "running" {
+				for _, required := range []string{"/run/spire/data/keys.json", "/run/spire/data/database.sqlite3"} {
+					info, err := os.Stat(required)
+					if err != nil || !info.Mode().IsRegular() || info.Size() == 0 {
+						panic("run_invalid")
+					}
+				}
+			} else if g.Phase != "bootstrap" {
+				panic("run_invalid")
+			}
+			if err := syscall.Exec(flag.Args()[0], flag.Args(), os.Environ()); err != nil {
+				panic("component execution failed")
+			}
+		}
+		if err == nil && (g.Run != run || g.Phase == "invalid" || (g.Pods[*role] != "" && g.Pods[*role] != pod)) {
+			panic("run_invalid")
+		}
+		if time.Now().After(deadline) {
+			panic("startup guard unavailable")
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+}
