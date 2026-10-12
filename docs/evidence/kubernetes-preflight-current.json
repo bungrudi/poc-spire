@@ -1,0 +1,15 @@
+{
+  "phase": "full-baseline-startup-preflight",
+  "observed_at_utc": "2026-10-12T23:35:18Z",
+  "source_revision": "c39c13e4bb56d701ab042ff2ff260bbf1c4b82c7",
+  "available_memory_bytes": 6440288256,
+  "approved_start_floor_bytes": 6442450944,
+  "node_cap_memory_bytes": 4294967296,
+  "node_cap_cpus": 3,
+  "required_host_reserve_bytes": 2147483648,
+  "owned_cluster_exists": false,
+  "status": "capacity_gate_blocked",
+  "public_cutover_performed": false,
+  "protected_state_mutation_performed": false,
+  "next_action": "Start only after the original 6 GiB floor is met; no floor/budget override."
+}

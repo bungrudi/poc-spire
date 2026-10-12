@@ -141,3 +141,26 @@ verified API HTTPS with one named owned ConfigMap update; it is not deployed yet
 No task beyond approval/artifact resolution is checked by these development
 observations. Final source/configuration and exact normal/test artifacts must
 still be committed before the final acceptance run and independent review.
+
+## Full-start capacity gate — 13 October 2026
+
+Full-deployment source is committed/pushed at
+`c39c13e4bb56d701ab042ff2ff260bbf1c4b82c7`. Go tests/race/vet, all 28 deterministic
+Python checks and strict validation of eight specs/two changes pass. This is
+source verification, not full application runtime acceptance.
+
+The final development run was removed with verified owned cleanup and protected
+HTTPS/container/retained-state/default-context continuity. Full fresh startup
+then stopped before creating resources because host available memory was below
+the owner-reviewed **6 GiB (6442450944-byte)** startup floor. Six later bounded
+samples ranged from 6406586368 to 6432006144 bytes; the subsequent saved sample
+was 6440288256 bytes and another exact preflight still rejected startup.
+[Sanitized capacity evidence](../../../docs/evidence/kubernetes-preflight-current.json)
+records the tested source, unchanged 4 GiB/3 CPU node cap and 2 GiB host reserve.
+There is currently no owned active cluster/descriptor.
+
+No unrelated workload was stopped, cache dropped, host setting changed or budget/
+floor silently relaxed. Resume the full ordered bootstrap only after the original
+floor is met. A different budget/floor/host arrangement would require an explicit
+reviewed scope change before dependent execution. Full deployment/KB/JS runtime
+acceptance and final independent review remain pending; task 7.1 is unchecked.
