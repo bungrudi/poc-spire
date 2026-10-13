@@ -19,7 +19,7 @@ Existing POST /api/attempts SHALL accept only trusted/unidentified caller and br
 - **AND** public demo sessions are all the same assumed principal and have no such per-human separation
 
 ### Requirement: UI-05 Read-only workload identity and bounded resources
-UI MUST read balances and enabled Kafka metadata/receipts only with its own observer SVID, verifying exact Money identity, and trigger callers only over private sockets. All scenarios SHALL share 64 attempts, two active workers, eight dispatches/minute per principal and 128 sessions; bounded bodies and no unsafe history eviction remain. UI MUST receive no Kafka/admin credentials or producer private keys.
+While its run is valid, UI MUST use only its observer SVID for balances/enabled Kafka metadata/receipts, verifying exact Money. Compose triggers remain private UDS; Kubernetes triggers MUST use exact-ID adapters in PC-07 without caller mounts/keys. All scenarios SHALL share 64 attempts, two workers, eight dispatches/minute per principal and 128 sessions; bounded bodies/no unsafe eviction remain. UI MUST receive no Kafka/admin credentials or producer keys.
 
 #### Scenario: Verified balance display and existing attempt lookup
 - **WHEN** UI reads Money or an existing pending/done attempt is repeated at history capacity
@@ -30,6 +30,10 @@ UI MUST read balances and enabled Kafka metadata/receipts only with its own obse
 - **WHEN** UI's SVID directly posts a Money transfer or new browser work exceeds configured limits
 - **THEN** Money returns 403; UI returns 429 for concurrency/rate or 503 for capacity without eviction
 - **AND** unavailable Money reads return an infrastructure failure, not fabricated balances
+
+#### Scenario: Kubernetes UI uses its own identity at adapters
+- **WHEN** the UI dispatches one fixed scenario through a configured private network adapter
+- **THEN** its own observer SVID verifies that exact control adapter, with unchanged fixed API/ownership/quota/retry behavior and no borrowed caller state/key
 
 ## ADDED Requirements
 

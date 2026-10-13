@@ -191,3 +191,17 @@ Independent review passed after the UI retry, eligible SVID-source and restart
 wording corrections, including the health-check liveness clarification. The
 review receipt is in the adoption evidence. Owner baseline acceptance remains
 pending; independent verification and publication do not imply that acceptance.
+
+
+## Owned Kubernetes/Istio profile — 13 October 2026
+
+[Runtime/runbook](kubernetes-baseline.md) and [core evidence](evidence/kubernetes-core-current.json)
+map clean `528bc5f` to exact normal/test hashes, observed attestation/control/Money/
+broker/JWS negatives and seven actual correlated TLS flows. Current contracts add
+[kubernetes-demo-runtime](../openspec/specs/kubernetes-demo-runtime/spec.md) and
+[mesh-transport-security](../openspec/specs/mesh-transport-security/spec.md), with
+conditional Kubernetes additions to existing capabilities. [KB/JS acceptance](../openspec/changes/add-kubernetes-double-mtls-baseline/acceptance.md)
+declares runtime versus deterministic modes and DEFERRED reliability. Parent
+source/runtime review passed; final docs consistency review passed; owner acceptance
+remains pending. Earlier development/preflight reports are historical checkpoints.
+Compose/public contracts and evidence are preserved; no public cutover occurred.

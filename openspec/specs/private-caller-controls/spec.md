@@ -7,7 +7,7 @@ Define the browser-to-caller trigger boundary, caller-owned workload connections
 ## Requirements
 
 ### Requirement: PC-01 Separate private trigger channels
-Each caller SHALL listen only on its own Unix-domain control socket, with no network trigger endpoint. UI SHALL have separate mounts for both channels; the unidentified caller MUST NOT mount or reach the trusted channel. The public profile SHALL combine private mounts with peer-UID checking, not treat shared UID alone as workload identity.
+Caller executables SHALL expose only separate local UDS controls. Compose UI SHALL retain separate direct control mounts. Kubernetes UI SHALL instead use the exact-ID adapters in PC-07; only each adapter mounts its own caller UDS. The unidentified caller MUST NOT reach trusted control. Kernel peer checks and private mounts remain; UID/Pod/mesh membership alone MUST NOT grant executable or remote-control authority.
 
 #### Scenario: UI triggers the selected caller
 - **WHEN** the UI sends a command over the selected caller's separately mounted socket
@@ -16,6 +16,10 @@ Each caller SHALL listen only on its own Unix-domain control socket, with no net
 #### Scenario: Unidentified caller targets trusted control
 - **WHEN** the unidentified container attempts to open the trusted control path or reach a network trigger
 - **THEN** no reachable trusted control endpoint exists and no trusted attempt is dispatched
+
+#### Scenario: Kubernetes UI uses separate authenticated controls
+- **WHEN** the Kubernetes UI selects a caller through its configured adapter
+- **THEN** it verifies that exact adapter and borrows no local control mount; each adapter can reach only its own UID-checked caller
 
 ### Requirement: PC-02 Fixed bounded peer-checked protocol
 Existing POST /attempt SHALL accept exactly one request_id matching [A-Za-z0-9_-]{1,128}, strict JSON with no unknown/trailing fields, at most 1024 body bytes and a kernel peer UID matching configured operator UID. Separate opt-in Kafka routes SHALL use their fixed schema on the same private boundary. Routes MUST NOT accept arbitrary destinations, payloads, amounts, SPIFFE identities or headers.
@@ -55,7 +59,7 @@ Sync results SHALL retain submitted IDs and distinct Money/TLS/business/infrastr
 - **THEN** it reports unknown_commit, preserves the ID and supplies no invented Money success
 
 ### Requirement: PC-05 Fixed private Kafka controls
-Opt-in callers SHALL add POST /attempt/kafka with exactly request_id, scenario and a 32-hex authenticated-Money instance nonce, plus GET /attempt/kafka/{request_id} for metadata. Trusted SHALL support only kafka-trusted/kafka-tampered; unidentified SHALL support only kafka-unidentified. Peer checking, 1024-byte input, strict parsing and bounded deadlines MUST apply. No network control listener or signing-key export is allowed.
+Opt-in callers SHALL keep POST /attempt/kafka with exactly request_id, scenario and a 32-hex authenticated-Money instance nonce, plus GET /attempt/kafka/{request_id}. Trusted permits only kafka-trusted/kafka-tampered; unidentified only kafka-unidentified. Peer checking, strict 1024-byte input and bounded deadlines remain. Caller executables expose no network listener/key export; Kubernetes adapters in PC-07 only mirror these fixed controls.
 
 #### Scenario: Fixed Kafka command is published
 - **WHEN** an authorized UI peer submits a valid fixed scenario/ID/instance tuple on the corresponding private socket
@@ -66,15 +70,40 @@ Opt-in callers SHALL add POST /attempt/kafka with exactly request_id, scenario a
 - **THEN** the command is rejected before publication and the old POST /attempt contract remains unchanged
 
 ### Requirement: PC-06 Initialized bounded retry state
-The runner SHALL initialize one stream-bound caller manifest/index before startup. Caller-only state SHALL retain at most 64 immutable descriptors and four record variants each, atomically before publication; callers MUST NOT recreate missing/corrupt expected state. Retry/UI or caller restart MUST preserve original deadline, instance nonce and potentially submitted digests. New IDs at capacity SHALL fail without eviction.
+Runner SHALL initialize one stream-bound caller manifest/index before startup, retaining at most 64 immutable descriptors/four variants atomically before publication. Callers MUST NOT repair missing/corrupt state; new IDs at capacity fail without eviction and original ID/deadline/unknown-result semantics remain. The original recovery scenarios below remain Compose contracts and are not a new Kubernetes recovery guarantee.
 
 #### Scenario: Lost publish response then restart
 - **WHEN** publication may have happened but its control response is lost and UI/caller container restarts in the same run
 - **THEN** initialized state recovers the exact descriptor/all potentially submitted digests without a new ID/deadline
+- **AND** Existing Compose intact-restart recovery contracts remain unchanged.
 
 #### Scenario: State loss or descriptor expiry
 - **WHEN** expected state is missing/corrupt, stream/instance differs, or the original deadline expired
 - **THEN** Kafka publish fails closed as unknown/reset/expired instead of creating a fresh descriptor; metadata lookup can still recover surviving evidence
+
+#### Scenario: Kubernetes caller Pod is replaced
+- **WHEN** a caller Pod UID changes or expected initialized state is lost within its current run
+- **THEN** the operator stops and explicitly recreates the whole owned run rather than repairing it or automatically republishing old attempts; no same-run recovery is promised
+- **AND** Failed/corrupt Kubernetes runs require operator whole-cluster stop/recreate under KR-04; automatic state-loss detection and exhaustive Kubernetes restart/variant recovery validation are DEFERRED.
+
+### Requirement: PC-07 Exact-identity Kubernetes control adapters
+Each Kubernetes caller Pod SHALL have a separately attested control-only adapter. UI MUST verify its exact SVID; adapter MUST authorize only exact UI ID before fixed bounded processing and forward only to its own UID-checked UDS. No generic proxy/signing API, application-key lending, caller-state/broker-key mount or transfer identity is permitted. Remote credential expiry/unknown-response guards MUST preserve original attempt semantics.
+
+#### Scenario: UI triggers a fixed operation
+- **WHEN** UI authenticates the selected adapter and submits the unchanged fixed Sync or caller-specific Kafka schema
+- **THEN** adapter verifies current UI identity/body/limits, reaches only its own caller as UID 10002 and relays bounded correlated diagnostics without inventing Money effects
+
+#### Scenario: Remote peer or payload is unauthorized
+- **WHEN** a no-certificate or valid wrong-ID client connects, or input supplies extra fields/destination/signing parameters
+- **THEN** TLS denies no-certificate clients or adapter returns403 for authenticated unauthorized peers; malformed fixed input returns400 before UDS execution
+
+#### Scenario: Adapter seeks app or foreign authority
+- **WHEN** an adapter requests a transfer SVID, uses its control SVID at Money or targets another caller/state/broker key
+- **THEN** issuance/inner authorization/mount boundaries deny that authority; shared Pod mesh identity does not substitute
+
+#### Scenario: Remote response or credential becomes uncertain
+- **WHEN** a control response is lost/uncorrelated or remote credentials cross expiry before forwarding
+- **THEN** preserve the original ID/deadline and unknown-result handling without another identity, automatic publication or fabricated verified Money result
 
 ## Traceability and limitations
 

@@ -101,10 +101,10 @@ commands now use their configured private socket paths; a healthy issuer was
 not previously recognized by an incorrect default-socket probe. Explicit full
 owned cleanup/fresh run preserved all protected continuity checks.
 
-The actual UID1000 trusted-caller executable obtained its exact trusted SVID
+The actual UID 1000 trusted-caller executable obtained its exact trusted SVID
 under Unix SHA+K8s requesting-container image/name/namespace/SA/run/role/Pod UID
 and exact PSAT node-parent conjunction. It performed a direct verified-Money
-transfer (200, one 100-minor debit/credit). A separately registered UID10002
+transfer (200, one 100-minor debit/credit). A separately registered UID 10002
 process with only the control ID received Money403. Same-container ineligible
 executables received explicit Workload API PermissionDenied.
 
@@ -125,7 +125,7 @@ User/entrypoint/labels and same config, with distinct actual index/platform
 hashes. A digest alias is created only for the matching imported descriptor.
 Actual CRI ImageID and final artifact provenance remain separate freeze inputs.
 
-The new exact-ID adapter is work in progress: UID10002/own source, current UI
+The new exact-ID adapter is work in progress: UID 10002/own source, current UI
 credential checks before/after bounded body, exact fixed fields/caller role,
 shared two slots and original deadlines, own UDS only, bounded correlated reply,
 and no redirects/reuse. Focused tests cover wrong peers, duplicate/extra/case-
@@ -235,7 +235,7 @@ unconfirmed.
 
 Clean source `18c5f51aa4d373aef1bdfe3da8d005a48f72cedb`, run `565d3a7e420f`,
 reached full native dependency readiness with actual regular application sidecars,
-separate in-cluster SPIRE/PSAT/CSI, both real UID10002 adapters, observed immutable
+separate in-cluster SPIRE/PSAT/CSI, both real UID 10002 adapters, observed immutable
 requesting-container/ReplicaSet owner bindings and the monotonic setup observer.
 The native-sidecar Kafka admin Job completed and its credentials were removed.
 Exported normal image inventory contains ten runtime components, no adversarial
@@ -327,3 +327,52 @@ failure probe was run for this documentation amendment.
    verify public HTTPS/PIDs, retained-state/default-context equality and final
    source/artifact/config hashes. Publish honest core/deferred evidence for
    independent review. No crash/outage/issuer-integrity/failure-injection work.
+
+
+## Retained core runtime and parent review — 13 October 2026
+
+Clean `528bc5f` built distinct normal/test artifacts and ran fresh owned
+`8fe59fe9e74c` after checked cleanup of development run `565d3a7e420f`.
+[Sanitized core report](../../../docs/evidence/kubernetes-core-current.json)
+records 64 case/receipt records, seven actual correlated TLS flows, real normal
+UID 1000/10002 wrong-executable/UDS tests, wrong deployment, exact-ID Money/control
+negatives, broker admission versus authenticated JWS rejection reasons and
+UI/control/broker isolation. The auxiliary `security-client` uses existing
+`kafkatest` source with `-s -w`; its own hash/flags are declared and no SVID grant
+uses that hash. Initial wrapper mount/response assertions are documented as
+execution errors; UI history is exactly 2 → 3 (Sync replay), then valid JWS → 4.
+
+The SDK-only bypass error did not identify the aborting peer. Actual current app
+source, bypass annotation, filtered STRICT listener and matching Envoy/no-HTTP
+observation support mesh-boundary denial; a separate outer OpenSSL observer
+verified exact mesh server URI/root and observed certificate-required alert.
+OpenSSL observers are not claimed SPIRE-attested and receive no private key.
+Normal-role generic network errors are classified with matched Envoy and TCP
+RBAC-denial delta, not passed as Workload API rejection.
+
+Parent thread `01a12b31-9ead-7e92-a024-23860cfe5d8f` independently reviewed source,
+retained runtime evidence, actual layers/negative boundaries, restored five
+registrations/configuration and protected coexistence: substantive PASS.
+Configuration SHA is `758eeb4f856d99a0c4dc171b6870fda3e34cc213a587bf92ee267da9ca442f44`.
+Temporary grants/policies/files/JWS are removed; five normal Pods remain ready
+with zero restarts under 4 GiB / 3 CPU. Protected public/state/default context match.
+Relevant uncached Go race/tagged/vet/JOSE, 42 Python/browser checks pass.
+
+Approved main contracts/RFC/runbook/TODO are reconciled in the evidence-only
+follow-up. Final docs/evidence consistency review remains pending; owner
+acceptance is separate. Deferred reliability stays DEFERRED. No comparison,
+benchmark, changed connection mode or public cutover is included.
+
+Final parent docs review approved the bounded compatibility/description/spacing
+corrections conditional on strict validation. The condition passed: 12/12
+post-sync items, separately from the original 10-item clean-source test result;
+Go formatting and diff checks pass. No application source/configuration changed,
+no runtime suite was repeated and the restored normal run remains ready. Owner
+acceptance stays separate. The earlier Kafka change remains in its original
+location with its current approved UI-05 block carried forward for compatibility.
+
+Parent independently verified the final documentation corrections, strict 12/12
+validation, source equality, links, declared proof modes and preserved approval
+history: final documentation/evidence consistency PASS, 13 October 2026.
+Tasks 7.1/7.2 are complete; owner acceptance remains pending. No archival move
+or new application/runtime change was made.

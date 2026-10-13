@@ -29,7 +29,7 @@ Review [proposal](proposal.md), [design](design.md), [profile](profile.md),
 [seven deltas](specs/), [tasks](tasks.md), [acceptance](acceptance.md),
 [references](references.md) and [structural validation](validation.md) together.
 Decisions include one owned kind node/enforcing Calico, default Istiod CA,
-independent SPIRE 1.14 built-in process+K8s gate, UID10002 control-only adapters,
+independent SPIRE 1.14 built-in process+K8s gate, UID 10002 control-only adapters,
 public-bundle projection, disposable guarded reset and exact freeze/proof limits.
 
 ## Historical independent parent drafting review — PASS
@@ -133,3 +133,30 @@ Computed from sorted `path + tab + SHA256(file) + newline` for the same 14
 normative paths in the original manifest; review/implementation audit text is
 excluded. The original manifest is not rewritten. The documentation Git commit
 is reported with this batch for independent review.
+
+
+## Independent implementation/core review — 13 October 2026
+
+Parent orchestrator thread `01a12b31-9ead-7e92-a024-23860cfe5d8f` explicitly reported
+PASS for clean source `528bc5f` and the retained core runtime, after independent
+source/tests/live selectors/artifacts/mounts/policies/resources inspection and
+actual TLS/negative/receipt/restoration verification. [Evidence](../../../docs/evidence/kubernetes-core-current.json)
+records modes and limits. It authorized the evidence-only specs/RFC/runbook/TODO
+reconciliation and final commit/push, leaving the restored normal run ready.
+Final docs/evidence consistency review is pending. This is independent technical
+review, not a new owner behavioral approval or owner acceptance. Original and
+narrowed approval messages/manifests above remain unchanged.
+
+Final parent docs review approved the bounded compatibility/description/spacing
+corrections conditional on strict validation. The condition passed: 12/12
+post-sync items, separately from the original 10-item clean-source test result;
+Go formatting and diff checks pass. No application source/configuration changed,
+no runtime suite was repeated and the restored normal run remains ready. Owner
+acceptance stays separate. The earlier Kafka change remains in its original
+location with its current approved UI-05 block carried forward for compatibility.
+
+Parent independently verified the final documentation corrections, strict 12/12
+validation, source equality, links, declared proof modes and preserved approval
+history: final documentation/evidence consistency PASS, 13 October 2026.
+Tasks 7.1/7.2 are complete; owner acceptance remains pending. No archival move
+or new application/runtime change was made.

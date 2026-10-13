@@ -97,3 +97,15 @@ This is separate from the earlier planning-artifact PASS. Owner acceptance of
 the finished implementation remains pending. The original approved normative
 revision/manifest above remains the authorization record, and no Kafka public
 deployment is authorized or performed.
+
+
+## Current-base compatibility — 13 October 2026
+
+The already-applied UI-05 delta retains the Kubernetes adapter scenario now
+present in the current spec, from the separately owner-approved
+[Kubernetes change](../add-kubernetes-double-mtls-baseline/review.md). This
+carry-forward prevents strict validation from treating the historical modified
+block as removing that current scenario. Original approval revisions/manifests
+and owner-acceptance status remain unchanged; this is no new Kafka behavior,
+implementation, acceptance claim or archive. Do not reapply this historical
+already-synced delta over later current contracts.

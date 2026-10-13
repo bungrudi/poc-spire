@@ -16,7 +16,7 @@ or claims about this public demo.
 
 
 - **Status:** implementation authorized; identity substrate, money API and internal callers/control verified in the measured UID-1000/native-agent layout; simplified HTTPS UI implemented; isolated integration passes; owner-approved public deployment live and verified
-- **Scope:** Go services on one Docker Compose host; fake money only
+- **Scope:** fake-money Go services in the public Compose profile and approved isolated Kafka/owned Kubernetes profiles
 - **Decision authority:** project owner
 - **Related:** [workspace brief](../../WORKSPACE.md), [TODO list](../../TODO.md), [delivery plan](../plan.md)
 - **Supersedes:** earlier localhost-only UI assumption
@@ -56,6 +56,26 @@ PKI, containers and state are fully isolated; this extension is not deployed to
 the public demo and adds no persistent host credentials or security changes.
 Original T01–T23 and historical OIDC material below retain their original scope.
 
+## Approved Kubernetes/Istio baseline — 13 October 2026
+
+The opt-in [owned baseline](../kubernetes-baseline.md) places the complete fixed
+five-scenario profile, SPIRE/PSAT/CSI and Kafka inside one disposable kind cluster.
+Istio's default CA authenticates outer Pod/service-account TLS independently of
+inner SPIRE Money/control mTLS and conventional broker TLS/DN admission plus JWS.
+Money still terminates mandatory inner TLS in Go and applies exact-ID permissions.
+Caller Pods retain UID 1000; distinct UID 10002, control-only SPIRE adapters accept
+only UI's exact SVID and forward to their own UID-checked UDS. Shared Pod mesh
+identity grants no application identity, transfer permission or foreign keys.
+Browser HTTPS uses owned loopback forwarding; the existing public demo remains.
+
+[Core evidence](../evidence/kubernetes-core-current.json) records exact tested
+source/artifacts, actual layer/negative proof, restored boundaries and independent
+source/runtime review. On a failed/corrupt run the operator stops and recreates
+its whole owned cluster. Extended automatic integrity/lineage/recovery and fault
+injection are DEFERRED, as are comparison/benchmark/public cutover. No durable
+Money, continuous process integrity or host-compromise protection is added.
+Final docs consistency review passed; owner acceptance remains separate.
+
 ## 1. Summary
 
 Build a remote HTTPS learning demo with an assumed operator with two buttons: **Transfer as trusted process** and **Transfer as unidentified process**. Each button tells the selected Go process to initiate its own direct connection to a money service. The money service requires SPIFFE mTLS and authorizes the exact caller SPIFFE ID in Go. It does not trust browser-supplied identities, network location, or a sidecar's forwarded identity headers.
@@ -80,12 +100,12 @@ The owner intentionally assumes the **human operator** for this learning demo. W
 2. Demonstrate that same UID, network reachability, knowledge of the expected SPIFFE ID, and Workload API socket access are insufficient to impersonate the trusted executable.
 3. Make both the successful transfer and the identity-based rejection visible in the remote UI.
 4. Retain browser CSRF/origin/Host controls and duplicate prevention while disclosing the explicit assumed-human scope.
-5. Keep startup, teardown, identity inspection, and negative tests reproducible with Compose.
+5. Keep startup, teardown, identity inspection, and negative tests reproducible with Compose or the approved owned Kubernetes profile.
 6. Describe limits explicitly; avoid equating container identity, executable attestation, and runtime integrity.
 
 ### Non-goals
 
-- Real money, persistent accounting, bank integration, Kubernetes, service mesh, multi-host federation, or high availability.
+- Real money, persistent accounting, bank integration, multi-host federation, or high availability.
 - A distinct SPIFFE ID per PID or per click.
 - Resistance to a compromised Docker host/daemon, SPIRE control plane/agent, UI, or authorized caller.
 - Protection after an authorized private key/session is stolen; immediate revocation of already-issued credentials.

@@ -65,6 +65,15 @@ observations. The synchronous public deployment remains unchanged.
 - [x] Complete independent review of the final source/evidence revision; parent [PASS and separate rerun evidence](docs/evidence/kafka-independent-review.json), 12 October 2026.
 - [ ] Obtain owner acceptance of the implemented learning profile based on evidence.
 
+## Approved Kubernetes/Istio baseline — 13 October 2026
+
+The isolated complete baseline and retained core security checks pass on clean
+`528bc5f`; [runtime/evidence](docs/kubernetes-baseline.md) records five scenarios,
+actual double TLS, attestation/authorization/JWS and restored boundaries/resources.
+Parent independent source/runtime review passed. Final docs consistency review passed;
+owner acceptance remains pending in [tasks](openspec/changes/add-kubernetes-double-mtls-baseline/tasks.md).
+Extended reliability is DEFERRED; the public/Compose profiles are unchanged.
+
 ## Original milestone checklist — historical
 
 The P0–P6 entries below preserve the 5 October implementation sequence and its

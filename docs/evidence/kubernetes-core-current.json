@@ -1,0 +1,3137 @@
+{
+  "Money_live_STRICT_listener": {
+    "money_pod_uid": "c6c116ab-7fe7-4cff-8c21-36418d71b745",
+    "port_8443_mesh_tls_filter_chains": [
+      {
+        "filter_chain_match": {
+          "destination_port": 8443,
+          "transport_protocol": "tls"
+        },
+        "require_client_certificate": true,
+        "tls_params": {
+          "cipher_suites": [
+            "ECDHE-ECDSA-AES256-GCM-SHA384",
+            "ECDHE-RSA-AES256-GCM-SHA384",
+            "ECDHE-ECDSA-AES128-GCM-SHA256",
+            "ECDHE-RSA-AES128-GCM-SHA256",
+            "AES256-GCM-SHA384",
+            "AES128-GCM-SHA256"
+          ],
+          "tls_maximum_protocol_version": "TLSv1_3",
+          "tls_minimum_protocol_version": "TLSv1_3"
+        },
+        "validation_context": {
+          "default_validation_context": {
+            "match_subject_alt_names": [
+              {
+                "prefix": "spiffe://cluster.local/"
+              }
+            ]
+          },
+          "validation_context_sds_secret_config": {
+            "name": "ROOTCA",
+            "sds_config": {
+              "api_config_source": {
+                "api_type": "GRPC",
+                "grpc_services": [
+                  {
+                    "envoy_grpc": {
+                      "cluster_name": "sds-grpc"
+                    }
+                  }
+                ],
+                "set_node_on_first_message_only": true,
+                "transport_api_version": "V3"
+              },
+              "initial_fetch_timeout": "0s",
+              "resource_api_version": "V3"
+            }
+          }
+        }
+      }
+    ],
+    "run": "8fe59fe9e74c"
+  },
+  "UI_broker_network_isolation": {
+    "classification": "UI no server certificate and upstream UF/URX; allowed caller verifies broker CA/hostname. This control proves reachability, not successful broker client admission.",
+    "probes": {
+      "records": [
+        {
+          "at_utc": "2026-10-13T05:03:28.781213+00:00",
+          "broker_chain_hostname_verified": true,
+          "exit_code": 0,
+          "mode": "existing OpenSSL UID1000 in actual owned Pod network namespace, authenticated public broker CA, exact hostname kafka, no client key/certificate; observer process is not claimed SPIRE-attested",
+          "pod_ip": "10.245.9.203",
+          "pod_uid": "91e4edfc-e007-48c4-8ecc-bd60b9c29866",
+          "role": "caller-trusted",
+          "server_certificate_received": true,
+          "tls_client_certificate_rejected": false
+        },
+        {
+          "at_utc": "2026-10-13T05:03:28.907589+00:00",
+          "broker_chain_hostname_verified": false,
+          "exit_code": 1,
+          "mode": "existing OpenSSL UID1000 in actual owned Pod network namespace, authenticated public broker CA, exact hostname kafka, no client key/certificate; observer process is not claimed SPIRE-attested",
+          "pod_ip": "10.245.9.202",
+          "pod_uid": "33db7626-7e64-4afa-993a-eff09f3bd354",
+          "role": "ui",
+          "server_certificate_received": false,
+          "tls_client_certificate_rejected": false
+        }
+      ],
+      "run": "8fe59fe9e74c"
+    },
+    "source_envoy": {
+      "events": [
+        {
+          "connection": "21597",
+          "downstream_local": "10.246.17.166:9093",
+          "downstream_peer": "-",
+          "downstream_remote": "10.245.9.202:59318",
+          "downstream_tls": "-",
+          "flags": "UF,URX",
+          "start": "2026-10-13T05:03:29.000Z",
+          "upstream": "10.245.9.204:9093",
+          "upstream_local": "-",
+          "upstream_peer": "-",
+          "upstream_tls": "-"
+        }
+      ],
+      "role": "ui"
+    }
+  },
+  "UI_run_history": {
+    "accepted_trusted_JWS_added_one_transfer_to_version": 4,
+    "authenticated_final_balances": {
+      "balances": {
+        "demo-a": 99600,
+        "demo-b": 100400
+      },
+      "expected_server_id": "spiffe://poc.internal/money",
+      "server_verified": true,
+      "version": 4
+    },
+    "final_five_scenario_wrapper_ledger_version": 3,
+    "initial_final_wrapper_ledger_version": 2,
+    "preliminary_wrapper_dispatches": "two authorized Sync transfers before response-field assertion fixes; not failed identity/business cases",
+    "trusted_Sync_in_final_wrapper": "same-key replay of an already committed setup attempt"
+  },
+  "actual_correlated_TLS_flows": [
+    {
+      "flow": "spiffe://poc.internal/caller/trusted \u2192 money/money",
+      "inner": {
+        "at_utc": "2026-10-13T04:19:44.246248107Z",
+        "event": "money_request",
+        "local": "10.245.9.206:8443",
+        "method": "POST",
+        "path": "/transfer",
+        "remote": "127.0.0.6:33007",
+        "status": 200,
+        "tls_session_resumed": false,
+        "tls_version": "TLS 1.3",
+        "verified_peer": "spiffe://poc.internal/caller/trusted"
+      },
+      "mode": "actual inner TLS audit plus destination Envoy tuple/time/identity",
+      "outer": {
+        "connection": "319",
+        "downstream_local": "10.245.9.206:8443",
+        "downstream_peer": "spiffe://cluster.local/ns/poc-8fe59fe9e74c/sa/caller-trusted",
+        "downstream_remote": "10.245.9.203:59880",
+        "downstream_tls": "TLSv1.3",
+        "flags": "-",
+        "start": "2026-10-13T04:19:44.236Z",
+        "upstream": "10.245.9.206:8443",
+        "upstream_local": "127.0.0.6:33007",
+        "upstream_peer": "-",
+        "upstream_tls": "-"
+      }
+    },
+    {
+      "flow": "spiffe://poc.internal/ui \u2192 money/money",
+      "inner": {
+        "at_utc": "2026-10-13T04:19:03.676235Z",
+        "event": "money_request",
+        "local": "10.245.9.206:8443",
+        "method": "GET",
+        "path": "/balances",
+        "remote": "127.0.0.6:44755",
+        "status": 200,
+        "tls_session_resumed": false,
+        "tls_version": "TLS 1.3",
+        "verified_peer": "spiffe://poc.internal/ui"
+      },
+      "mode": "actual inner TLS audit plus destination Envoy tuple/time/identity",
+      "outer": {
+        "connection": "150",
+        "downstream_local": "10.245.9.206:8443",
+        "downstream_peer": "spiffe://cluster.local/ns/poc-8fe59fe9e74c/sa/ui",
+        "downstream_remote": "10.245.9.202:44774",
+        "downstream_tls": "TLSv1.3",
+        "flags": "-",
+        "start": "2026-10-13T04:19:03.668Z",
+        "upstream": "10.245.9.206:8443",
+        "upstream_local": "127.0.0.6:44755",
+        "upstream_peer": "-",
+        "upstream_tls": "-"
+      }
+    },
+    {
+      "flow": "spiffe://poc.internal/ui \u2192 caller-trusted/adapter",
+      "inner": {
+        "at_utc": "2026-10-13T04:19:44.247859095Z",
+        "event": "control_request",
+        "local": "10.245.9.203:9001",
+        "method": "POST",
+        "path": "/attempt",
+        "remote": "127.0.0.6:58169",
+        "role": "trusted",
+        "status": 200,
+        "tls_session_resumed": false,
+        "tls_version": "TLS 1.3",
+        "verified_peer": "spiffe://poc.internal/ui"
+      },
+      "mode": "actual inner TLS audit plus destination Envoy tuple/time/identity",
+      "outer": {
+        "connection": "101",
+        "downstream_local": "10.245.9.203:9001",
+        "downstream_peer": "spiffe://cluster.local/ns/poc-8fe59fe9e74c/sa/ui",
+        "downstream_remote": "10.245.9.202:54606",
+        "downstream_tls": "TLSv1.3",
+        "flags": "-",
+        "start": "2026-10-13T04:19:44.227Z",
+        "upstream": "10.245.9.203:9001",
+        "upstream_local": "127.0.0.6:58169",
+        "upstream_peer": "-",
+        "upstream_tls": "-"
+      }
+    },
+    {
+      "flow": "spiffe://poc.internal/ui \u2192 caller-unidentified/adapter",
+      "inner": {
+        "at_utc": "2026-10-13T04:24:42.373580346Z",
+        "event": "control_request",
+        "local": "10.245.9.205:9001",
+        "method": "POST",
+        "path": "/attempt",
+        "remote": "127.0.0.6:48151",
+        "role": "unidentified",
+        "status": 200,
+        "tls_session_resumed": false,
+        "tls_version": "TLS 1.3",
+        "verified_peer": "spiffe://poc.internal/ui"
+      },
+      "mode": "actual inner TLS audit plus destination Envoy tuple/time/identity",
+      "outer": {
+        "connection": "670",
+        "downstream_local": "10.245.9.205:9001",
+        "downstream_peer": "spiffe://cluster.local/ns/poc-8fe59fe9e74c/sa/ui",
+        "downstream_remote": "10.245.9.202:43580",
+        "downstream_tls": "TLSv1.3",
+        "flags": "-",
+        "start": "2026-10-13T04:24:41.832Z",
+        "upstream": "10.245.9.205:9001",
+        "upstream_local": "127.0.0.6:48151",
+        "upstream_peer": "-",
+        "upstream_tls": "-"
+      }
+    },
+    {
+      "destination_outer": {
+        "connection": "44",
+        "downstream_local": "10.245.9.204:9093",
+        "downstream_peer": "spiffe://cluster.local/ns/poc-8fe59fe9e74c/sa/money",
+        "downstream_remote": "10.245.9.206:53364",
+        "downstream_tls": "TLSv1.3",
+        "flags": "-",
+        "start": "2026-10-13T04:17:18.870Z",
+        "upstream": "10.245.9.204:9093",
+        "upstream_local": "127.0.0.6:56335",
+        "upstream_peer": "-",
+        "upstream_tls": "-"
+      },
+      "flow": "money \u2192 kafka",
+      "inner": {
+        "at_utc": "2026-10-13T04:17:18.912628825Z",
+        "event": "broker_tls_connected",
+        "local": "10.245.9.206:54668",
+        "remote": "10.246.17.166:9093",
+        "tls_session_resumed": false,
+        "tls_version": "TLS 1.3",
+        "verified_peer_name": "kafka"
+      },
+      "mode": "actual conventional broker TLS hook plus source/destination Envoy tuple/time/identity",
+      "source_outer": {
+        "connection": "55",
+        "downstream_local": "10.246.17.166:9093",
+        "downstream_peer": "-",
+        "downstream_remote": "10.245.9.206:54668",
+        "downstream_tls": "-",
+        "flags": "-",
+        "start": "2026-10-13T04:17:18.869Z",
+        "upstream": "10.245.9.204:9093",
+        "upstream_local": "10.245.9.206:53364",
+        "upstream_peer": "spiffe://cluster.local/ns/poc-8fe59fe9e74c/sa/kafka",
+        "upstream_tls": "TLSv1.3"
+      }
+    },
+    {
+      "destination_outer": {
+        "connection": "94",
+        "downstream_local": "10.245.9.204:9093",
+        "downstream_peer": "spiffe://cluster.local/ns/poc-8fe59fe9e74c/sa/caller-trusted",
+        "downstream_remote": "10.245.9.203:47194",
+        "downstream_tls": "TLSv1.3",
+        "flags": "-",
+        "start": "2026-10-13T04:21:50.284Z",
+        "upstream": "10.245.9.204:9093",
+        "upstream_local": "127.0.0.6:43537",
+        "upstream_peer": "-",
+        "upstream_tls": "-"
+      },
+      "flow": "caller-trusted \u2192 kafka",
+      "inner": {
+        "at_utc": "2026-10-13T04:21:50.304583291Z",
+        "event": "broker_tls_connected",
+        "local": "10.245.9.203:40398",
+        "remote": "10.246.17.166:9093",
+        "tls_session_resumed": false,
+        "tls_version": "TLS 1.3",
+        "verified_peer_name": "kafka"
+      },
+      "mode": "actual conventional broker TLS hook plus source/destination Envoy tuple/time/identity",
+      "source_outer": {
+        "connection": "365",
+        "downstream_local": "10.246.17.166:9093",
+        "downstream_peer": "-",
+        "downstream_remote": "10.245.9.203:40398",
+        "downstream_tls": "-",
+        "flags": "-",
+        "start": "2026-10-13T04:21:50.282Z",
+        "upstream": "10.245.9.204:9093",
+        "upstream_local": "10.245.9.203:47194",
+        "upstream_peer": "spiffe://cluster.local/ns/poc-8fe59fe9e74c/sa/kafka",
+        "upstream_tls": "TLSv1.3"
+      }
+    },
+    {
+      "destination_outer": {
+        "connection": "91",
+        "downstream_local": "10.245.9.204:9093",
+        "downstream_peer": "spiffe://cluster.local/ns/poc-8fe59fe9e74c/sa/caller-unidentified",
+        "downstream_remote": "10.245.9.205:34998",
+        "downstream_tls": "TLSv1.3",
+        "flags": "-",
+        "start": "2026-10-13T04:21:40.000Z",
+        "upstream": "10.245.9.204:9093",
+        "upstream_local": "127.0.0.6:56263",
+        "upstream_peer": "-",
+        "upstream_tls": "-"
+      },
+      "flow": "caller-unidentified \u2192 kafka",
+      "inner": {
+        "at_utc": "2026-10-13T04:21:40.029304456Z",
+        "event": "broker_tls_connected",
+        "local": "10.245.9.205:33750",
+        "remote": "10.246.17.166:9093",
+        "tls_session_resumed": false,
+        "tls_version": "TLS 1.3",
+        "verified_peer_name": "kafka"
+      },
+      "mode": "actual conventional broker TLS hook plus source/destination Envoy tuple/time/identity",
+      "source_outer": {
+        "connection": "292",
+        "downstream_local": "10.246.17.166:9093",
+        "downstream_peer": "-",
+        "downstream_remote": "10.245.9.205:33750",
+        "downstream_tls": "-",
+        "flags": "-",
+        "start": "2026-10-13T04:21:39.999Z",
+        "upstream": "10.245.9.204:9093",
+        "upstream_local": "10.245.9.205:34998",
+        "upstream_peer": "spiffe://cluster.local/ns/poc-8fe59fe9e74c/sa/kafka",
+        "upstream_tls": "TLSv1.3"
+      }
+    }
+  ],
+  "actual_normal_boundaries": {
+    "cases": [
+      {
+        "arguments": [
+          "-target",
+          "money:8443",
+          "-expect-denied"
+        ],
+        "binary_sha256": "431ef2e87ac297ef4c2ee2635cb9052dbabe90cb1eb0c9edbf409fdf78bbea35",
+        "container": "adapter",
+        "exit_code": 0,
+        "result": {
+          "gid": 1000,
+          "grpc_code": "PermissionDenied",
+          "network_reachable": true,
+          "result": "no_matching_identity",
+          "role": "ineligible",
+          "socket_reachable": true,
+          "uid": 10002
+        },
+        "role": "caller-trusted"
+      },
+      {
+        "arguments": [
+          "-target",
+          "money:8443",
+          "-expect-denied"
+        ],
+        "binary_sha256": "431ef2e87ac297ef4c2ee2635cb9052dbabe90cb1eb0c9edbf409fdf78bbea35",
+        "container": "adapter",
+        "exit_code": 0,
+        "result": {
+          "gid": 1000,
+          "grpc_code": "PermissionDenied",
+          "network_reachable": true,
+          "result": "no_matching_identity",
+          "role": "ineligible",
+          "socket_reachable": true,
+          "uid": 10002
+        },
+        "role": "caller-unidentified"
+      },
+      {
+        "arguments": [
+          "-socket",
+          "/control/api.sock",
+          "-id",
+          "core-peer-uid-denied"
+        ],
+        "binary_sha256": "46ca2a54608f78af9d4c34fd2b0b0b88fcd46fb5787f3d4592ebbf77dbf61ef9",
+        "container": "caller",
+        "exit_code": 1,
+        "result": {
+          "control_status": 403
+        },
+        "role": "caller-trusted"
+      },
+      {
+        "arguments": [
+          "-socket",
+          "/control/api.sock",
+          "-id",
+          "core-peer-uid-denied"
+        ],
+        "binary_sha256": "46ca2a54608f78af9d4c34fd2b0b0b88fcd46fb5787f3d4592ebbf77dbf61ef9",
+        "container": "caller",
+        "exit_code": 1,
+        "result": {
+          "control_status": 403
+        },
+        "role": "caller-unidentified"
+      }
+    ],
+    "run": "8fe59fe9e74c"
+  },
+  "actual_normal_trusted_caller_wrong_executable": {
+    "cases": [
+      {
+        "arguments": [
+          "-target",
+          "money:8443",
+          "-expect-denied"
+        ],
+        "binary_sha256": "431ef2e87ac297ef4c2ee2635cb9052dbabe90cb1eb0c9edbf409fdf78bbea35",
+        "container": "caller",
+        "exit_code": 0,
+        "result": {
+          "gid": 1000,
+          "grpc_code": "PermissionDenied",
+          "network_reachable": true,
+          "result": "no_matching_identity",
+          "role": "ineligible",
+          "socket_reachable": true,
+          "uid": 1000
+        },
+        "role": "caller-trusted"
+      }
+    ],
+    "run": "8fe59fe9e74c"
+  },
+  "auxiliary_test_artifact": {
+    "CGO_ENABLED": "0",
+    "GOFLAGS": "-p=2",
+    "GOMAXPROCS": "2",
+    "go_build_tags": [
+      "kafkatest"
+    ],
+    "ldflags": "-s -w",
+    "purpose": "auxiliary test-only no-certificate network probe; no SVID grant",
+    "sha256": "fb469f3b26de8aa18678ecf278e700e569f468d021393efb860f9a8ba8153043",
+    "size": 12828856,
+    "source_dirty": false,
+    "source_revision": "528bc5fa5367b46bd2dc1de5676ee766e7fd2187"
+  },
+  "basic_cleanup_repeatability": {
+    "fresh_normal_setup_run": "8fe59fe9e74c",
+    "hidden_node_archive_copies_cleanup": {
+      "hidden_docker_archive_tmp_copies_removed": 3,
+      "temporary_root_view_removed": true,
+      "verified_removed_content_sha256": "431ef2e87ac297ef4c2ee2635cb9052dbabe90cb1eb0c9edbf409fdf78bbea35"
+    },
+    "normal_run_left_ready_for_parent_inspection": true,
+    "old_descriptor_and_runtime_removed_before_start": true,
+    "old_owned_run": "565d3a7e420f",
+    "parent_independent_old_cleanup_seconds": 22.5,
+    "preflight_and_native_bootstrap_passed": true,
+    "prepared_JWS_file_removed": true,
+    "public_cutover": false,
+    "same_pins_and_caps": true,
+    "temporary_tests_removed": true
+  },
+  "cluster": "poc-k8s-8fe59fe9e74c",
+  "core_fixture_case_records": [
+    {
+      "broker_tls": [],
+      "case": "positive-executable",
+      "exit_code": 0,
+      "result": {
+        "gid": 1000,
+        "identities": [
+          "spiffe://poc.internal/ui"
+        ],
+        "network_reachable": true,
+        "result": "expected_identity_issued",
+        "role": "approved",
+        "socket_reachable": true,
+        "uid": 1000
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "UI-read-balances",
+      "exit_code": 0,
+      "result": {
+        "body": {
+          "balances": {
+            "demo-a": 99700,
+            "demo-b": 100300
+          },
+          "version": 3
+        },
+        "money_http_status": 200,
+        "outcome": "money_http_response",
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "UI-transfer-403",
+      "exit_code": 0,
+      "result": {
+        "body": {
+          "error": "forbidden"
+        },
+        "money_http_status": 403,
+        "outcome": "money_http_response",
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "adapter-trusted-ui",
+      "exit_code": 0,
+      "result": {
+        "caller_id": "spiffe://poc.internal/ui",
+        "case": "ui",
+        "expected_server_id": "spiffe://poc.internal/control/caller/trusted",
+        "http_status": 404,
+        "outcome": "permitted_ui_read_verified",
+        "role": "trusted",
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "adapter-trusted-no-cert",
+      "exit_code": 0,
+      "result": {
+        "case": "no-cert",
+        "expected_server_id": "spiffe://poc.internal/control/caller/trusted",
+        "http_status": 0,
+        "outcome": "no_certificate_rejected",
+        "role": "trusted",
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "adapter-trusted-wrong-server",
+      "exit_code": 0,
+      "result": {
+        "caller_id": "spiffe://poc.internal/ui",
+        "case": "wrong-server",
+        "expected_server_id": "spiffe://poc.internal/control/caller/trusted",
+        "http_status": 0,
+        "outcome": "server_identity_mismatch",
+        "role": "trusted",
+        "server_verified": false
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "adapter-unidentified-ui",
+      "exit_code": 0,
+      "result": {
+        "caller_id": "spiffe://poc.internal/ui",
+        "case": "ui",
+        "expected_server_id": "spiffe://poc.internal/control/caller/unidentified",
+        "http_status": 404,
+        "outcome": "permitted_ui_read_verified",
+        "role": "unidentified",
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "adapter-unidentified-no-cert",
+      "exit_code": 0,
+      "result": {
+        "case": "no-cert",
+        "expected_server_id": "spiffe://poc.internal/control/caller/unidentified",
+        "http_status": 0,
+        "outcome": "no_certificate_rejected",
+        "role": "unidentified",
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "adapter-unidentified-wrong-server",
+      "exit_code": 0,
+      "result": {
+        "caller_id": "spiffe://poc.internal/ui",
+        "case": "wrong-server",
+        "expected_server_id": "spiffe://poc.internal/control/caller/unidentified",
+        "http_status": 0,
+        "outcome": "server_identity_mismatch",
+        "role": "unidentified",
+        "server_verified": false
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "Money-no-cert-forged-header",
+      "exit_code": 0,
+      "result": {
+        "outcome": "tls_client_rejected",
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "Money-fake-root-forged-header",
+      "exit_code": 0,
+      "result": {
+        "outcome": "tls_client_rejected",
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "wrong-executable-denial",
+      "exit_code": 0,
+      "result": {
+        "gid": 1000,
+        "grpc_code": "PermissionDenied",
+        "network_reachable": true,
+        "result": "no_matching_identity",
+        "role": "ineligible",
+        "socket_reachable": true,
+        "uid": 1000
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "wrong-executable-verified-destination",
+      "exit_code": 0,
+      "result": {
+        "destination_verified": true,
+        "gid": 1000,
+        "grpc_code": "PermissionDenied",
+        "issuance": "no_matching_identity",
+        "local_tcp_connectivity_only": true,
+        "money_http_status": 0,
+        "outcome": "verified_money_no_certificate_rejected",
+        "uid": 1000
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "wrong-executable-closed-upstream-control",
+      "exit_code": 0,
+      "result": {
+        "destination_verified": false,
+        "gid": 1000,
+        "grpc_code": "PermissionDenied",
+        "issuance": "no_matching_identity",
+        "local_tcp_connectivity_only": true,
+        "money_http_status": 0,
+        "outcome": "destination_not_verified",
+        "uid": 1000
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "valid-wrong-ID-Money-403",
+      "exit_code": 0,
+      "result": {
+        "body": {
+          "error": "forbidden"
+        },
+        "money_http_status": 403,
+        "outcome": "money_http_response",
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "adapter-trusted-wrong-id",
+      "exit_code": 0,
+      "result": {
+        "caller_id": "spiffe://poc.internal/test/control-client",
+        "case": "wrong-id",
+        "expected_server_id": "spiffe://poc.internal/control/caller/trusted",
+        "http_status": 403,
+        "outcome": "valid_wrong_identity_denied",
+        "role": "trusted",
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "adapter-unidentified-wrong-id",
+      "exit_code": 0,
+      "result": {
+        "caller_id": "spiffe://poc.internal/test/control-client",
+        "case": "wrong-id",
+        "expected_server_id": "spiffe://poc.internal/control/caller/unidentified",
+        "http_status": 403,
+        "outcome": "valid_wrong_identity_denied",
+        "role": "unidentified",
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "same-approved-binary-wrong-deployment",
+      "exit_code": 0,
+      "result": {
+        "gid": 1000,
+        "grpc_code": "PermissionDenied",
+        "network_reachable": true,
+        "result": "no_matching_identity",
+        "role": "approved",
+        "socket_reachable": true,
+        "uid": 1000
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "wrong-deployment-verified-destination",
+      "exit_code": 0,
+      "result": {
+        "destination_verified": true,
+        "gid": 1000,
+        "grpc_code": "PermissionDenied",
+        "issuance": "no_matching_identity",
+        "local_tcp_connectivity_only": true,
+        "money_http_status": 0,
+        "outcome": "verified_money_no_certificate_rejected",
+        "uid": 1000
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "adapter-trusted-ui",
+      "exit_code": 0,
+      "result": {
+        "caller_id": "spiffe://poc.internal/ui",
+        "case": "ui",
+        "expected_server_id": "spiffe://poc.internal/control/caller/trusted",
+        "http_status": 404,
+        "outcome": "permitted_ui_read_verified",
+        "role": "trusted",
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "valid-app-no-outer-Money-denied",
+      "exit_code": 1,
+      "result": {
+        "outcome": "transport_failure",
+        "server_verified": false
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:22.917092266Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:52958",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:22.93268145Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:52964",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "broker-admitted-wrong-signer",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "digest": "857ebb954d21c50bf6c77a3b19b816db4f76ac51ccc7b4a496842866c5c24ee2"
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:23.768014429Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:52974",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:23.784927324Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:52976",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-valid",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "valid",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865823,
+          "deadline": 1791865943,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "71b13d197468973fb4e19609f6c448447eb370eb33cf4c4280869867b0930630",
+        "expires_at": 1791865853,
+        "request_id": "core-valid",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:24.876712654Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55494",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:24.910244918Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55510",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-tampered",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "tampered",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865824,
+          "deadline": 1791865944,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "2450a721ec84d890c19c0ee529ebf59134f971f3c00b8ffd058d891aaafd5de1",
+        "expires_at": 1791865854,
+        "request_id": "core-tampered",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:25.470914504Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55512",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:25.487929149Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55514",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-fake-root",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "fake-root",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865825,
+          "deadline": 1791865945,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "9d6fd0c523212a9ebd4f0556ab1e67b744cd8031fbb5800bd0caa54689da3bf5",
+        "expires_at": 1791865855,
+        "request_id": "core-fake-root",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:25.911284683Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55518",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:25.923761594Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55532",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-wrong-type",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "wrong-type",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865825,
+          "deadline": 1791865945,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "other.type",
+          "version": 1
+        },
+        "digest": "dd116ce735caed23655287c05e228c135b370f94755e550063e23b9368f46525",
+        "expires_at": 1791865855,
+        "request_id": "core-wrong-type",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:26.971162802Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55534",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:26.985914478Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55550",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-wrong-environment",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "wrong-environment",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865826,
+          "deadline": 1791865946,
+          "environment": "other-environment",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "aa6810fe327d3af78c04f20d1f7c6a848066232f630042a03ceeaa038bca8343",
+        "expires_at": 1791865856,
+        "request_id": "core-wrong-environment",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:28.284061553Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55566",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:28.303337444Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55570",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-wrong-audience",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "wrong-audience",
+        "context": {
+          "audience": "spiffe://poc.internal/ui",
+          "created_at": 1791865828,
+          "deadline": 1791865948,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "f1f68b1887f7e15ff85b4d5ccd00eb45a82dea8cf4202ae4997da8ae9b03511a",
+        "expires_at": 1791865858,
+        "request_id": "core-wrong-audience",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:28.903206236Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55586",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:28.91824501Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55602",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-wrong-stream",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "wrong-stream",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865828,
+          "deadline": 1791865948,
+          "environment": "poc-spire-isolated",
+          "stream_id": "ffffffffffffffffffffffffffffffff",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "50cdbb6bf8bc035a2a88ab97479a8e7240a4d2ae4e4504c47614a39feba2c9d6",
+        "expires_at": 1791865858,
+        "request_id": "core-wrong-stream",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:29.77505749Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55608",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:29.788322194Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55618",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-wrong-topic",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "wrong-topic",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865829,
+          "deadline": 1791865949,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68.other",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "fd7682dc0e08128a83525eb33c24125e77555c98d7abf1eab050dba4d6ea058f",
+        "expires_at": 1791865859,
+        "request_id": "core-wrong-topic",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:30.964654719Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55620",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:30.977831112Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55622",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-wrong-key",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "wrong-key",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865830,
+          "deadline": 1791865950,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "f6efce45967ced414fe18c5c45f5ad835705a075c207ff996aa778adf95051aa",
+        "expires_at": 1791865860,
+        "request_id": "core-wrong-key",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:32.004513007Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55636",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:32.024439728Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55652",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-headers",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "headers",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865831,
+          "deadline": 1791865951,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "f2188a22b3ec4bbca3616067d6fc7c89ce08b757d191c8b09d7fc0f8bc0d84f9",
+        "expires_at": 1791865861,
+        "request_id": "core-headers",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:32.674091068Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55664",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:32.692146805Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55666",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-stripped",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "stripped",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865832,
+          "deadline": 1791865952,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "6c0d2562109d8ed3ed1831a76b9b060eacba49ddbf4924e00c5390505ed19db9",
+        "expires_at": 1791865862,
+        "request_id": "core-stripped",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:33.586391854Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55676",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:33.616660421Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:55680",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-none",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "none",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865833,
+          "deadline": 1791865953,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "1cee2abe19553e3626d330d224bdc86b221f8b5b32da64066806933a9289d1dd",
+        "expires_at": 1791865863,
+        "request_id": "core-none",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:34.669815185Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:39216",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:34.697985483Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:39218",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-hs256",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "hs256",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865834,
+          "deadline": 1791865954,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "7eaf096611dd0983f4ea9fc1fc7eb7523a8b79cfb372951c3ab0044a86126f0b",
+        "expires_at": 1791865864,
+        "request_id": "core-hs256",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:35.406061631Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:39220",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:35.46388771Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:39232",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-es384",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "es384",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865835,
+          "deadline": 1791865955,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "769cc7700f2c43d323fa1855e46931ded3687c30463742a6d77be83f6253e1d4",
+        "expires_at": 1791865865,
+        "request_id": "core-es384",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:35.959320812Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:39240",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:35.984162859Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:39250",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-der",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "der",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865835,
+          "deadline": 1791865955,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "8ec35157ed9af9a18778a8378b5c167f1f675ffa55656c78e92bfb09af0bf605",
+        "expires_at": 1791865865,
+        "request_id": "core-der",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:36.679235705Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:39258",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:36.701074092Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:39264",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-unknown-header",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "unknown-header",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865836,
+          "deadline": 1791865956,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "3201e7cc00504f3ed8b32de05e22d4e559f113680e35eb88e9bf239e2d302e71",
+        "expires_at": 1791865866,
+        "request_id": "core-unknown-header",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:39.77977886Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:39274",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:39.793789282Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:39284",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-expired-message",
+      "exit_code": 0,
+      "result": {
+        "broker_queued": true,
+        "case": "expired-message",
+        "context": {
+          "audience": "spiffe://poc.internal/money",
+          "created_at": 1791865837,
+          "deadline": 1791865957,
+          "environment": "poc-spire-isolated",
+          "stream_id": "2eb5b29ebbd14b608aff8993ee637f68",
+          "topic": "poc.spire.commands.2eb5b29ebbd14b608aff8993ee637f68",
+          "type": "fake.transfer.v1",
+          "version": 1
+        },
+        "digest": "1efec69478bd34dc54bf7ccd0dcf0b88ab97c6f048ccc761bd57109fc66daf8a",
+        "expires_at": 1791865838,
+        "request_id": "core-expired-message",
+        "svid_not_after": 1791865912
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "JWS-wrong-reader",
+      "exit_code": 0,
+      "result": {
+        "query_http_status": 403,
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "JWS-no-certificate-reader",
+      "exit_code": 0,
+      "result": {
+        "money_http_status_present": false,
+        "outcome": "tls_client_rejected",
+        "server_verified": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "JWS-broker-wrong-host",
+      "exit_code": 0,
+      "result": {
+        "tls_hostname_rejected": true
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:42.265846994Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:39308",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-broker-topic-denied",
+      "exit_code": 0,
+      "result": {
+        "broker_topic_denied": true,
+        "idempotent_write_disabled": true
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:42.652068182Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:39318",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        },
+        {
+          "at_utc": "2026-10-13T04:30:42.672274508Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.214:39322",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "JWS-broker-group-denied",
+      "exit_code": 0,
+      "result": {
+        "broker_group_denied": true
+      }
+    },
+    {
+      "broker_tls": [
+        {
+          "at_utc": "2026-10-13T04:30:52.146103863Z",
+          "event": "broker_tls_connected",
+          "local": "10.245.9.215:33222",
+          "remote": "10.246.17.166:9093",
+          "tls_session_resumed": false,
+          "tls_version": "TLS 1.3",
+          "verified_peer_name": "kafka"
+        }
+      ],
+      "case": "broker-rogue-principal-denied",
+      "exit_code": 0,
+      "result": {
+        "broker_topic_denied": true,
+        "idempotent_write_disabled": true
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-wrong-signer",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "857ebb954d21c50bf6c77a3b19b816db4f76ac51ccc7b4a496842866c5c24ee2",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865822,
+          "reason": "unauthorized_signer",
+          "retain_until": 1791866002,
+          "verified_producer_id": "spiffe://poc.internal/ui"
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-valid",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "business_code": 200,
+          "business_result": {
+            "amount_minor": 100,
+            "balances": {
+              "demo-a": 99600,
+              "demo-b": 100400
+            },
+            "currency": "USD",
+            "replay": false,
+            "request_id": "core-valid",
+            "transfer_id": "b513046bd64183a03035887ca5af3a4284aacf08b97aa67cf4e2a357db0cea17",
+            "verified_caller_id": "spiffe://poc.internal/caller/trusted",
+            "version": 4
+          },
+          "digest": "71b13d197468973fb4e19609f6c448447eb370eb33cf4c4280869867b0930630",
+          "disposition": "applied",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865823,
+          "reason": "transfer_applied",
+          "request_id": "core-valid",
+          "retain_until": 1791866003,
+          "verified_producer_id": "spiffe://poc.internal/caller/trusted"
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-tampered",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "2450a721ec84d890c19c0ee529ebf59134f971f3c00b8ffd058d891aaafd5de1",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865824,
+          "reason": "invalid_signature",
+          "retain_until": 1791866004
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-fake-root",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "9d6fd0c523212a9ebd4f0556ab1e67b744cd8031fbb5800bd0caa54689da3bf5",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865825,
+          "reason": "untrusted_svid",
+          "retain_until": 1791866005
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-wrong-type",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "dd116ce735caed23655287c05e228c135b370f94755e550063e23b9368f46525",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865825,
+          "reason": "context_mismatch",
+          "retain_until": 1791866005,
+          "verified_producer_id": "spiffe://poc.internal/caller/trusted"
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-wrong-environment",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "aa6810fe327d3af78c04f20d1f7c6a848066232f630042a03ceeaa038bca8343",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865826,
+          "reason": "context_mismatch",
+          "retain_until": 1791866006,
+          "verified_producer_id": "spiffe://poc.internal/caller/trusted"
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-wrong-audience",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "f1f68b1887f7e15ff85b4d5ccd00eb45a82dea8cf4202ae4997da8ae9b03511a",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865828,
+          "reason": "context_mismatch",
+          "retain_until": 1791866008,
+          "verified_producer_id": "spiffe://poc.internal/caller/trusted"
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-wrong-stream",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "50cdbb6bf8bc035a2a88ab97479a8e7240a4d2ae4e4504c47614a39feba2c9d6",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865828,
+          "reason": "context_mismatch",
+          "retain_until": 1791866008,
+          "verified_producer_id": "spiffe://poc.internal/caller/trusted"
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-wrong-topic",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "fd7682dc0e08128a83525eb33c24125e77555c98d7abf1eab050dba4d6ea058f",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865829,
+          "reason": "context_mismatch",
+          "retain_until": 1791866009,
+          "verified_producer_id": "spiffe://poc.internal/caller/trusted"
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-wrong-key",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "f6efce45967ced414fe18c5c45f5ad835705a075c207ff996aa778adf95051aa",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865830,
+          "reason": "context_mismatch",
+          "retain_until": 1791866010,
+          "verified_producer_id": "spiffe://poc.internal/caller/trusted"
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-headers",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "f2188a22b3ec4bbca3616067d6fc7c89ce08b757d191c8b09d7fc0f8bc0d84f9",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865832,
+          "reason": "unsupported_kafka_headers",
+          "retain_until": 1791866012
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-stripped",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "6c0d2562109d8ed3ed1831a76b9b060eacba49ddbf4924e00c5390505ed19db9",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865832,
+          "reason": "malformed_signature",
+          "retain_until": 1791866012
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-none",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "1cee2abe19553e3626d330d224bdc86b221f8b5b32da64066806933a9289d1dd",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865833,
+          "reason": "unsupported_header",
+          "retain_until": 1791866013
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-hs256",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "7eaf096611dd0983f4ea9fc1fc7eb7523a8b79cfb372951c3ab0044a86126f0b",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865834,
+          "reason": "unsupported_header",
+          "retain_until": 1791866014
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-es384",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "769cc7700f2c43d323fa1855e46931ded3687c30463742a6d77be83f6253e1d4",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865835,
+          "reason": "unsupported_header",
+          "retain_until": 1791866015
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-der",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "8ec35157ed9af9a18778a8378b5c167f1f675ffa55656c78e92bfb09af0bf605",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865835,
+          "reason": "malformed_signature",
+          "retain_until": 1791866015
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-unknown-header",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "3201e7cc00504f3ed8b32de05e22d4e559f113680e35eb88e9bf239e2d302e71",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865836,
+          "reason": "malformed_header",
+          "retain_until": 1791866016
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "receipt-expired-message",
+      "exit_code": 0,
+      "result": {
+        "case": "receipt",
+        "query_http_status": 200,
+        "receipt": {
+          "digest": "1efec69478bd34dc54bf7ccd0dcf0b88ab97c6f048ccc761bd57109fc66daf8a",
+          "disposition": "rejected",
+          "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+          "observed_at": 1791865839,
+          "reason": "message_expired",
+          "retain_until": 1791866019,
+          "verified_producer_id": "spiffe://poc.internal/caller/trusted"
+        }
+      }
+    },
+    {
+      "broker_tls": [],
+      "case": "final-shared-metadata",
+      "exit_code": 0,
+      "result": {
+        "consumer_ready": true,
+        "instance_id": "8ebf77f59f46ab06ece23ac3b75e1583",
+        "stream_id": "2eb5b29ebbd14b608aff8993ee637f68"
+      }
+    }
+  ],
+  "deterministic_verification": {
+    "JOSE_interoperability_with_POC_JOSE_INTEROP_1": "PASS",
+    "Python_result": "PASS",
+    "Python_unittest_cases": 42,
+    "full_Go_race_tests_uncached": "PASS",
+    "go_vet": "PASS",
+    "relevant_kafkatest_Go_race_tests_uncached": "PASS",
+    "shipped_JavaScript_browser_controls": "PASS",
+    "source_revision": "528bc5fa5367b46bd2dc1de5676ee766e7fd2187",
+    "strict_OpenSpec_validation": "PASS",
+    "strict_OpenSpec_validation_items": 10
+  },
+  "exact_temporary_registration_manifests": [
+    {
+      "binary": "security-client",
+      "deleted": true,
+      "id": "2c5a6566-8a4d-419e-9a30-af46adbea3e0",
+      "selectors": [
+        "unix:uid:1000",
+        "unix:sha256:dca9b73d81767395f3523859e5d20b9ea941a9263938e7f382f358f02a35ed4e",
+        "k8s:ns:poc-8fe59fe9e74c",
+        "k8s:sa:probe-core-ui",
+        "k8s:container-name:probe",
+        "k8s:container-image:docker.io/library/import-2026-10-13@sha256:3a505d8be4de50b89f9fc203eca28e3a85e472d487e871e2efb691bd15760a7f",
+        "k8s:pod-uid:c2b7f7e7-0717-4dc1-8192-0733cb1dcc8c",
+        "k8s:pod-label:poc-run:8fe59fe9e74c",
+        "k8s:pod-label:poc-role:probe-core-ui",
+        "k8s:pod-owner-uid:ReplicaSet:f80c4fd8-7d67-4538-b950-2bea2d3dbe9c"
+      ],
+      "sid": "spiffe://poc.internal/ui"
+    },
+    {
+      "binary": "attestation-approved",
+      "deleted": true,
+      "id": "c8791a8d-8cdb-436b-a200-6e888df34344",
+      "selectors": [
+        "unix:uid:1000",
+        "unix:sha256:b23e6c0e1605229fd78d4c6b1dc90b0b85aebc57d06826651d6c9906aa0bef10",
+        "k8s:ns:poc-8fe59fe9e74c",
+        "k8s:sa:probe-core-ui",
+        "k8s:container-name:probe",
+        "k8s:container-image:docker.io/library/import-2026-10-13@sha256:3a505d8be4de50b89f9fc203eca28e3a85e472d487e871e2efb691bd15760a7f",
+        "k8s:pod-uid:c2b7f7e7-0717-4dc1-8192-0733cb1dcc8c",
+        "k8s:pod-label:poc-run:8fe59fe9e74c",
+        "k8s:pod-label:poc-role:probe-core-ui",
+        "k8s:pod-owner-uid:ReplicaSet:f80c4fd8-7d67-4538-b950-2bea2d3dbe9c"
+      ],
+      "sid": "spiffe://poc.internal/ui"
+    },
+    {
+      "binary": "ui",
+      "deleted": true,
+      "id": "5c7a653d-4f87-469b-883f-329c7dada315",
+      "selectors": [
+        "unix:uid:1000",
+        "unix:sha256:8d2d50146945c57547c309a1fb989a53ffc904e338826d61c3665c03dcac8c4a",
+        "k8s:ns:poc-8fe59fe9e74c",
+        "k8s:sa:probe-core-ui",
+        "k8s:container-name:probe",
+        "k8s:container-image:docker.io/library/import-2026-10-13@sha256:3a505d8be4de50b89f9fc203eca28e3a85e472d487e871e2efb691bd15760a7f",
+        "k8s:pod-uid:c2b7f7e7-0717-4dc1-8192-0733cb1dcc8c",
+        "k8s:pod-label:poc-run:8fe59fe9e74c",
+        "k8s:pod-label:poc-role:probe-core-ui",
+        "k8s:pod-owner-uid:ReplicaSet:f80c4fd8-7d67-4538-b950-2bea2d3dbe9c"
+      ],
+      "sid": "spiffe://poc.internal/ui"
+    },
+    {
+      "binary": "security-client",
+      "deleted": true,
+      "id": "afe32cd7-475c-41aa-a698-0948b88ca6b7",
+      "selectors": [
+        "unix:uid:1000",
+        "unix:sha256:dca9b73d81767395f3523859e5d20b9ea941a9263938e7f382f358f02a35ed4e",
+        "k8s:ns:poc-8fe59fe9e74c",
+        "k8s:sa:probe-core-wrong",
+        "k8s:container-name:probe",
+        "k8s:container-image:docker.io/library/import-2026-10-13@sha256:3a505d8be4de50b89f9fc203eca28e3a85e472d487e871e2efb691bd15760a7f",
+        "k8s:pod-uid:d2fc52da-cc05-435f-ae8b-ab6f7b0d7aa0",
+        "k8s:pod-label:poc-run:8fe59fe9e74c",
+        "k8s:pod-label:poc-role:probe-core-wrong",
+        "k8s:pod-owner-uid:ReplicaSet:352ebc9e-dd76-47ad-bf2d-81de69643aec"
+      ],
+      "sid": "spiffe://poc.internal/test/control-client"
+    },
+    {
+      "binary": "security-client",
+      "deleted": true,
+      "id": "e7db1cfc-5275-49d0-975e-a60f41796ebc",
+      "selectors": [
+        "unix:uid:1000",
+        "unix:sha256:dca9b73d81767395f3523859e5d20b9ea941a9263938e7f382f358f02a35ed4e",
+        "k8s:ns:poc-8fe59fe9e74c",
+        "k8s:sa:probe-core-ui",
+        "k8s:container-name:probe",
+        "k8s:container-image:docker.io/library/import-2026-10-13@sha256:3a505d8be4de50b89f9fc203eca28e3a85e472d487e871e2efb691bd15760a7f",
+        "k8s:pod-uid:48f5cf48-e53f-4f0d-9122-9edeab507284",
+        "k8s:pod-label:poc-run:8fe59fe9e74c",
+        "k8s:pod-label:poc-role:probe-core-ui",
+        "k8s:pod-owner-uid:ReplicaSet:8d0b55f2-834f-41bd-9a72-cdee09c2d9d7"
+      ],
+      "sid": "spiffe://poc.internal/ui"
+    },
+    {
+      "binary": "ui",
+      "deleted": true,
+      "id": "6702b074-7195-4e9f-9ea3-decf61a59c04",
+      "selectors": [
+        "unix:uid:1000",
+        "unix:sha256:8d2d50146945c57547c309a1fb989a53ffc904e338826d61c3665c03dcac8c4a",
+        "k8s:ns:poc-8fe59fe9e74c",
+        "k8s:sa:probe-core-ui",
+        "k8s:container-name:probe",
+        "k8s:container-image:docker.io/library/import-2026-10-13@sha256:3a505d8be4de50b89f9fc203eca28e3a85e472d487e871e2efb691bd15760a7f",
+        "k8s:pod-uid:dd7638fe-d34e-4913-a9a1-000762d021bb",
+        "k8s:pod-label:poc-run:8fe59fe9e74c",
+        "k8s:pod-label:poc-role:probe-core-ui",
+        "k8s:pod-owner-uid:ReplicaSet:e331f92c-f820-4861-9e57-a81283e7ea06"
+      ],
+      "sid": "spiffe://poc.internal/ui"
+    },
+    {
+      "binary": "trusted-caller",
+      "deleted": true,
+      "id": "580eade5-e78b-450b-908b-b99f55b1d0f2",
+      "selectors": [
+        "unix:uid:1000",
+        "unix:sha256:978426ba31ea5831ae572f6889b048dd090c307b34e1a57af369ec9a71049d68",
+        "k8s:ns:poc-8fe59fe9e74c",
+        "k8s:sa:probe-core-trusted",
+        "k8s:container-name:probe",
+        "k8s:container-image:docker.io/library/import-2026-10-13@sha256:3a505d8be4de50b89f9fc203eca28e3a85e472d487e871e2efb691bd15760a7f",
+        "k8s:pod-uid:aaec43e5-5159-4146-afd4-a03a4d1d941c",
+        "k8s:pod-label:poc-run:8fe59fe9e74c",
+        "k8s:pod-label:poc-role:probe-core-trusted",
+        "k8s:pod-owner-uid:ReplicaSet:82b46d7a-539a-4dc8-9e1d-42a71dfff1b4"
+      ],
+      "sid": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "binary": "ui",
+      "deleted": true,
+      "id": "815b9e50-93ca-4bcc-8f31-2b6238d9b836",
+      "selectors": [
+        "unix:uid:1000",
+        "unix:sha256:8d2d50146945c57547c309a1fb989a53ffc904e338826d61c3665c03dcac8c4a",
+        "k8s:ns:poc-8fe59fe9e74c",
+        "k8s:sa:probe-core-ui",
+        "k8s:container-name:probe",
+        "k8s:container-image:docker.io/library/import-2026-10-13@sha256:3a505d8be4de50b89f9fc203eca28e3a85e472d487e871e2efb691bd15760a7f",
+        "k8s:pod-uid:c5d4f049-ccab-48cb-a15e-4752d6acb05a",
+        "k8s:pod-label:poc-run:8fe59fe9e74c",
+        "k8s:pod-label:poc-role:probe-core-ui",
+        "k8s:pod-owner-uid:ReplicaSet:f0047301-7534-4911-a2b7-65a6a2851901"
+      ],
+      "sid": "spiffe://poc.internal/ui"
+    },
+    {
+      "binary": "trusted-caller",
+      "deleted": true,
+      "id": "65730888-fbf9-4248-a1c8-2d018f5ec056",
+      "selectors": [
+        "unix:uid:1000",
+        "unix:sha256:978426ba31ea5831ae572f6889b048dd090c307b34e1a57af369ec9a71049d68",
+        "k8s:ns:poc-8fe59fe9e74c",
+        "k8s:sa:probe-core-trusted",
+        "k8s:container-name:probe",
+        "k8s:container-image:docker.io/library/import-2026-10-13@sha256:3a505d8be4de50b89f9fc203eca28e3a85e472d487e871e2efb691bd15760a7f",
+        "k8s:pod-uid:23070746-d2f7-4a54-b8b3-021f54b67830",
+        "k8s:pod-label:poc-run:8fe59fe9e74c",
+        "k8s:pod-label:poc-role:probe-core-trusted",
+        "k8s:pod-owner-uid:ReplicaSet:7fce0db2-61ee-4b16-b28c-f6fc12d3d22a"
+      ],
+      "sid": "spiffe://poc.internal/caller/trusted"
+    },
+    {
+      "binary": "security-client",
+      "deleted": true,
+      "id": "c45e279b-db0a-45b8-a12c-66dff8d815fb",
+      "selectors": [
+        "unix:uid:1000",
+        "unix:sha256:dca9b73d81767395f3523859e5d20b9ea941a9263938e7f382f358f02a35ed4e",
+        "k8s:ns:poc-8fe59fe9e74c",
+        "k8s:sa:probe-core-ui",
+        "k8s:container-name:probe",
+        "k8s:container-image:docker.io/library/import-2026-10-13@sha256:3a505d8be4de50b89f9fc203eca28e3a85e472d487e871e2efb691bd15760a7f",
+        "k8s:pod-uid:fd3b9f33-9eef-4779-93a8-283c3c156476",
+        "k8s:pod-label:poc-run:8fe59fe9e74c",
+        "k8s:pod-label:poc-role:probe-core-ui",
+        "k8s:pod-owner-uid:ReplicaSet:357ec270-9972-48d5-9cae-52fe3582ad53"
+      ],
+      "sid": "spiffe://poc.internal/ui"
+    },
+    {
+      "binary": "security-client",
+      "deleted": true,
+      "id": "2833f42d-0003-498e-a78c-9d29785ddb91",
+      "selectors": [
+        "unix:uid:1000",
+        "unix:sha256:dca9b73d81767395f3523859e5d20b9ea941a9263938e7f382f358f02a35ed4e",
+        "k8s:ns:poc-8fe59fe9e74c",
+        "k8s:sa:probe-core-ui",
+        "k8s:container-name:probe",
+        "k8s:container-image:docker.io/library/import-2026-10-13@sha256:3a505d8be4de50b89f9fc203eca28e3a85e472d487e871e2efb691bd15760a7f",
+        "k8s:pod-uid:1ba17194-1e26-4a14-bf4f-e0c67ede35ef",
+        "k8s:pod-label:poc-run:8fe59fe9e74c",
+        "k8s:pod-label:poc-role:probe-core-ui",
+        "k8s:pod-owner-uid:ReplicaSet:ca156c97-6655-412a-b2e9-3e9dcd70332d"
+      ],
+      "sid": "spiffe://poc.internal/ui"
+    }
+  ],
+  "independent_review": {
+    "date": "2026-10-13",
+    "final_documentation_evidence_consistency": "PASS",
+    "owner_acceptance": "PENDING",
+    "reviewer": "parent orchestrator",
+    "source_revision": "528bc5fa5367b46bd2dc1de5676ee766e7fd2187",
+    "substantive_source_core_runtime": "PASS",
+    "thread_id": "01a12b31-9ead-7e92-a024-23860cfe5d8f"
+  },
+  "limits_and_pending": [
+    "Independent parent source/runtime/core and final documentation review PASS; human owner acceptance remains separate and pending.",
+    "Approved current specs/RFC/runbook/TODO are reconciled; task 7.3 owner presentation/acceptance and later separately reviewed comparison remain.",
+    "The first private fixture mount failed before application/identity execution; the corrected fixture and exact grant-distribution wait passed. Wrapper response-field mistakes caused two authorized preliminary Sync dispatches and are described by actual ledger versions.",
+    "Some initial fixture proxy captures had an incorrect JSON allowlist and are empty; preserved normal logs independently correlate all seven required actual flows, and focused correctly filtered follow-ups provide negative evidence.",
+    "Outer OpenSSL probes are operator-controlled observers in the actual owned Pod network namespace; they are not claimed SPIRE-attested processes and receive no workload/broker private key.",
+    "Zero OOM and restart counters do not establish absence of memory reclaim: memory.max events remain 2611.",
+    "Production reliability extensions, issuer integrity/lineage, exhaustive crash/restart/outage/ack/rebalance/fault injection and full Kubernetes JS reliability re-proving remain DEFERRED, never PASS.",
+    "No performance comparison, benchmark connection mode, host-security change or public deployment cutover was performed."
+  ],
+  "normal_UI": {
+    "browser_checks": [
+      {
+        "case": "missing-CSRF",
+        "status": 403
+      },
+      {
+        "case": "wrong-Origin",
+        "status": 403
+      },
+      {
+        "case": "wrong-Host",
+        "status": 403
+      },
+      {
+        "case": "invalid-caller",
+        "status": 400
+      },
+      {
+        "case": "arbitrary-payload",
+        "status": 400
+      }
+    ],
+    "browser_denials_preserve_balances": true,
+    "initial_verified_balances": {
+      "balances": {
+        "demo-a": 99800,
+        "demo-b": 100200
+      },
+      "expected_server_id": "spiffe://poc.internal/money",
+      "server_verified": true,
+      "version": 2
+    },
+    "normal_scenarios": [
+      {
+        "outcome": "transfer_succeeded",
+        "scenario": "trusted"
+      },
+      {
+        "outcome": "tls_rejected",
+        "scenario": "unidentified"
+      },
+      {
+        "outcome": "transfer_succeeded",
+        "scenario": "kafka-trusted"
+      },
+      {
+        "outcome": "money_rejected",
+        "scenario": "kafka-unidentified"
+      },
+      {
+        "outcome": "money_rejected",
+        "scenario": "kafka-tampered"
+      }
+    ],
+    "run": "8fe59fe9e74c",
+    "source_revision": "528bc5fa5367b46bd2dc1de5676ee766e7fd2187",
+    "verified_balances": {
+      "balances": {
+        "demo-a": 99700,
+        "demo-b": 100300
+      },
+      "expected_server_id": "spiffe://poc.internal/money",
+      "server_verified": true,
+      "version": 3
+    }
+  },
+  "normal_and_test_artifacts": {
+    "normal": {
+      "binary_sha256": {
+        "bundle-publisher": "b03b3fced0a9d51b0a06684dca8b79300320cc7a468708e297cdc3d407e66098",
+        "control-adapter": "ea770e533dd1a4986eabed60aad0e4cd100b5824aa6068488a2e05400a226cef",
+        "kubernetes-broker-ready": "91b10fe7dfd51d543bf06fcbb3971b8631eb9bd9a049eaab70f6cffb495e3cbe",
+        "kubernetes-init": "43ff4664e6534e259910bea4ee26badf059d64a498f2c9861ffb16cca778ab64",
+        "kubernetes-ready": "30a82ce4c2ee98f83cb87250579a1589faf5a33df392ab44766d66a24e916ff3",
+        "kubernetes-run-guard": "d1bc8485eb0bb83e2f9fc2cd8fc3936c2961eb2e9a037d5d8497e704f9dda663",
+        "money": "0054c59175b16c827724a4f5286bee4827fe0fa93465040d0b72d2e5220248b5",
+        "trusted-caller": "14b64f3a4919fd34ec2a16987fbf8637ace58a82ebfd7f0d2eb77a6b8bbe1f4f",
+        "ui": "c6df030aedc703138735590a0c4c01f63a10b8f3f1c0ef0ef201c722503a17f0",
+        "untrusted-caller": "4889e1d8ece0043680674788d75f80807cfaf18682f9c3d6dcda136675251507"
+      },
+      "build_tags": [],
+      "config_digest": "sha256:a5cc542b713eb6ac6b377c9d4d4e92b851056a8e2092b0c2063277cacdc486cc",
+      "docker_image_id": "sha256:2ef8132f76a67758b66f40cfcb5e99d47cfd4727250c2fbad7295548d9ca1219",
+      "immutable_reference": "docker.io/poc-spire/normal@sha256:3fe906b137fa136224974ee8f1d89c532d3dd533b832e4d790b8ec771064e7e0",
+      "index_digest": "sha256:37dfa526fec1d477c2408e959eb7059b38402568f418f99aad7685ed6f99b595",
+      "native_descriptor_graph": {
+        "config_digest": "sha256:a5cc542b713eb6ac6b377c9d4d4e92b851056a8e2092b0c2063277cacdc486cc",
+        "filesystem_diff_ids": [
+          "sha256:6a2a86ef72521f0b3127baf8c254c2958104e2225c69d28ae69c388a6a818576"
+        ],
+        "indexes": [
+          {
+            "digest": "sha256:2ef8132f76a67758b66f40cfcb5e99d47cfd4727250c2fbad7295548d9ca1219",
+            "media_type": "application/vnd.oci.image.index.v1+json"
+          }
+        ],
+        "platform_manifest_digest": "sha256:eabc08caa335d8980ce9f664992422f359b6b053b329aa72300f466ab8b96d7f",
+        "store_descriptor": {
+          "digest": "sha256:2ef8132f76a67758b66f40cfcb5e99d47cfd4727250c2fbad7295548d9ca1219",
+          "mediaType": "application/vnd.oci.image.index.v1+json",
+          "size": 855
+        }
+      },
+      "platform_manifest_digest": "sha256:3fe906b137fa136224974ee8f1d89c532d3dd533b832e4d790b8ec771064e7e0",
+      "profile": "normal",
+      "source_dirty": false,
+      "source_revision": "528bc5fa5367b46bd2dc1de5676ee766e7fd2187",
+      "test_tags": [],
+      "verified_file_inventory": {
+        "bundle-publisher": {
+          "mode": "0o775",
+          "sha256": "b03b3fced0a9d51b0a06684dca8b79300320cc7a468708e297cdc3d407e66098",
+          "size": 8857669
+        },
+        "control-adapter": {
+          "mode": "0o775",
+          "sha256": "ea770e533dd1a4986eabed60aad0e4cd100b5824aa6068488a2e05400a226cef",
+          "size": 19056832
+        },
+        "kubernetes-broker-ready": {
+          "mode": "0o775",
+          "sha256": "91b10fe7dfd51d543bf06fcbb3971b8631eb9bd9a049eaab70f6cffb495e3cbe",
+          "size": 6723698
+        },
+        "kubernetes-init": {
+          "mode": "0o775",
+          "sha256": "43ff4664e6534e259910bea4ee26badf059d64a498f2c9861ffb16cca778ab64",
+          "size": 15690419
+        },
+        "kubernetes-ready": {
+          "mode": "0o775",
+          "sha256": "30a82ce4c2ee98f83cb87250579a1589faf5a33df392ab44766d66a24e916ff3",
+          "size": 3027903
+        },
+        "kubernetes-run-guard": {
+          "mode": "0o775",
+          "sha256": "d1bc8485eb0bb83e2f9fc2cd8fc3936c2961eb2e9a037d5d8497e704f9dda663",
+          "size": 3331582
+        },
+        "money": {
+          "mode": "0o775",
+          "sha256": "0054c59175b16c827724a4f5286bee4827fe0fa93465040d0b72d2e5220248b5",
+          "size": 24522442
+        },
+        "trusted-caller": {
+          "mode": "0o775",
+          "sha256": "14b64f3a4919fd34ec2a16987fbf8637ace58a82ebfd7f0d2eb77a6b8bbe1f4f",
+          "size": 25217152
+        },
+        "ui": {
+          "mode": "0o775",
+          "sha256": "c6df030aedc703138735590a0c4c01f63a10b8f3f1c0ef0ef201c722503a17f0",
+          "size": 19220117
+        },
+        "untrusted-caller": {
+          "mode": "0o775",
+          "sha256": "4889e1d8ece0043680674788d75f80807cfaf18682f9c3d6dcda136675251507",
+          "size": 25019109
+        }
+      }
+    },
+    "test": {
+      "binary_sha256": {
+        "attestation-approved": "b23e6c0e1605229fd78d4c6b1dc90b0b85aebc57d06826651d6c9906aa0bef10",
+        "attestation-ineligible": "431ef2e87ac297ef4c2ee2635cb9052dbabe90cb1eb0c9edbf409fdf78bbea35",
+        "bundle-publisher": "bcb64e0b38575fca6abf37508d88c5c647f9da3753bc2778b90a4748458ebb17",
+        "control-adapter": "82c48d61b12c5bdfb580168e283105b76f7a39b947f262a5cb55c6e38a155c24",
+        "control-client": "46ca2a54608f78af9d4c34fd2b0b0b88fcd46fb5787f3d4592ebbf77dbf61ef9",
+        "kafka-init": "7941d924148d1f0a46f552182ba76f99ab8554c23e7058a556bd7950104c17b4",
+        "kubernetes-broker-ready": "27845eac26808911c874d493ec2016fbdc5c00f5da819ba638fd0d171c4448b4",
+        "kubernetes-destination-probe": "20c63e5f862b5a89935dbe07c4852462a2da3644ca744795857f06e94720e358",
+        "kubernetes-init": "d0f88f950bc4eae96961b0bf0dbfd6fac2f8576041749557ffc515d08c70298e",
+        "kubernetes-ready": "db752b05ef6dc9edb4a493c38f8d235eb509c857ca11403188bd20df6efdba44",
+        "kubernetes-run-guard": "d271aa80e5ab412db6d66bf4b80e7e35c52b5918742aec7e7c2900f52c35fa48",
+        "money": "a7f8b5f732b2f89ac27292f77ae18f3ba0bc56095e8f77f95b420f77725d1b7e",
+        "security-client": "dca9b73d81767395f3523859e5d20b9ea941a9263938e7f382f358f02a35ed4e",
+        "trusted-caller": "978426ba31ea5831ae572f6889b048dd090c307b34e1a57af369ec9a71049d68",
+        "ui": "8d2d50146945c57547c309a1fb989a53ffc904e338826d61c3665c03dcac8c4a",
+        "untrusted-caller": "4086ce3c813ec783a99e9c6c54a61466bef8bb470cb81ff8f3bc56915cbeaf6f"
+      },
+      "build_tags": [
+        "kafkatest"
+      ],
+      "config_digest": "sha256:60ece12f3702a38d5e1c63afcb98d137f8c2f5b735db0b9faf9f5a00ab0759b3",
+      "docker_image_id": "sha256:8acfe71572d021bd15ba01abfe6546f75329ac03d84eb2536776d972895f78cb",
+      "immutable_reference": "docker.io/poc-spire/test@sha256:cbe8c6be720106426286f8bb22a7c39d64b4648b9e9114c09bd7408de3b7e3a0",
+      "index_digest": "sha256:3a505d8be4de50b89f9fc203eca28e3a85e472d487e871e2efb691bd15760a7f",
+      "native_descriptor_graph": {
+        "config_digest": "sha256:60ece12f3702a38d5e1c63afcb98d137f8c2f5b735db0b9faf9f5a00ab0759b3",
+        "filesystem_diff_ids": [
+          "sha256:bf035742657861bc7c3b0c97d6a4dc7a0c795b91e3030a834a1a0bd132f32587"
+        ],
+        "indexes": [
+          {
+            "digest": "sha256:8acfe71572d021bd15ba01abfe6546f75329ac03d84eb2536776d972895f78cb",
+            "media_type": "application/vnd.oci.image.index.v1+json"
+          }
+        ],
+        "platform_manifest_digest": "sha256:ed818dc43ef1f3e5d5dfd62a4f1c17fbbb61563ba17e5b49f6cdbee1fa7ed577",
+        "store_descriptor": {
+          "digest": "sha256:8acfe71572d021bd15ba01abfe6546f75329ac03d84eb2536776d972895f78cb",
+          "mediaType": "application/vnd.oci.image.index.v1+json",
+          "size": 855
+        }
+      },
+      "platform_manifest_digest": "sha256:cbe8c6be720106426286f8bb22a7c39d64b4648b9e9114c09bd7408de3b7e3a0",
+      "profile": "test",
+      "source_dirty": false,
+      "source_revision": "528bc5fa5367b46bd2dc1de5676ee766e7fd2187",
+      "test_tags": [
+        "kafkatest"
+      ],
+      "verified_file_inventory": {
+        "attestation-approved": {
+          "mode": "0o775",
+          "sha256": "b23e6c0e1605229fd78d4c6b1dc90b0b85aebc57d06826651d6c9906aa0bef10",
+          "size": 15827746
+        },
+        "attestation-ineligible": {
+          "mode": "0o775",
+          "sha256": "431ef2e87ac297ef4c2ee2635cb9052dbabe90cb1eb0c9edbf409fdf78bbea35",
+          "size": 15827746
+        },
+        "bundle-publisher": {
+          "mode": "0o775",
+          "sha256": "bcb64e0b38575fca6abf37508d88c5c647f9da3753bc2778b90a4748458ebb17",
+          "size": 8857669
+        },
+        "control-adapter": {
+          "mode": "0o775",
+          "sha256": "82c48d61b12c5bdfb580168e283105b76f7a39b947f262a5cb55c6e38a155c24",
+          "size": 19076364
+        },
+        "control-client": {
+          "mode": "0o775",
+          "sha256": "46ca2a54608f78af9d4c34fd2b0b0b88fcd46fb5787f3d4592ebbf77dbf61ef9",
+          "size": 8924477
+        },
+        "kafka-init": {
+          "mode": "0o775",
+          "sha256": "7941d924148d1f0a46f552182ba76f99ab8554c23e7058a556bd7950104c17b4",
+          "size": 15461032
+        },
+        "kubernetes-broker-ready": {
+          "mode": "0o775",
+          "sha256": "27845eac26808911c874d493ec2016fbdc5c00f5da819ba638fd0d171c4448b4",
+          "size": 6723714
+        },
+        "kubernetes-destination-probe": {
+          "mode": "0o775",
+          "sha256": "20c63e5f862b5a89935dbe07c4852462a2da3644ca744795857f06e94720e358",
+          "size": 17556833
+        },
+        "kubernetes-init": {
+          "mode": "0o775",
+          "sha256": "d0f88f950bc4eae96961b0bf0dbfd6fac2f8576041749557ffc515d08c70298e",
+          "size": 15692775
+        },
+        "kubernetes-ready": {
+          "mode": "0o775",
+          "sha256": "db752b05ef6dc9edb4a493c38f8d235eb509c857ca11403188bd20df6efdba44",
+          "size": 3027911
+        },
+        "kubernetes-run-guard": {
+          "mode": "0o775",
+          "sha256": "d271aa80e5ab412db6d66bf4b80e7e35c52b5918742aec7e7c2900f52c35fa48",
+          "size": 3331574
+        },
+        "money": {
+          "mode": "0o775",
+          "sha256": "a7f8b5f732b2f89ac27292f77ae18f3ba0bc56095e8f77f95b420f77725d1b7e",
+          "size": 24517408
+        },
+        "security-client": {
+          "mode": "0o775",
+          "sha256": "dca9b73d81767395f3523859e5d20b9ea941a9263938e7f382f358f02a35ed4e",
+          "size": 18942158
+        },
+        "trusted-caller": {
+          "mode": "0o775",
+          "sha256": "978426ba31ea5831ae572f6889b048dd090c307b34e1a57af369ec9a71049d68",
+          "size": 25421661
+        },
+        "ui": {
+          "mode": "0o775",
+          "sha256": "8d2d50146945c57547c309a1fb989a53ffc904e338826d61c3665c03dcac8c4a",
+          "size": 25447537
+        },
+        "untrusted-caller": {
+          "mode": "0o775",
+          "sha256": "4086ce3c813ec783a99e9c6c54a61466bef8bb470cb81ff8f3bc56915cbeaf6f",
+          "size": 25019329
+        }
+      }
+    }
+  },
+  "normal_binary_vcs_provenance": {
+    "method": "Explicit clean source/build manifest and verified executable inventories; no embedded VCS revision is claimed.",
+    "vcs_revision_embedded": false
+  },
+  "normal_control_network_denials": {
+    "classification": "cross-caller upstream UF/URX under unchanged default-deny flows with healthy UI destination controls; same-Pod path has authenticated outer caller-unidentified peer and observed TCP RBAC denial +1 before inner HTTP. Generic CLI errors are not classified as SPIRE identity rejection.",
+    "probe_results": {
+      "cases": [
+        {
+          "arguments": [
+            "-control-case",
+            "no-cert",
+            "-control-role",
+            "trusted"
+          ],
+          "binary_sha256": "fb469f3b26de8aa18678ecf278e700e569f468d021393efb860f9a8ba8153043",
+          "container": "caller",
+          "exit_code": 1,
+          "result": {
+            "case": "no-cert",
+            "expected_server_id": "spiffe://poc.internal/control/caller/trusted",
+            "http_status": 0,
+            "outcome": "infrastructure_unknown",
+            "role": "trusted",
+            "server_verified": false
+          },
+          "role": "caller-unidentified"
+        },
+        {
+          "arguments": [
+            "-control-case",
+            "no-cert",
+            "-control-role",
+            "unidentified"
+          ],
+          "binary_sha256": "fb469f3b26de8aa18678ecf278e700e569f468d021393efb860f9a8ba8153043",
+          "container": "caller",
+          "exit_code": 1,
+          "result": {
+            "case": "no-cert",
+            "expected_server_id": "spiffe://poc.internal/control/caller/unidentified",
+            "http_status": 0,
+            "outcome": "infrastructure_unknown",
+            "role": "unidentified",
+            "server_verified": false
+          },
+          "role": "caller-unidentified"
+        }
+      ],
+      "run": "8fe59fe9e74c"
+    },
+    "same_Pod_mesh_RBAC_denial_delta": {
+      "after": 2,
+      "before": 1,
+      "delta": 1,
+      "mode": "actual normal caller UID1000, unchanged policies, same-Pod control route; CLI generic error classified by actual destination TCP RBAC denial"
+    },
+    "source_connection_evidence": {
+      "independently_healthy_UI_adapter_controls": [
+        {
+          "at_utc": "2026-10-13T04:55:31.693934758Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:43517",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:32.690243987Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:41293",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:33.695482627Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:58643",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:34.690185704Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:45745",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:35.701159118Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:43317",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:36.697769099Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:59929",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:37.71982192Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:48971",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:38.696852932Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:44595",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:39.697950546Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:60159",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:40.701182651Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:43431",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:41.70173757Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:57385",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:42.693638456Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:56561",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:43.696764305Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:53961",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:44.698234829Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:40899",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:45.735850899Z",
+          "event": "control_request",
+          "local": "10.245.9.203:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:36541",
+          "role": "trusted",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:31.704374894Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:55509",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:32.698743093Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:43327",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:33.706404788Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:34805",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:34.699552577Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:37043",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:35.710189897Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:45507",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:36.707164219Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:60355",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:37.729159932Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:47055",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:38.706862242Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:47743",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:39.707983747Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:38825",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:40.715832607Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:43215",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:41.745283623Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:49943",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:42.703791011Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:33013",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:43.706027449Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:40453",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:44.706711504Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:52125",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        },
+        {
+          "at_utc": "2026-10-13T04:55:45.751481482Z",
+          "event": "control_request",
+          "local": "10.245.9.205:9001",
+          "path": "/attempt/kafka/{id}",
+          "remote": "127.0.0.6:59337",
+          "role": "unidentified",
+          "status": 404,
+          "tls_version": "TLS 1.3",
+          "verified_peer": "spiffe://poc.internal/ui"
+        }
+      ],
+      "source_pod_ip": "10.245.9.205",
+      "source_proxy_control_attempts": [
+        {
+          "connection": "4256",
+          "downstream_local": "10.245.9.205:9001",
+          "downstream_peer": "spiffe://cluster.local/ns/poc-8fe59fe9e74c/sa/caller-unidentified",
+          "downstream_remote": "10.245.9.205:54152",
+          "downstream_tls": "TLSv1.3",
+          "flags": "-",
+          "start": "2026-10-13T04:53:18.087Z",
+          "upstream": "10.245.9.205:9001",
+          "upstream_local": "127.0.0.6:32923",
+          "upstream_peer": "-",
+          "upstream_tls": "-"
+        },
+        {
+          "connection": "4254",
+          "downstream_local": "10.246.147.161:9001",
+          "downstream_peer": "-",
+          "downstream_remote": "10.245.9.205:44044",
+          "downstream_tls": "-",
+          "flags": "-",
+          "start": "2026-10-13T04:53:18.086Z",
+          "upstream": "10.245.9.205:9001",
+          "upstream_local": "10.245.9.205:54152",
+          "upstream_peer": "spiffe://cluster.local/ns/poc-8fe59fe9e74c/sa/caller-unidentified",
+          "upstream_tls": "TLSv1.3"
+        },
+        {
+          "connection": "4244",
+          "downstream_local": "10.246.126.101:9001",
+          "downstream_peer": "-",
+          "downstream_remote": "10.245.9.205:57332",
+          "downstream_tls": "-",
+          "flags": "UF,URX",
+          "start": "2026-10-13T04:53:14.197Z",
+          "upstream": "10.245.9.203:9001",
+          "upstream_local": "-",
+          "upstream_peer": "-",
+          "upstream_tls": "-"
+        }
+      ],
+      "source_role": "caller-unidentified",
+      "test_modes": "Actual normal caller UID1000, authentic public bundle, no client certificate, unchanged policies; no temporary allowance"
+    }
+  },
+  "observed_at_utc": "2026-10-13T05:10:36.451364+00:00",
+  "pinned_artifacts_manifest_sha256": "4d84d5404e07b70f0b5b3ba6e3a5466e7d55455dfbc66857cc8315e3ccdf03d3",
+  "post_sync_documentation_validation": {
+    "Go_source_formatting": "PASS",
+    "diff_check": "PASS",
+    "failed": 0,
+    "old_completed_Kafka_change": "Current UI-05 block carried forward minimally; existing location and frozen approval/owner-acceptance history preserved; no archive.",
+    "parent_independent_strict_validation": {
+      "date": "2026-10-13",
+      "failed": 0,
+      "passed": 12
+    },
+    "passed": 12,
+    "source_followup": "Documentation/spec/evidence only; original 10-item validation on clean 528bc5f is retained separately.",
+    "strict_items": 12
+  },
+  "restoration_and_resources": {
+    "actual_cgroup": {
+      "cpu.max": "300000 100000",
+      "memory.current": "3410444288",
+      "memory.events": "low 0\nhigh 0\nmax 2611\noom 0\noom_kill 0\noom_group_kill 0",
+      "memory.max": "4294967296",
+      "memory.peak": "3729805312"
+    },
+    "actual_node_limits": {
+      "Memory": 4294967296,
+      "MemorySwap": 4294967296,
+      "NanoCpus": 3000000000
+    },
+    "configuration_unchanged": true,
+    "host_available_memory_bytes": 4478521344,
+    "normal_configuration_sha256": "758eeb4f856d99a0c4dc171b6870fda3e34cc213a587bf92ee267da9ca442f44",
+    "normal_grant_count": 5,
+    "normal_grants_unchanged": true,
+    "normal_pods": [
+      {
+        "namespace": "poc-8fe59fe9e74c",
+        "ready": true,
+        "restarts": {
+          "adapter": 0,
+          "caller": 0,
+          "istio-proxy": 0
+        },
+        "role": "caller-trusted"
+      },
+      {
+        "namespace": "poc-8fe59fe9e74c",
+        "ready": true,
+        "restarts": {
+          "adapter": 0,
+          "caller": 0,
+          "istio-proxy": 0
+        },
+        "role": "caller-unidentified"
+      },
+      {
+        "namespace": "poc-8fe59fe9e74c",
+        "ready": true,
+        "restarts": {
+          "istio-proxy": 0,
+          "kafka": 0
+        },
+        "role": "kafka"
+      },
+      {
+        "namespace": "poc-8fe59fe9e74c",
+        "ready": true,
+        "restarts": {
+          "istio-proxy": 0,
+          "money": 0
+        },
+        "role": "money"
+      },
+      {
+        "namespace": "poc-8fe59fe9e74c",
+        "ready": true,
+        "restarts": {
+          "istio-proxy": 0,
+          "ui": 0
+        },
+        "role": "ui"
+      }
+    ],
+    "protected_continuity": {
+      "default_context_unchanged": true,
+      "protected_containers_unchanged": true,
+      "public_https_healthy": true,
+      "retained_identity_unchanged": true
+    },
+    "source_dirty": false,
+    "source_revision": "528bc5fa5367b46bd2dc1de5676ee766e7fd2187",
+    "temporary_resources_present": []
+  },
+  "run": "8fe59fe9e74c",
+  "separate_explicit_outer_no_certificate_probe": {
+    "current_app_source_control_positive": {
+      "caller_id": "spiffe://poc.internal/ui",
+      "case": "ui",
+      "expected_server_id": "spiffe://poc.internal/control/caller/trusted",
+      "http_status": 404,
+      "outcome": "permitted_ui_read_verified",
+      "role": "trusted",
+      "server_verified": true
+    },
+    "exact_outer_server_uri_verified": true,
+    "exit_code": 1,
+    "fixture_uid": 1000,
+    "mode": "outer TLS client with no certificate; separate current application-source positive in same Pod",
+    "money_application_http_response_obtained": false,
+    "outer_peer_id": [
+      "spiffe://cluster.local/ns/poc-8fe59fe9e74c/sa/money"
+    ],
+    "outer_server_chain_verified": true,
+    "pod_ip": "10.245.9.219",
+    "pod_uid": "1ba17194-1e26-4a14-bf4f-e0c67ede35ef",
+    "run": "8fe59fe9e74c",
+    "tls_alert_certificate_required": true
+  },
+  "source_dirty_at_build_and_tests": false,
+  "source_revision": "528bc5fa5367b46bd2dc1de5676ee766e7fd2187",
+  "status": "implementation, retained core runtime, independent source/runtime/docs review PASS; owner acceptance PENDING",
+  "structural_normal_boundaries": [
+    {
+      "native_ready": true,
+      "no_host_admin_mount": true,
+      "proxy_has_no_application_CSI_keys_state_control": true,
+      "restart_counts": {
+        "adapter": 0,
+        "caller": 0,
+        "istio-proxy": 0
+      },
+      "role": "caller-trusted",
+      "separate_Pod_PID_namespace": true
+    },
+    {
+      "native_ready": true,
+      "no_host_admin_mount": true,
+      "proxy_has_no_application_CSI_keys_state_control": true,
+      "restart_counts": {
+        "adapter": 0,
+        "caller": 0,
+        "istio-proxy": 0
+      },
+      "role": "caller-unidentified",
+      "separate_Pod_PID_namespace": true
+    },
+    {
+      "native_ready": true,
+      "no_host_admin_mount": true,
+      "proxy_has_no_application_CSI_keys_state_control": true,
+      "restart_counts": {
+        "istio-proxy": 0,
+        "kafka": 0
+      },
+      "role": "kafka",
+      "separate_Pod_PID_namespace": true
+    },
+    {
+      "native_ready": true,
+      "no_host_admin_mount": true,
+      "proxy_has_no_application_CSI_keys_state_control": true,
+      "restart_counts": {
+        "istio-proxy": 0,
+        "money": 0
+      },
+      "role": "money",
+      "separate_Pod_PID_namespace": true
+    },
+    {
+      "native_ready": true,
+      "no_host_admin_mount": true,
+      "proxy_has_no_application_CSI_keys_state_control": true,
+      "restart_counts": {
+        "istio-proxy": 0,
+        "ui": 0
+      },
+      "role": "ui",
+      "separate_Pod_PID_namespace": true
+    }
+  ],
+  "technical_baseline_freeze": "PASS; evidence-only documentation/spec follow-up to clean 528bc5f",
+  "valid_app_no_outer_SDK_probe": {
+    "classification": "current application source plus bypass annotation and required mesh client-certificate listener; no Money HTTP request. Original SDK probe alone did not establish which peer aborted or an explicit server-side TLS alert.",
+    "current_source_positive": {
+      "broker_tls": [],
+      "case": "adapter-trusted-ui",
+      "exit_code": 0,
+      "result": {
+        "caller_id": "spiffe://poc.internal/ui",
+        "case": "ui",
+        "expected_server_id": "spiffe://poc.internal/control/caller/trusted",
+        "http_status": 404,
+        "outcome": "permitted_ui_read_verified",
+        "role": "trusted",
+        "server_verified": true
+      }
+    },
+    "generic_SDK_transport_result": {
+      "broker_tls": [],
+      "case": "valid-current-app-no-outer-TLS-denied",
+      "exit_code": 1,
+      "result": {
+        "outcome": "transport_failure",
+        "server_verified": false
+      }
+    },
+    "matched_destination_envoy": {
+      "events": [
+        {
+          "connection": "4309",
+          "downstream_local": "10.245.9.206:8443",
+          "downstream_peer": "-",
+          "downstream_remote": "10.245.9.218:37930",
+          "downstream_tls": "TLSv1.3",
+          "flags": "-",
+          "start": "2026-10-13T04:35:38.851Z",
+          "upstream": "10.245.9.206:8443",
+          "upstream_local": "127.0.0.6:43285",
+          "upstream_peer": "-",
+          "upstream_tls": "-"
+        }
+      ],
+      "pod_ip": "10.245.9.218",
+      "pod_uid": "fd3b9f33-9eef-4779-93a8-283c3c156476"
+    }
+  }
+}

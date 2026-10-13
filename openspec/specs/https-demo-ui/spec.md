@@ -19,7 +19,7 @@ The public demo SHALL disclose that its human operator is assumed, not authentic
 - **AND** this does not establish human authentication because any visitor can obtain the session
 
 ### Requirement: UI-02 Fail-closed HTTPS and browser certificate replacement
-Demo startup MUST require explicit demo mode, an exact HTTPS origin and a provisioned matching current browser certificate/key. Go UI SHALL serve HTTPS; the approved Nginx edge SHALL verify re-encrypted upstream HTTPS separately from workload PKI. Atomic replacement of the combined browser PEM SHALL load on the next handshake without resetting sessions or Money.
+Demo startup MUST require explicit mode, exact HTTPS origin and matching current browser certificate/key. Go UI SHALL serve HTTPS; the existing Nginx edge SHALL retain verified re-encrypted upstream HTTPS separate from workload PKI. Kubernetes loopback access SHALL use direct UI HTTPS without installing/reusing that edge. Atomic combined-PEM replacement SHALL load on the next handshake without resetting sessions/Money.
 
 #### Scenario: Valid configuration and atomic renewal
 - **WHEN** a valid hostname-matching PEM is provisioned or atomically replaced with another valid PEM
@@ -28,6 +28,10 @@ Demo startup MUST require explicit demo mode, an exact HTTPS origin and a provis
 #### Scenario: Missing or invalid TLS configuration
 - **WHEN** demo configuration has missing/mismatched/expired/not-yet-valid certificate material or a plaintext origin
 - **THEN** startup or certificate loading fails without enabling anonymous plaintext fallback
+
+#### Scenario: Kubernetes loopback browser access
+- **WHEN** the isolated Kubernetes profile forwards its browser port
+- **THEN** literal loopback exposes the matching Go UI HTTPS certificate and current session/CSRF/Host/origin controls, without changing the existing Nginx/public endpoint
 
 ### Requirement: UI-03 Session and browser request defenses
 Demo sessions MUST be opaque in-memory sessions with Secure/HttpOnly/SameSite=Lax cookies, 15-minute idle and one-hour absolute expiry. POSTs MUST require a matching CSRF token and exact Origin/Host, rejecting cross-site fetches and forwarded-host overrides. Responses SHALL use escaped templates, restrictive CSP, frame protection and no-store caching.
@@ -57,7 +61,7 @@ Existing POST /api/attempts SHALL accept only trusted/unidentified caller and br
 - **AND** public demo sessions are all the same assumed principal and have no such per-human separation
 
 ### Requirement: UI-05 Read-only workload identity and bounded resources
-UI MUST read balances and enabled Kafka metadata/receipts only with its own observer SVID, verifying exact Money identity, and trigger callers only over private sockets. All scenarios SHALL share 64 attempts, two active workers, eight dispatches/minute per principal and 128 sessions; bounded bodies and no unsafe history eviction remain. UI MUST receive no Kafka/admin credentials or producer private keys.
+While its run is valid, UI MUST use only its observer SVID for balances/enabled Kafka metadata/receipts, verifying exact Money. Compose triggers remain private UDS; Kubernetes triggers MUST use exact-ID adapters in PC-07 without caller mounts/keys. All scenarios SHALL share 64 attempts, two workers, eight dispatches/minute per principal and 128 sessions; bounded bodies/no unsafe eviction remain. UI MUST receive no Kafka/admin credentials or producer keys.
 
 #### Scenario: Verified balance display and existing attempt lookup
 - **WHEN** UI reads Money or an existing pending/done attempt is repeated at history capacity
@@ -68,6 +72,10 @@ UI MUST read balances and enabled Kafka metadata/receipts only with its own obse
 - **WHEN** UI's SVID directly posts a Money transfer or new browser work exceeds configured limits
 - **THEN** Money returns 403; UI returns 429 for concurrency/rate or 503 for capacity without eviction
 - **AND** unavailable Money reads return an infrastructure failure, not fabricated balances
+
+#### Scenario: Kubernetes UI uses its own identity at adapters
+- **WHEN** the UI dispatches one fixed scenario through a configured private network adapter
+- **THEN** its own observer SVID verifies that exact control adapter, with unchanged fixed API/ownership/quota/retry behavior and no borrowed caller state/key
 
 ### Requirement: UI-06 Separate local owner-login preview
 The optional local profile SHALL use a private UI Unix socket behind a literal loopback HTTP bridge and a separate owner-only admin Unix socket. Kernel UID checking SHALL issue one-use, one-minute login codes, with origin checks and session rotation. This local login MUST NOT be exposed as the public demo or described as OIDC.

@@ -7,7 +7,7 @@ Define which executable in which deployment can obtain a workload identity in th
 ## Requirements
 
 ### Requirement: WA-01 Executable and deployment conjunction
-Identity issuance MUST require the exact attested agent parent and the approved UID, executable SHA-256, deployment role and image config digest together. The measured profile SHALL use SPIRE 1.14.0 with built-in Unix and Docker attestors.
+Identity issuance MUST bind exact attested parent, UID, executable SHA-256, deployment and image conditions together. Native profiles SHALL retain SPIRE 1.14.0 Unix/Docker config-digest attestation. Kubernetes SHALL require verified built-in Unix/K8s selectors, secure kubelet and actual process visibility; its immutable requesting-container image selector MUST NOT be substituted by a Docker config digest or Pod identity alone.
 
 #### Scenario: Approved executable in approved deployment
 - **WHEN** the requesting executable satisfies every registered condition
@@ -20,6 +20,14 @@ Identity issuance MUST require the exact attested agent parent and the approved 
 #### Scenario: Approved executable in wrong deployment
 - **WHEN** the approved executable runs with the same UID and image but the wrong deployment role
 - **THEN** it receives no matching identity
+
+#### Scenario: Kubernetes executable and deployment binding
+- **WHEN** the in-cluster feasibility gate observes actual parent/PID/UID/hash and immutable requesting-container namespace/SA/image/role/owner selectors
+- **THEN** only the exact intended app/control IDs issue under their complete conjunction; wrong binary/deployment and adapter app-ID requests fail with explicit denial
+
+#### Scenario: Kubernetes feasibility is not established
+- **WHEN** PID/proc, verified kubelet, immutable selector or negative issuance proof is missing
+- **THEN** dependent implementation stops; timeout, container-only identity, custom plugins or TLS-verification bypass cannot substitute
 
 ### Requirement: WA-02 Narrow registration and explicit binary updates
 Registration setup MUST refuse duplicate, broader, wrong-parent or wrong-lifetime grants for an existing SPIFFE ID. An exact existing entry SHALL be reused without taking ownership of it for cleanup. A rebuilt executable MUST require an explicitly reviewed policy update.
@@ -37,7 +45,7 @@ Registration setup MUST refuse duplicate, broader, wrong-parent or wrong-lifetim
 - **THEN** issuance is denied until a reviewed update changes the digest while preserving the other required boundaries
 
 ### Requirement: WA-03 Same-UID reachability and workload isolation
-The two demo callers SHALL run in separate containers with equal UID/GID 1000 and access to both the Workload API and Money network. Applications MUST receive no Docker/admin sockets, private SPIRE state or other workloads' keys. UID or container membership alone MUST NOT grant executable identity.
+Both caller app processes SHALL retain UID/GID 1000 in separate containers and, for Kubernetes, separate Pods, with Workload API/Money reachability for controlled denial probes. Apps MUST receive no Docker/admin/private-SPIRE state or foreign keys. Kubernetes control adapters SHALL be separate UID 10002 processes with control-only identities/mounts; shared Pod mesh identity MUST NOT confer app executable identity.
 
 #### Scenario: Both callers can reach the identity and money services
 - **WHEN** the measured demo starts with its intended mounts and network
@@ -46,6 +54,14 @@ The two demo callers SHALL run in separate containers with equal UID/GID 1000 an
 #### Scenario: A mount or network prevents the negative probe
 - **WHEN** a purported issuance-denial test cannot reach the Workload API or its required network target
 - **THEN** it fails as an infrastructure problem rather than passing as executable-attestation proof
+
+#### Scenario: Normal mesh proxy has no application socket or key
+- **WHEN** the normal mesh proxy without a CSI/Workload API mount is inspected
+- **THEN** its Workload API/application-key absence is recorded structurally, while its own mesh credentials are allowed; missing reachability is not claimed as PermissionDenied issuance proof
+
+#### Scenario: Separate caller Pods with adapter identities
+- **WHEN** both caller Pods run app UID 1000 and independently attested UID 10002 adapters
+- **THEN** both app probes can reach their required targets, only trusted app gets transfer identity, and adapters/proxies receive no app identity or foreign state/key mount
 
 ### Requirement: WA-04 Evidence scope and provenance
 Attestation evidence MUST correlate observed selectors to the requesting executable and deployment, record actual versions/digests, redact bootstrap secrets and treat timeout, incomplete selectors or unexpected issuance as test failures. Successful attestation MUST NOT be described as protection against host/SPIRE/authorized-process compromise.
