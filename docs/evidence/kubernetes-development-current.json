@@ -1,0 +1,124 @@
+{
+  "status": "development full normal bring-up and five scenarios PASS; acceptance incomplete",
+  "observed_at_utc": "2026-10-13T00:44:52.580143+00:00",
+  "run": "565d3a7e420f",
+  "source_revision": "18c5f51aa4d373aef1bdfe3da8d005a48f72cedb",
+  "source_dirty_at_build": false,
+  "normal_image": {
+    "immutable_reference": "docker.io/poc-spire/normal@sha256:5f0f5454ddad8c95c9f758a0ee8853e63f506a2a63cdf47c84fd3fa1c0a4201a",
+    "config_digest": "sha256:2166fd7b214bf72941db5b2ba8578100be4a619adddda11ec8a67baf9ff8a9b9",
+    "test_tags": [],
+    "verified_file_inventory": {
+      "bundle-publisher": {
+        "sha256": "b03b3fced0a9d51b0a06684dca8b79300320cc7a468708e297cdc3d407e66098",
+        "size": 8857669,
+        "mode": "0o775"
+      },
+      "control-adapter": {
+        "sha256": "62f038a35bb392dfe295d67f38159094164806b1e98de18cf628c74255cb3f99",
+        "size": 19045936,
+        "mode": "0o775"
+      },
+      "kubernetes-broker-ready": {
+        "sha256": "91b10fe7dfd51d543bf06fcbb3971b8631eb9bd9a049eaab70f6cffb495e3cbe",
+        "size": 6723698,
+        "mode": "0o775"
+      },
+      "kubernetes-init": {
+        "sha256": "a5544a3545798b7f46dd186e87583934f080964df1fa0cf04933c182713a1833",
+        "size": 15690419,
+        "mode": "0o775"
+      },
+      "kubernetes-ready": {
+        "sha256": "30a82ce4c2ee98f83cb87250579a1589faf5a33df392ab44766d66a24e916ff3",
+        "size": 3027903,
+        "mode": "0o775"
+      },
+      "kubernetes-run-guard": {
+        "sha256": "b74a0287795d857e127603c0cc7604172d2b61abd894fe49273452ffc45e4ad4",
+        "size": 3331144,
+        "mode": "0o775"
+      },
+      "money": {
+        "sha256": "1a6cd14e16cb2fc151c78d6a7e54605a5fca3d48341257784d50bfb040713b23",
+        "size": 24506807,
+        "mode": "0o775"
+      },
+      "trusted-caller": {
+        "sha256": "a5acf993cdb7b2f4e5b02184b561a7fdf175fce392740e6f953a3383e27e0406",
+        "size": 25206372,
+        "mode": "0o775"
+      },
+      "ui": {
+        "sha256": "d9ab8213d387a40a8afb419466dba5a26211765cc313636a29376eaf9588c7f9",
+        "size": 19220117,
+        "mode": "0o775"
+      },
+      "untrusted-caller": {
+        "sha256": "ed2f15177ece83a4e5368b276db33e13b0a6c05e6e04fc25583d64bdddc63617",
+        "size": 25007305,
+        "mode": "0o775"
+      }
+    }
+  },
+  "full_dependency_readiness": "PASS",
+  "actual_application_regular_sidecars": true,
+  "native_sidecar_reserved_for_admin_job": true,
+  "admin_job_and_credentials_removed": true,
+  "normal_UI_scenarios": [
+    {
+      "scenario": "trusted",
+      "status": "done",
+      "outcome": "transfer_succeeded",
+      "expected": "transfer_succeeded"
+    },
+    {
+      "scenario": "unidentified",
+      "status": "done",
+      "outcome": "tls_rejected",
+      "expected": "tls_rejected"
+    },
+    {
+      "scenario": "kafka-trusted",
+      "status": "done",
+      "outcome": "transfer_succeeded",
+      "expected": "transfer_succeeded"
+    },
+    {
+      "scenario": "kafka-unidentified",
+      "status": "done",
+      "outcome": "money_rejected",
+      "expected": "money_rejected"
+    },
+    {
+      "scenario": "kafka-tampered",
+      "status": "done",
+      "outcome": "money_rejected",
+      "expected": "money_rejected"
+    }
+  ],
+  "verified_shared_ledger_version": 2,
+  "protected_continuity": {
+    "public_https_healthy": true,
+    "protected_containers_unchanged": true,
+    "retained_identity_unchanged": true,
+    "default_context_unchanged": true
+  },
+  "actual_node_cgroup": {
+    "memory_max": "4294967296",
+    "memory_current": "3484798976",
+    "memory_peak": "3627581440",
+    "cpu_max": "300000 100000",
+    "memory_events": "low 0\nhigh 0\nmax 2371\noom 0\noom_kill 0\noom_group_kill 0"
+  },
+  "limitations": [
+    "All KB/JS migration obligations are not yet closed.",
+    "Actual per-flow outer/inner TLS correlation remains NOT RUN.",
+    "Wrong-binary/deployment, restart, outage, destructive reset and pressure fixtures require final real acceptance.",
+    "Independent final review and known-good freeze remain pending.",
+    "Memory max events show limit reclaim; zero OOM counters do not establish no pressure."
+  ],
+  "full_acceptance": "NOT RUN",
+  "owner_acceptance": "PENDING",
+  "public_cutover_performed": false
+}

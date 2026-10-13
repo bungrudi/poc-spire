@@ -229,3 +229,25 @@ neither node nor volume budgets were raised. Exact loss/corruption/nonce and
 held-publication-lock regressions remain passing. Actual corrected startup and
 full acceptance must still be rerun; the earlier failure's exact cause remains
 unconfirmed.
+
+
+## First complete normal development run — 13 October 2026
+
+Clean source `18c5f51aa4d373aef1bdfe3da8d005a48f72cedb`, run `565d3a7e420f`,
+reached full native dependency readiness with actual regular application sidecars,
+separate in-cluster SPIRE/PSAT/CSI, both real UID10002 adapters, observed immutable
+requesting-container/ReplicaSet owner bindings and the monotonic setup observer.
+The native-sidecar Kafka admin Job completed and its credentials were removed.
+Exported normal image inventory contains ten runtime components, no adversarial
+fixture executables and no test tags.
+
+All five fixed scenarios passed through actual loopback browser HTTPS, exact-ID
+controls, Money and Kafka: trusted Sync/Kafka succeeded; unidentified Sync was
+TLS-rejected; unsigned and tampered Kafka were rejected by Money. Authenticated
+shared ledger version was exactly two. The temporary loopback forward stopped.
+[Sanitized development report](../../../docs/evidence/kubernetes-development-current.json)
+records source/artifacts, placement, cgroups and preserved protected continuity.
+These are development functional proofs, not full KB/JS acceptance or actual
+per-flow outer/inner TLS correlation. Restart/outage/destructive loss, exact
+negative attestation/layer probes, bounded pressure and final review remain.
+No additional task checkbox is closed by this partial evidence.
