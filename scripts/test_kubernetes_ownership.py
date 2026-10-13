@@ -1,4 +1,5 @@
 import json
+import hashlib
 import os
 import subprocess
 import tempfile
@@ -10,6 +11,25 @@ import kubernetes_demo as runtime
 
 
 class OwnershipTests(unittest.TestCase):
+    def test_reported_capacity_sample_is_the_sample_that_passed_final_gate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);tools=root/'tools';tools.mkdir();pins=root/'infra/kubernetes-baseline';pins.mkdir(parents=True)
+            catalog={'status':'resolved','resolution_failures':[],'tools':{}}
+            for name in ('kind','kubectl'):
+                data=name.encode();(tools/name).write_bytes(data)
+                catalog['tools'][name]={'sha256':'sha256:'+hashlib.sha256(data).hexdigest()}
+            (pins/'artifacts.json').write_text(json.dumps(catalog))
+            info={'Architecture':'x86_64','CgroupVersion':'2','ServerVersion':'test'}
+            floor=6*runtime.GIB
+            with patch.object(runtime,'ROOT',root),patch.object(runtime,'TOOLS',tools),patch.object(runtime,'ACTIVE',root/'absent'), \
+                 patch.object(runtime,'DOCKER','fake'),patch.object(runtime,'docker_json',return_value=info), \
+                 patch.object(runtime,'execute',side_effect=lambda args: '[]' if args[0]=='ip' else ''), \
+                 patch.object(runtime.socket,'socket'):
+                with patch.object(runtime,'memory',side_effect=[floor+1,floor-1]):
+                    with self.assertRaisesRegex(RuntimeError,'startup floor'):runtime.preflight()
+                with patch.object(runtime,'memory',side_effect=[floor+1,floor+2]):
+                    self.assertEqual(runtime.preflight()['available_memory_bytes'],floor+2)
+
     def test_partial_csi_apply_records_unmount_intent_before_mutation(self):
         with tempfile.TemporaryDirectory() as directory:
             marker = Path(directory) / 'apps-mounted'

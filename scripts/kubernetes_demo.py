@@ -123,7 +123,10 @@ def preflight():
         binary = TOOLS / name
         if not binary.is_file() or 'sha256:' + hashlib.sha256(binary.read_bytes()).hexdigest() != pins['tools'][name]['sha256']:
             raise RuntimeError('KB-01: tool checksum mismatch')
-    return {'available_memory_bytes': memory(), 'disk_free_bytes': free,
+    available = memory()
+    if available < 6 * GIB:
+        raise RuntimeError('KB-01: available memory below approved 6 GiB startup floor')
+    return {'available_memory_bytes': available, 'disk_free_bytes': free,
             'node_limit_memory_bytes': MEMORY, 'node_limit_cpus': CPUS,
             'host_reserve_bytes': 2 * GIB, 'ports': [16443, 18089],
             'pod_cidr': POD_CIDR, 'service_cidr': SERVICE_CIDR, 'node_cidr': NODE_CIDR,
@@ -247,6 +250,9 @@ nodes:
     env['KIND_EXPERIMENTAL_DOCKER_NETWORK'] = value['network']
     env['KUBECONFIG'] = str(work / 'kubeconfig')
     try:
+        result['available_memory_bytes'] = memory()
+        if result['available_memory_bytes'] < 6 * GIB:
+            raise RuntimeError('KB-01: available memory below approved 6 GiB startup floor')
         execute([DOCKER, 'network', 'create', '--driver', 'bridge', '--subnet', NODE_CIDR,
                  '--label', OWNER + '=' + run, value['network']])
         print('Starting owned node with 4 GiB / 3 CPU limits from Docker creation.', flush=True)
