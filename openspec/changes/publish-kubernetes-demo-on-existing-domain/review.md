@@ -26,4 +26,17 @@ Planning `be9c6b5`, clean normal build `51a9f85`, bounded ownership lifecycle fi
 `e53c616` and verifier `cd3fb62` are declared independently; Go/application code
 is unchanged. Named public checks and exact cleanup pass with modes/limits in
 [public evidence](../../../docs/evidence/kubernetes-public-current.json).
-Final parent route/source/cleanup verification remains pending after publication.
+Final parent route/source/cleanup verification PASS after publication, 13 October 2026.
+
+## Independent final public-cutover review — 13 October 2026
+
+Parent thread `01a12b31-9ead-7e92-a024-23860cfe5d8f` independently verified the live
+HTTPS 200/ready/five-menu domain, exact verified Nginx loopback upstream, main-local
+run/profile, active route, five ready Pods/zero restarts, eight retired containers
+absent and four foreign containers preserved. It reviewed public profile/renewal/
+unit/startup ownership, unchanged Go/application source, proof modes, ledger 0 → 2,
+route/renewal continuity, twelve-file WIP/stash preservation and exact retirement/
+retained-state checks. Its own strict validation passed 13/13, diff/no-PEM checks
+passed. Technical public-cutover review is PASS; human acceptance is not inferred.
+No additional runtime fixture, rebuild, cleanup or reliability work was performed
+for this documentation-only final reconciliation.

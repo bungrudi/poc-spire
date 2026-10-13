@@ -215,4 +215,5 @@ platform/binary, normal registrations, five outcomes/ledger, browser defense mod
 route restart, renewal projection and exact retirement/preserved-state checks.
 The private baseline evidence remains its separately scoped source checkpoint.
 The old two-scenario public/preview runtimes are retired; shared/retained/access
-services are preserved. Public final independent verification remains pending.
+services are preserved. Public final independent route/source/cleanup verification PASS, 13 October 2026;
+its own strict validation passed 13/13. Human acceptance remains separate.

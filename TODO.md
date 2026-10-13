@@ -15,7 +15,7 @@ renewal hook, persistent service and public access without human login. Those
 changes are installed and verified at `https://spire.adianto.dev/`.
 
 
-**Current phase: simplified HTTPS demo live and verified at spire.adianto.dev. Owner approved public assumed-operator access, browser TLS retention, Nginx, renewal hook and startup service. Original verified-human/full acceptance gates below are historical, not claimed.**
+**Current phase: five-scenario Kubernetes/Istio/SPIRE/Kafka HTTPS demo live and independently verified at spire.adianto.dev. Owner approved public assumed-operator access, browser TLS retention, Nginx, renewal hook and startup service. Original verified-human/full acceptance gates below are historical, not claimed.**
 
 Checked boxes mean work actually completed. Unchecked boxes are planned work, not tests that passed. Technical decisions live in [RFC 0001](docs/rfcs/0001-process-identity.md); workspace requirements live in [WORKSPACE.md](WORKSPACE.md).
 
@@ -27,7 +27,7 @@ Kubernetes/Istio/SPIRE/Kafka run, public five outcomes/ledger 0 → 2, verified 
 TLS, browser defenses, renewal projection and route restart. Eight old public/
 preview containers and their owned supervisors/issuers/runtime are removed; the
 old public service is masked. Shared apps/access, retained state and local WIP
-are preserved. Final independent public-route/cleanup review remains pending.
+are preserved. Final independent public-route/source/cleanup review PASS; strict validation 13/13.
 
 ## Historical two-scenario Compose demo — 11 October 2026
 

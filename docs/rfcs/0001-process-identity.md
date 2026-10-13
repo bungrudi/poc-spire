@@ -87,6 +87,8 @@ retained identity, shared apps and access services are preserved. Public own-
 endpoint availability is separately verified rather than required during its
 explicit whole-run stop/reset. [Evidence](../evidence/kubernetes-public-current.json)
 declares artifacts, modes, resource caps, route/renewal checks and limitations.
+Final independent public-route/source/cleanup review PASS, 13 October 2026;
+no additional behavior or reliability scope was introduced.
 
 ## 1. Summary
 

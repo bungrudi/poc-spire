@@ -11,6 +11,8 @@ records the clean normal application image from `51a9f85`, bounded startup fix
 `e53c616`, verifier `cd3fb62`, actual UI/OCI index→platform provenance, public five
 outcomes and ledger 0 → 2, browser defenses, renewal and supervised-route restart.
 Go/application source is unchanged from the independently reviewed baseline.
+Final parent live-route/source/cleanup review passed on 13 October 2026, including
+independent strict validation 13/13. Human acceptance is separate.
 
 The existing Nginx/browser certificate remains the edge. Nginx validates HTTPS
 `127.0.0.1:18089` against system roots and exact `spire.adianto.dev`; UI accepts only
