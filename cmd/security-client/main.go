@@ -163,6 +163,8 @@ func rotation(source *workloadapi.X509Source, target string) (report, error) {
 	return report{Outcome: "rotation_expiry_and_reuse_passed", ServerVerified: checks["server_verified"], Checks: checks}, nil
 }
 func main() {
+	controlCase := flag.String("control-case", "", "fixed test-only adapter case: ui, no-cert, wrong-id, wrong-server")
+	controlRole := flag.String("control-role", "trusted", "fixed adapter selection: trusted or unidentified")
 	target := flag.String("target", "https://money:8443", "private test target")
 	mode := flag.String("mode", "registered", "registered, no-cert, self-signed, rotation")
 	action := flag.String("action", "transfer", "transfer or balances")
@@ -173,6 +175,10 @@ func main() {
 	impostor := flag.Bool("impostor", false, "serve test-only wrong server identity")
 	listen := flag.String("listen", "127.0.0.1:8443", "impostor private listener")
 	flag.Parse()
+	if *controlCase != "" {
+		runControlProbe(*controlCase, *controlRole)
+		return
+	}
 	if *idle {
 		for {
 			time.Sleep(time.Hour)

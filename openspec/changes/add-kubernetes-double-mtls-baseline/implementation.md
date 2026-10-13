@@ -268,3 +268,62 @@ remain undeployed and were neither edited nor committed in this batch. No issuer
 integrity/lineage implementation or dependency was added. Existing working guards
 are preserved without claiming exhaustive integrity or recovery. No runtime or
 failure probe was run for this documentation amendment.
+
+
+## Proposed bounded core execution checklist — Batch C, not executed
+
+1. Commit final source before tests. Use the pinned normal setup and existing
+   browser API/shipped-JS fixtures for two Sync/three Kafka scenarios, authenticated
+   shared-ledger effects and focused CSRF/Host/Origin/schema negatives. Record
+   normal image/config/registration/policy hashes and topology first.
+2. Run one fixture ReplicaSet/Pod at a time in `poc-<run>`, container `probe`,
+   UID/GID1000, read-only root/drop-all/seccomp, no API/admin/foreign key mounts.
+   Use these distinct SA/`poc-role` pairs, never guarded normal roles:
+   `probe-core-ui` → `spiffe://poc.internal/ui`;
+   `probe-core-trusted` → `spiffe://poc.internal/caller/trusted`;
+   `probe-core-wrong` → `spiffe://poc.internal/test/control-client` or no grant.
+   Use the distinct pinned test image; deployment-denial pairs retain the same
+   positively proven executable/image/UID.
+   Mount read-only CSI and authentic public bundle as needed. Budget fixture
+   requests25m/16Mi, limits500m/96Mi plus existing proxy25m/32Mi, limit96Mi.
+   Verify actual quota/allocatable/host reserve before each fixture: node4GiB/
+   3CPU, host reserve2GiB; quota1300m/1800Mi requests,2600Mi limits,12Pods.
+   Refuse inadequate fit; do not raise caps.
+3. Each temporary SVID entry binds exact PSAT parent, UID, executable SHA,
+   requesting-container actual immutable ImageID/name, namespace/SA/run/role,
+   Pod UID and `ReplicaSet` owner UID; TTL90s. Normal entries stay unchanged.
+   **Execution approval detail:** UI/trusted test actors need additional exact-ID
+   temporary entries; the normal registration helper rejects duplicate IDs.
+   Explicitly approve those test-only entries, record their IDs and delete them
+   afterward. This is not permission to weaken that normal guard or lend keys.
+4. Name temporary policies `core-probe-*`. Allow only the current fixture SA/label
+   to the destination under test: Money8443, selected adapter9001 or Kafka9093;
+   retain existing DNS/xDS, STRICT and inner authentication. For valid-app/no-outer,
+   use sequential positive/bypass test Pods with fresh UID-bound grants and only
+   the bypass Pod's outbound8443 exclusion; prove eligible app source/positive
+   control, then correlate STRICT denial. Normal Pods/policies
+   are untouched. Wrong-SA/network controls run without the allowance.
+5. Reuse attestation fixtures plus verified-destination/closed-upstream controls
+   for wrong executable/deployment; inspect real adapter grants/normal proxy
+   mount absence and run ineligible executable denial in an owned temporary
+   adapter file. Use security-client for Money policy/fake-root/header cases and
+   `-control-case ui|no-cert|wrong-id|wrong-server -control-role trusted|unidentified`
+   for fixed read-only adapter probes. Use tagged Kafka fixed/prepare/publish/
+   receipt/broker cases for signature/context/actor and admission negatives.
+   Broker fixtures receive only their own newly issued leaf/key from the owned
+   broker CA, appropriate producer/rogue DN; UI-signing fixture has no broker key.
+   Prepared JWS travels only through bounded private input, never logs/evidence.
+6. Correlate Money/control UTC, negotiated TLS, peer and local/remote tuples to
+   inbound Envoy upstream-local/upstream-host, connection ID/time and outer
+   peer/TLS. Match Kafka client hook tuples to source Envoy downstream tuples,
+   then source-upstream to destination-downstream tuples. Kafka connections stay
+   long-lived: start bounded allowlisted log followers before ordinary graceful
+   cleanup and retain their connection-close logs before node removal; do not
+   change reuse or add telemetry. Missing correlation is a named proof gap.
+7. Remove only captured test entry IDs, fixture RS/SA/Secrets/files and named
+   policy exceptions. Compare restored normal hashes. Retain relevant existing
+   deterministic Go/race/vet/JOSE, Python/browser checks; no reliability matrix.
+8. Perform basic owned graceful stop/recreate with fresh run/trust/stream and
+   verify public HTTPS/PIDs, retained-state/default-context equality and final
+   source/artifact/config hashes. Publish honest core/deferred evidence for
+   independent review. No crash/outage/issuer-integrity/failure-injection work.
