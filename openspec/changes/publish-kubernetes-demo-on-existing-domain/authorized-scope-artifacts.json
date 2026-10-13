@@ -1,0 +1,11 @@
+{
+  "authorization": "Direct owner public-cutover instruction conveyed by parent on 2026-10-13; scope-derived artifact snapshot, not a claim that the owner reviewed agent-authored text later.",
+  "parent_thread": "01a12b31-9ead-7e92-a024-23860cfe5d8f",
+  "files": {
+    "proposal.md": "36aad07db807b0c538b7791bbc3a11301e489e5cea3dbb71e9575dfe0b100489",
+    "design.md": "a54b9277c64cf402acd0b250d1904830a3de446a6bf6f0bfabe639c3a07dda4a",
+    "tasks.md": "76fbb6ee52d11f71f5c84e862a93a863b90cd09d9cf7c2bd19f2c8ddeff9ea42",
+    "specs/https-demo-ui/spec.md": "086f1dec84775ff0ade2f8175d901c4530d8279b7523e69730862a5ebaca9a81",
+    "specs/kubernetes-demo-runtime/spec.md": "61b7666636796abc867a4f6752cd6c3b2dff38e4649467c9a91f48b2f5dd8ee7"
+  }
+}
