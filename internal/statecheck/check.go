@@ -10,9 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"poc-spire/internal/kafkacaller"
-	"poc-spire/internal/kafkacmd"
 )
 
 type Result struct {
@@ -48,26 +45,6 @@ func Check(role, dir, run, pod, stream, cluster string, requireTopic bool) Resul
 		return Result{}
 	}
 	switch role {
-	case "caller-trusted", "caller-unidentified":
-		policy, err := kafkacmd.NewPolicy(stream)
-		if err != nil {
-			return Result{}
-		}
-		callerRole := "trusted"
-		if role == "caller-unidentified" {
-			callerRole = "unidentified"
-		}
-		if _, err = kafkacaller.Open(dir, policy, callerRole); err != nil {
-			if err.Error() == "caller_state_busy" {
-				return Result{Unavailable: true}
-			}
-			return Result{}
-		}
-		data, err := read(filepath.Join(dir, "manifest.json"), 1024)
-		if err != nil {
-			return Result{}
-		}
-		return fingerprint(data)
 	case "kafka":
 		marker, err := read(filepath.Join(dir, "owned-initialized"), 256)
 		if err != nil || string(marker) != run+"\n"+pod {
@@ -96,7 +73,7 @@ func Check(role, dir, run, pod, stream, cluster string, requireTopic bool) Resul
 			return Result{}
 		}
 		if requireTopic {
-			if !kafkacmd.Hex32.MatchString(stream) {
+			if !validStream(stream) {
 				return Result{}
 			}
 			for _, name := range []string{"__cluster_metadata-0", "poc.spire.commands." + stream + "-0"} {
@@ -130,4 +107,16 @@ func Check(role, dir, run, pod, stream, cluster string, requireTopic bool) Resul
 		return fingerprint([]byte(run + "\n" + pod))
 	}
 	return Result{}
+}
+
+func validStream(stream string) bool {
+	if len(stream) != 32 {
+		return false
+	}
+	for _, c := range stream {
+		if !(c >= '0' && c <= '9') && !(c >= 'a' && c <= 'f') {
+			return false
+		}
+	}
+	return true
 }

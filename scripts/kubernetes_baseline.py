@@ -25,6 +25,9 @@ def start():
             module.main('normal') if stage == 'kubernetes_images' else module.main()
     except Exception:
         if value is not None:
+            from kubernetes_diagnostics import capture
+            try: capture(value, stage)
+            except Exception: pass  # Diagnostic failure never prevents owned cleanup.
             runtime.private_json(runtime.RUNTIME / 'diagnostics' / ('failed-'+value['run']+'.json'),
                                  {'run':value['run'],'source_revision':revision,'stage':stage,
                                   'status':'development startup failed; no acceptance pass'})

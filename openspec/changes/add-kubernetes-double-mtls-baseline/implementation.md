@@ -210,3 +210,22 @@ independent Node JOSE enabled, vet, 37 deterministic Python checks, browser
 control execution and strict 10-item OpenSpec validation pass for this source
 checkpoint. The observation process and corrected topology still require the
 fresh real run; this checkpoint closes no additional acceptance task.
+
+
+The corrected-source development run `65d8fa0ac145` passed the exact startup
+capacity sample, built an export-verified normal image with no test fixtures
+from clean source `b11ede7`, and reached SPIRE/PSAT/CSI. It failed during app
+registration and was automatically cleaned with all protected continuity checks
+passing. Its precise failure was not retained before cleanup; it is not recorded
+as an identity rejection or accepted runtime. New failure capture preserves only
+bounded Pod/event categories and state metadata, never raw API/credential payloads.
+
+A helper dependency review identified a size risk in the unchanged 32Mi issuer
+helper volume. Caller-store checks are now separated from the minimal broker/
+issuer checker, so the startup guard does not link the caller/SDK/broker library.
+The three actual static issuer helpers total **27876344 bytes**, below the
+33554432-byte volume bound. Installation checks that bound before any copying;
+neither node nor volume budgets were raised. Exact loss/corruption/nonce and
+held-publication-lock regressions remain passing. Actual corrected startup and
+full acceptance must still be rerun; the earlier failure's exact cause remains
+unconfirmed.

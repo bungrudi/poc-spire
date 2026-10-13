@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"poc-spire/internal/callerstatecheck"
 	"poc-spire/internal/kafkacaller"
 	"poc-spire/internal/kafkacmd"
 	"poc-spire/internal/runguard"
@@ -62,6 +63,9 @@ func main() {
 			}
 		}
 		result := statecheck.Check(*role, *state, *run, os.Getenv("POC_POD_UID"), *stream, cluster, *topic)
+		if *role == "caller-trusted" || *role == "caller-unidentified" {
+			result = callerstatecheck.Check(*role, *state, *run, os.Getenv("POC_POD_UID"), *stream)
+		}
 		json.NewEncoder(os.Stdout).Encode(result)
 		if result.Unavailable {
 			os.Exit(21)
@@ -72,7 +76,29 @@ func main() {
 		return
 	}
 	if *install != "" {
-		for name, binary := range map[string]string{"run-guard": "kubernetes-run-guard", "bundle-publisher": "bundle-publisher", "kubernetes-init": "kubernetes-init", "kubernetes-broker-ready": "kubernetes-broker-ready"} {
+		binaries := map[string]string{"run-guard": "kubernetes-run-guard", "bundle-publisher": "bundle-publisher", "kubernetes-init": "kubernetes-init", "kubernetes-broker-ready": "kubernetes-broker-ready"}
+		limit := int64(32 << 20)
+		if *install == "/helpers" {
+			limit = 48 << 20
+		} else if *install != "/guard-bin" {
+			os.Exit(1)
+		}
+		var total int64
+		for name, binary := range binaries {
+			if name == "kubernetes-broker-ready" && *install != "/helpers" {
+				continue
+			}
+			info, err := os.Stat("/" + binary)
+			if err != nil || !info.Mode().IsRegular() {
+				os.Exit(1)
+			}
+			total += info.Size()
+		}
+		if total > limit {
+			fmt.Fprintln(os.Stderr, "helper_volume_budget_exceeded")
+			os.Exit(1)
+		}
+		for name, binary := range binaries {
 			if name == "kubernetes-broker-ready" && *install != "/helpers" {
 				continue
 			}
