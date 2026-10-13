@@ -23,6 +23,7 @@ class OwnershipTests(unittest.TestCase):
             floor=6*runtime.GIB
             with patch.object(runtime,'ROOT',root),patch.object(runtime,'TOOLS',tools),patch.object(runtime,'ACTIVE',root/'absent'), \
                  patch.object(runtime,'DOCKER','fake'),patch.object(runtime,'docker_json',return_value=info), \
+                 patch.object(runtime.shutil,'disk_usage',return_value=runtime.shutil._ntuple_diskusage(40*runtime.GIB,8*runtime.GIB,32*runtime.GIB)), \
                  patch.object(runtime,'execute',side_effect=lambda args: '[]' if args[0]=='ip' else ''), \
                  patch.object(runtime.socket,'socket'):
                 with patch.object(runtime,'memory',side_effect=[floor+1,floor-1]):
