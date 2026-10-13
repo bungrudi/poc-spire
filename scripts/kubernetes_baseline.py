@@ -12,13 +12,19 @@ STAGES = ('kubernetes_network', 'kubernetes_budget', 'kubernetes_kubelet', 'kube
           'kubernetes_application', 'kubernetes_finish_bootstrap')
 
 
-def start():
+def start(public=False):
     value = None
     stage = 'preflight'
+    profile = None
+    if public:
+        from kubernetes_public import provisioned_profile
+        profile = provisioned_profile()
     revision = runtime.execute(['git','rev-parse','HEAD']).strip()
     try:
         runtime.start()
         value = runtime.descriptor()
+        if profile is not None:
+            runtime.private_json(Path(value['work'])/'public-profile.json', profile)
         for stage in STAGES:
             print('Starting owned stage: ' + stage, flush=True)
             module = importlib.import_module(stage)
@@ -40,5 +46,6 @@ def start():
 if __name__ == '__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action',choices=('start','stop'))
+    parser.add_argument('--public', action='store_true', help='owner-authorized spire.adianto.dev profile in main')
     args=parser.parse_args()
-    start() if args.action=='start' else runtime.stop()
+    start(args.public) if args.action=='start' else runtime.stop()

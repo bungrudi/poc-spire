@@ -26,7 +26,7 @@ server {
     add_header Strict-Transport-Security "max-age=86400" always;
     add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
     location / {
-        proxy_pass https://127.0.0.1:18087;
+        proxy_pass https://127.0.0.1:18089;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto https;

@@ -33,7 +33,7 @@ def secret(ns,name,directory):
     return {'apiVersion':'v1','kind':'Secret','metadata':{'name':name,'namespace':ns},'type':'Opaque','data':data}
 
 
-def app_objects(value,image,stream,work):
+def app_objects(value,image,stream,work,origin='https://127.0.0.1:18089'):
     ns='poc-'+value['run'];normal=image['immutable_reference'];pins=json.loads((runtime.ROOT/'infra/kubernetes-baseline/artifacts.json').read_text())
     kafka_image=next(i['immutable_reference'] for i in pins['images'] if i['reference'].startswith('apache/kafka:'))
     items=[]
@@ -86,7 +86,7 @@ def app_objects(value,image,stream,work):
             args=['-readiness-file','/tmp/readiness.json','-run-guard','/run/guard/run.json','-run',value['run']]
             if role=='ui':
                 volumes.append({'name':'browser','secret':{'secretName':'browser-pki','defaultMode':0o440}});mount.append({'name':'browser','mountPath':'/browser','readOnly':True})
-                args += ['-mode','demo','-origin','https://127.0.0.1:18089','-listen',':8443','-tls-cert','/browser/browser.pem','-tls-key','/browser/browser.pem',
+                args += ['-mode','demo','-origin',origin,'-listen',':8443','-tls-cert','/browser/browser.pem','-tls-key','/browser/browser.pem',
                          '-kafka-stream',stream,'-control-transport','mtls','-startup-timeout','180s']
             else:
                 volumes.append({'name':'pki','secret':{'secretName':role+'-pki','defaultMode':0o440}});mount.append({'name':'pki','mountPath':'/kafka','readOnly':True})
@@ -135,7 +135,17 @@ def main():
     spec=importlib.util.spec_from_file_location('k8s_pki',runtime.ROOT/'infra/kafka-signing/broker-pki.py');pki=importlib.util.module_from_spec(spec);spec.loader.exec_module(pki)
     pki.generate(pkidir,stream,controller_local=True)
     adminpki=pkidir/'admin-pki';(adminpki/'client.pem').write_text((adminpki/'client.key').read_text()+(adminpki/'client.pem').read_text())
-    image=json.loads((work/'normal-image.json').read_text());objects=app_objects(value,image,stream,pkidir)
+    origin='https://127.0.0.1:18089'
+    if (work/'public-profile.json').exists():
+        from kubernetes_public import provisioned_profile
+        profile=provisioned_profile()
+        if json.loads((work/'public-profile.json').read_text())!=profile:
+            raise RuntimeError('public profile drift')
+        origin=profile['origin']
+        for path in (pkidir/'browser').iterdir():path.unlink()
+        (pkidir/'browser/browser.pem').write_bytes(Path(profile['browser_pem']).read_bytes())
+        (pkidir/'browser/browser.pem').chmod(0o600)
+    image=json.loads((work/'normal-image.json').read_text());objects=app_objects(value,image,stream,pkidir,origin=origin)
     private_manifest=work/'application-private.yaml';private_manifest.write_text(yaml.safe_dump_all(objects,sort_keys=False));private_manifest.chmod(0o600)
     runtime.apply_csi_workloads(value,str(private_manifest),timeout=120)
     expected_roles={'money','ui','caller-trusted','caller-unidentified','kafka'}

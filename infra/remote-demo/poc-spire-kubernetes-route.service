@@ -1,0 +1,25 @@
+[Unit]
+Description=SPIRE Kubernetes public HTTPS loopback route
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+SupplementaryGroups=docker
+WorkingDirectory=/home/ubuntu/Workspace/poc-spire
+Environment=PYTHONUNBUFFERED=1
+Environment=PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin
+UMask=0077
+ExecStart=/usr/bin/python3 /home/ubuntu/Workspace/poc-spire/scripts/kubernetes_public.py serve
+Restart=on-failure
+RestartSec=3
+KillMode=mixed
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

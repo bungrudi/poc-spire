@@ -13,6 +13,7 @@ import sys
 import time
 import uuid
 import urllib.request
+import urllib.error
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,7 +58,7 @@ def docker_json(*args):
     return json.loads(execute([DOCKER, *args]))
 
 
-def protected_snapshot():
+def protected_snapshot(*, public_optional=False):
     containers = {}
     for cid in execute([DOCKER, 'ps', '-q']).split():
         item = docker_json('inspect', cid)[0]
@@ -72,19 +73,28 @@ def protected_snapshot():
                     'digest': hashlib.sha256(path.read_bytes()).hexdigest(),
                     'mode': stat.S_IMODE(info.st_mode), 'uid': info.st_uid, 'gid': info.st_gid}
     default = Path.home() / '.kube/config'
-    with urllib.request.urlopen('https://spire.adianto.dev/healthz', timeout=8) as response:
-        public_healthy = response.status == 200
+    try:
+        with urllib.request.urlopen('https://spire.adianto.dev/healthz', timeout=8) as response:
+            public_healthy = response.status == 200
+    except (OSError, urllib.error.URLError):
+        if not public_optional:raise
+        public_healthy = False
     return {'containers': containers, 'public_https_healthy': public_healthy, 'retained_private_fingerprints': retained,
             'default_context': hashlib.sha256(default.read_bytes()).hexdigest() if default.exists() else None}
 
 
-def continuity(before):
-    after = protected_snapshot()
-    return {'public_https_healthy': before['public_https_healthy'] and after['public_https_healthy'],
+def continuity(before, *, public_route_owned=False):
+    after = protected_snapshot(public_optional=True) if public_route_owned else protected_snapshot()
+    checks = {'public_https_healthy': before['public_https_healthy'] and after['public_https_healthy'],
             'protected_containers_unchanged': all(after['containers'].get(k) == v
                                                 for k, v in before['containers'].items()),
             'retained_identity_unchanged': before['retained_private_fingerprints'] == after['retained_private_fingerprints'],
             'default_context_unchanged': before['default_context'] == after['default_context']}
+    if public_route_owned:
+        # Own endpoint downtime during explicit stop/reset is not foreign damage.
+        # Never label that unobserved availability as a successful health check.
+        del checks['public_https_healthy']
+    return checks
 
 
 def preflight():
@@ -367,7 +377,11 @@ def stop():
                     raise RuntimeError('cleanup refused reassigned image tag; ownership retained')
                 execute([DOCKER, 'image', 'rm', built['tag']])
     cleanup_image_intents(value)
-    checks = continuity(before)
+    public_file=Path(value['work'])/'public-profile.json'
+    public_owned=public_file.exists()
+    if public_owned and json.loads(public_file.read_text()).get('origin')!='https://spire.adianto.dev':
+        raise RuntimeError('invalid public ownership profile')
+    checks = continuity(before, public_route_owned=True) if public_owned else continuity(before)
     if not all(checks.values()):
         raise RuntimeError('protected continuity failure; descriptor retained')
     ACTIVE.unlink()
