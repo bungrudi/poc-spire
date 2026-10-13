@@ -8,7 +8,7 @@ public cutover.
 ## Requirements
 
 ### Requirement: KR-01 Complete owned in-cluster topology
-The opt-in Kubernetes profile SHALL run SPIRE Server, node Agents/CSI, UI, both callers, Money, Kafka and required bootstrap components inside one owned cluster. It MUST use separate caller Pods with equal app UID/GID 1000, one Money instance and one Kafka partition. Existing Compose/public runtime and retained identity MUST remain unchanged.
+The opt-in Kubernetes profile SHALL run SPIRE Server, Agents/CSI, UI, both callers, Money, Kafka and bootstrap inside one owned cluster, with separate UID/GID 1000 caller Pods, one Money and one Kafka partition. Retained identity and unrelated services MUST remain unchanged. Private baseline preserves existing Compose/public runtime; explicit named public cutover SHALL retire only the identified superseded PoC runtimes.
 
 #### Scenario: All runtime components are placed
 - **WHEN** the approved Kubernetes baseline starts
@@ -65,7 +65,7 @@ Kubernetes run state SHALL be disposable. On a failed or corrupt run, the operat
 - **THEN** balances/history/receipts may reset and manually reused IDs may act anew, without a durable or cross-run exactly-once guarantee
 
 ### Requirement: KR-05 Ownership and cleanup
-Every run SHALL identify its cluster, kubeconfig, namespace/Pod UIDs, temporary credentials and processes. Collision, startup failure and shutdown MUST remove only owned resources with verifiable bounded cleanup. Default kubecontext, public endpoint, unrelated workloads and retained identity MUST NOT be changed or reused.
+Every run SHALL identify its cluster, kubeconfig, namespaces/Pods, temporary credentials and processes. Cleanup MUST remove only owned resources. Default context, retained identity and unrelated workloads MUST remain unchanged. The explicitly authorized public profile SHALL own only spire.adianto.dev and allow retirement of precisely recorded old PoC IDs; its own endpoint downtime during whole-run stop/reset is not protected foreign-service continuity.
 
 #### Scenario: Name port or context collision
 - **WHEN** preflight detects an occupied port/name or foreign context/resource identity
@@ -74,6 +74,10 @@ Every run SHALL identify its cluster, kubeconfig, namespace/Pod UIDs, temporary 
 #### Scenario: Failure or full shutdown
 - **WHEN** startup/acceptance fails or the operator stops the run
 - **THEN** cleanup completion is checked, incomplete cleanup remains failed/retryable and actual protected service/state continuity is recorded
+
+#### Scenario: Authorized public retirement
+- **WHEN** the named public Kubernetes route is verified and superseded public/preview PoC runtimes are stopped
+- **THEN** only captured owned stack/container/process IDs are retired and excluded from public-run continuity, while original foreign-container/default-context/retained-state fingerprints remain enforced
 
 ### Requirement: KR-06 Reproducible validated baseline freeze
 Freeze MUST use committed source/config, pinned normal and distinct test artifacts, retained core proofs, relevant tests, basic cleanup/coexistence and independent review. Deployed topology/resources and restored hashes MUST match tested inputs. Evidence SHALL state modes and deferred coverage; DEFERRED cases are neither PASS nor prerequisites. Evidence-only follow-up SHALL NOT change tested source. No comparison or performance claim is included.
@@ -100,3 +104,14 @@ Kubernetes acceptance SHALL prove five scenarios, exact attestation/authorizatio
 #### Scenario: Coverage is partial or deferred
 - **WHEN** an obligation is deterministic, partial, unexecuted or outside the narrowed scope
 - **THEN** its mode/status is explicit; infrastructure errors and DEFERRED cases are never recorded as security PASS
+
+### Requirement: KR-08 Supervised named public Kubernetes route
+The public profile SHALL keep scripts/state in main and use the existing HTTPS edge/certificate for only spire.adianto.dev. Its UI forward MUST bind literal loopback and use the exact owned kubeconfig/context. Route supervision MUST fail closed and preserve the current run on a route-only restart. No controller, HA, automatic state repair, extra public application port or resource expansion is permitted.
+
+#### Scenario: Public route starts or restarts
+- **WHEN** the owned public run is ready and its route service starts or restarts
+- **THEN** the named HTTPS domain reaches that run's UI with validated upstream TLS and unchanged Pod/config guards, five scenarios, ledger and browser defenses
+
+#### Scenario: Ownership or upstream TLS is invalid
+- **WHEN** the descriptor/profile/context differs or upstream certificate verification fails
+- **THEN** no wrong workload, plaintext fallback or broad context adoption is used; the public route fails closed and operator whole-cluster reset remains explicit

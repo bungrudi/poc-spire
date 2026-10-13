@@ -160,3 +160,9 @@ validation, source equality, links, declared proof modes and preserved approval
 history: final documentation/evidence consistency PASS, 13 October 2026.
 Tasks 7.1/7.2 are complete; owner acceptance remains pending. No archival move
 or new application/runtime change was made.
+
+Public-cutover compatibility, 13 October 2026: the already-applied UI-02 delta
+carries the complete current block/scenario from the separately direct-owner-
+authorized [public change](../publish-kubernetes-demo-on-existing-domain/review.md).
+Original private-baseline approval snapshots remain historical; this does not
+invent public acceptance under the earlier private scope. No archive was moved.

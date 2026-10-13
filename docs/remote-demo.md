@@ -1,5 +1,12 @@
 # Simplified SPIRE demo — 11 October 2026
 
+Current deployment supersession — 13 October 2026: the named domain now serves
+[the Kubernetes five-scenario profile](kubernetes-public.md). The old Compose
+public service is masked and removed. The 11 October sections below preserve
+historical installation/acceptance; current operations and evidence are in the
+new runbook. Human authentication remains intentionally assumed.
+
+
 The owner requested `spire.adianto.dev` and explicitly removed OIDC, asking to
 assume an authenticated human identity in order to understand SPIRE. The app
 therefore declares an **assumed demo operator**, not a verified human identity.

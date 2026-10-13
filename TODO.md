@@ -19,7 +19,17 @@ changes are installed and verified at `https://spire.adianto.dev/`.
 
 Checked boxes mean work actually completed. Unchecked boxes are planned work, not tests that passed. Technical decisions live in [RFC 0001](docs/rfcs/0001-process-identity.md); workspace requirements live in [WORKSPACE.md](WORKSPACE.md).
 
-## Active simplified demo — owner request, 11 October 2026
+## Current public Kubernetes deployment — 13 October 2026
+
+The owner directly authorized merge/push, named public cutover and cleanup.
+[Current runbook/evidence](docs/kubernetes-public.md) records a main-local normal
+Kubernetes/Istio/SPIRE/Kafka run, public five outcomes/ledger 0 → 2, verified upstream
+TLS, browser defenses, renewal projection and route restart. Eight old public/
+preview containers and their owned supervisors/issuers/runtime are removed; the
+old public service is masked. Shared apps/access, retained state and local WIP
+are preserved. Final independent public-route/cleanup review remains pending.
+
+## Historical two-scenario Compose demo — 11 October 2026
 
 The original human-login checklist below is historical for this profile. No
 verified-human or original full Gate F/G acceptance is claimed.

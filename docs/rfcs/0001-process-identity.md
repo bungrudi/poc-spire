@@ -16,7 +16,7 @@ or claims about this public demo.
 
 
 - **Status:** implementation authorized; identity substrate, money API and internal callers/control verified in the measured UID-1000/native-agent layout; simplified HTTPS UI implemented; isolated integration passes; owner-approved public deployment live and verified
-- **Scope:** fake-money Go services in the public Compose profile and approved isolated Kafka/owned Kubernetes profiles
+- **Scope:** fake-money Go services in the named public Kubernetes profile and retained isolated Compose/private-baseline test profiles
 - **Decision authority:** project owner
 - **Related:** [workspace brief](../../WORKSPACE.md), [TODO list](../../TODO.md), [delivery plan](../plan.md)
 - **Supersedes:** earlier localhost-only UI assumption
@@ -75,6 +75,18 @@ its whole owned cluster. Extended automatic integrity/lineage/recovery and fault
 injection are DEFERRED, as are comparison/benchmark/public cutover. No durable
 Money, continuous process integrity or host-compromise protection is added.
 Final docs consistency review passed; owner acceptance remains separate.
+
+## Named public Kubernetes cutover — 13 October 2026
+
+The owner's direct merge/push/cutover/cleanup instruction moves only the named
+public demo to the [main-local Kubernetes profile](../kubernetes-public.md).
+Existing Nginx/browser TLS validates a supervised loopback UI upstream; exact
+public Origin/Host and current SPIRE/JWS/Istio/UDS permissions remain. The old
+public/preview stacks and native issuers are retired by recorded ownership;
+retained identity, shared apps and access services are preserved. Public own-
+endpoint availability is separately verified rather than required during its
+explicit whole-run stop/reset. [Evidence](../evidence/kubernetes-public-current.json)
+declares artifacts, modes, resource caps, route/renewal checks and limitations.
 
 ## 1. Summary
 

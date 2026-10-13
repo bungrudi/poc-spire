@@ -205,3 +205,14 @@ declares runtime versus deterministic modes and DEFERRED reliability. Parent
 source/runtime review passed; final docs consistency review passed; owner acceptance
 remains pending. Earlier development/preflight reports are historical checkpoints.
 Compose/public contracts and evidence are preserved; no public cutover occurred.
+
+
+## Current named public Kubernetes profile — 13 October 2026
+
+[Runbook](kubernetes-public.md) and [public evidence](evidence/kubernetes-public-current.json)
+map the direct-owner-authorized main/public cutover to actual UI Pod/image/index/
+platform/binary, normal registrations, five outcomes/ledger, browser defense modes,
+route restart, renewal projection and exact retirement/preserved-state checks.
+The private baseline evidence remains its separately scoped source checkpoint.
+The old two-scenario public/preview runtimes are retired; shared/retained/access
+services are preserved. Public final independent verification remains pending.

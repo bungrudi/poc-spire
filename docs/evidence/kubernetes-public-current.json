@@ -1,0 +1,823 @@
+{
+  "Go_application_source_unchanged_from_reviewed_baseline": true,
+  "cluster": "poc-k8s-f24dcec044c7",
+  "config_sha256": "9e23d28cf5bd8843345ef6b3446f0bed4cfb43611f202e35fd681885d988f875",
+  "limits": [
+    "Application image was built cleanly from51a9f85 before the bounded startup ownership fix/verifier commits; Go/application code and deployed Pod/security configuration are unchanged, and both helper revisions are declared.",
+    "First verifier reached all5 correct outcomes and actual fresh0\u21922 ledger check, then incorrectly required Go403 from a wrong-Host edge route; completed keys were reused without new logical transfers.",
+    "CRI reports the imported OCI index/repository name; actual index\u2192requested platform\u2192config is explicitly verified instead of equating differently typed digest/name fields.",
+    "Manual deploy hook tested existing certificate projection and session/ledger continuity; future actual ACME issuance and host reboot were not observed.",
+    "Route supervision restarts its loopback connection only. Failed/corrupt or stopped whole clusters require explicit owned stop/recreate; no operator/controller/HA/reliability framework is introduced.",
+    "Performance comparison and deferred reliability remain outside this cutover."
+  ],
+  "local_WIP": {
+    "local_stash_sha": "2bdc5bc57e0786e520885f970d2387e36930f19b",
+    "old_UI_changes_not_replayed": true,
+    "private_backup_exists": true,
+    "stash_not_pushed": true,
+    "tracked_and_untracked_files_preserved": 12
+  },
+  "main_checkout": "/home/ubuntu/Workspace/poc-spire",
+  "merged_implementation_sha": "59e069d8e984f5d12aa20848002c3d895c603532",
+  "normal_image": {
+    "binary_sha256": {
+      "bundle-publisher": "00e189359f6f779338990e54d245b1556458055dae2da7d3c18f0ae7748a1d53",
+      "control-adapter": "54ab561f048c8cb374a524ab40f98ed9c195c3404853c101ebdb250e9230dfe6",
+      "kubernetes-broker-ready": "2d22d131deeb915e57e9de367995914eb05cc90ea528467f518d0c844ba27690",
+      "kubernetes-init": "3ea61da2a3b12c68f3775401b6488c74d783ece927c97f4c20e157166b37a324",
+      "kubernetes-ready": "bbac77f1558f42606f94c2d187ae858f8e62c27a780bf75d775e9bde522628b8",
+      "kubernetes-run-guard": "3122cb671cf1968938115e1b8dcb8bfecd81b6c7657ad592590059f47d71f304",
+      "money": "f3a16b0daa21d18b62959514d53fc9b11503472f54ce7aeaaa2d7d6b1cc71e36",
+      "trusted-caller": "c7a8869814406072e10e86c096c036218c0f76bba33cc7472f6ee1fcb6e0de5c",
+      "ui": "383977a6f97f12da2f4b51796f55bbed9b09c1be4eec70f7b27672e4f0e65b6f",
+      "untrusted-caller": "9eee55d3dd980ad08743766df17ae69b16bf6de39bf82c9b8744cf0ecd01d20f"
+    },
+    "config_digest": "sha256:6e7d2c51d8bcb57318dba28899fe99e6335c6827d5b2f8499117f6f9a26b5751",
+    "immutable_reference": "docker.io/poc-spire/normal@sha256:d293a9696add73be90decfc88e19b8649ce224654ba2f81661218134bf37957d",
+    "index_digest": "sha256:ed0147bca5aaa1ef1aa0791522082be1d61508db20112130ebea9d919adfa533",
+    "native_descriptor_graph": {
+      "config_digest": "sha256:6e7d2c51d8bcb57318dba28899fe99e6335c6827d5b2f8499117f6f9a26b5751",
+      "filesystem_diff_ids": [
+        "sha256:1c14b8cbe997a3fdc664a06943276283e6c3c9fe28904c442b85d2d74aecc934"
+      ],
+      "indexes": [
+        {
+          "digest": "sha256:9d492bcf2d4584c30e6abce6a96dffd3416ced47c28518039aa6dc0d18d71c83",
+          "media_type": "application/vnd.oci.image.index.v1+json"
+        }
+      ],
+      "platform_manifest_digest": "sha256:4a04e02c5fce46fe568641d727bad67d4a21c0efb2438008eba8ff628ec0e158",
+      "store_descriptor": {
+        "digest": "sha256:9d492bcf2d4584c30e6abce6a96dffd3416ced47c28518039aa6dc0d18d71c83",
+        "mediaType": "application/vnd.oci.image.index.v1+json",
+        "size": 855
+      }
+    },
+    "platform_manifest_digest": "sha256:d293a9696add73be90decfc88e19b8649ce224654ba2f81661218134bf37957d",
+    "source_dirty": false,
+    "source_revision": "51a9f854b8728fbcc136dd82c9e25cc3104296d0",
+    "test_tags": [],
+    "verified_file_inventory": {
+      "bundle-publisher": {
+        "mode": "0o775",
+        "sha256": "00e189359f6f779338990e54d245b1556458055dae2da7d3c18f0ae7748a1d53",
+        "size": 8857637
+      },
+      "control-adapter": {
+        "mode": "0o775",
+        "sha256": "54ab561f048c8cb374a524ab40f98ed9c195c3404853c101ebdb250e9230dfe6",
+        "size": 19056856
+      },
+      "kubernetes-broker-ready": {
+        "mode": "0o775",
+        "sha256": "2d22d131deeb915e57e9de367995914eb05cc90ea528467f518d0c844ba27690",
+        "size": 6723706
+      },
+      "kubernetes-init": {
+        "mode": "0o775",
+        "sha256": "3ea61da2a3b12c68f3775401b6488c74d783ece927c97f4c20e157166b37a324",
+        "size": 15690443
+      },
+      "kubernetes-ready": {
+        "mode": "0o775",
+        "sha256": "bbac77f1558f42606f94c2d187ae858f8e62c27a780bf75d775e9bde522628b8",
+        "size": 3027911
+      },
+      "kubernetes-run-guard": {
+        "mode": "0o775",
+        "sha256": "3122cb671cf1968938115e1b8dcb8bfecd81b6c7657ad592590059f47d71f304",
+        "size": 3331582
+      },
+      "money": {
+        "mode": "0o775",
+        "sha256": "f3a16b0daa21d18b62959514d53fc9b11503472f54ce7aeaaa2d7d6b1cc71e36",
+        "size": 24522442
+      },
+      "trusted-caller": {
+        "mode": "0o775",
+        "sha256": "c7a8869814406072e10e86c096c036218c0f76bba33cc7472f6ee1fcb6e0de5c",
+        "size": 25217120
+      },
+      "ui": {
+        "mode": "0o775",
+        "sha256": "383977a6f97f12da2f4b51796f55bbed9b09c1be4eec70f7b27672e4f0e65b6f",
+        "size": 19220117
+      },
+      "untrusted-caller": {
+        "mode": "0o775",
+        "sha256": "9eee55d3dd980ad08743766df17ae69b16bf6de39bf82c9b8744cf0ecd01d20f",
+        "size": 25019165
+      }
+    }
+  },
+  "normal_image_source_sha": "51a9f854b8728fbcc136dd82c9e25cc3104296d0",
+  "normal_registration_count": 5,
+  "normal_registrations": [
+    {
+      "admin": false,
+      "created_at": "1791875684",
+      "dns_names": [],
+      "downstream": false,
+      "expires_at": "0",
+      "federates_with": [],
+      "hint": "",
+      "id": "c3568cb2-8561-4254-afdb-8d3c5e354b1d",
+      "jwt_svid_ttl": 0,
+      "parent_id": {
+        "path": "/spire/agent/k8s_psat/poc-k8s-f24dcec044c7/84817799-a340-4271-bf2b-10f2e08c7404",
+        "trust_domain": "poc.internal"
+      },
+      "revision_number": "0",
+      "selectors": [
+        {
+          "type": "k8s",
+          "value": "container-image:docker.io/library/import-2026-10-13@sha256:ed0147bca5aaa1ef1aa0791522082be1d61508db20112130ebea9d919adfa533"
+        },
+        {
+          "type": "k8s",
+          "value": "container-name:caller"
+        },
+        {
+          "type": "k8s",
+          "value": "ns:poc-f24dcec044c7"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-label:poc-role:caller-trusted"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-label:poc-run:f24dcec044c7"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-owner-uid:ReplicaSet:7a0ed3c4-689f-4bbb-a411-a9a1c9c5d262"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-uid:faaf9d0c-dab6-4328-b1b1-cf7cd34a9f83"
+        },
+        {
+          "type": "k8s",
+          "value": "sa:caller-trusted"
+        },
+        {
+          "type": "unix",
+          "value": "sha256:c7a8869814406072e10e86c096c036218c0f76bba33cc7472f6ee1fcb6e0de5c"
+        },
+        {
+          "type": "unix",
+          "value": "uid:1000"
+        }
+      ],
+      "spiffe_id": {
+        "path": "/caller/trusted",
+        "trust_domain": "poc.internal"
+      },
+      "store_svid": false,
+      "x509_svid_ttl": 90
+    },
+    {
+      "admin": false,
+      "created_at": "1791875685",
+      "dns_names": [],
+      "downstream": false,
+      "expires_at": "0",
+      "federates_with": [],
+      "hint": "",
+      "id": "f4eeecd2-829c-4ae0-a7b6-d179844dd542",
+      "jwt_svid_ttl": 0,
+      "parent_id": {
+        "path": "/spire/agent/k8s_psat/poc-k8s-f24dcec044c7/84817799-a340-4271-bf2b-10f2e08c7404",
+        "trust_domain": "poc.internal"
+      },
+      "revision_number": "0",
+      "selectors": [
+        {
+          "type": "k8s",
+          "value": "container-image:docker.io/library/import-2026-10-13@sha256:ed0147bca5aaa1ef1aa0791522082be1d61508db20112130ebea9d919adfa533"
+        },
+        {
+          "type": "k8s",
+          "value": "container-name:adapter"
+        },
+        {
+          "type": "k8s",
+          "value": "ns:poc-f24dcec044c7"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-label:poc-role:caller-trusted"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-label:poc-run:f24dcec044c7"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-owner-uid:ReplicaSet:7a0ed3c4-689f-4bbb-a411-a9a1c9c5d262"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-uid:faaf9d0c-dab6-4328-b1b1-cf7cd34a9f83"
+        },
+        {
+          "type": "k8s",
+          "value": "sa:caller-trusted"
+        },
+        {
+          "type": "unix",
+          "value": "sha256:54ab561f048c8cb374a524ab40f98ed9c195c3404853c101ebdb250e9230dfe6"
+        },
+        {
+          "type": "unix",
+          "value": "uid:10002"
+        }
+      ],
+      "spiffe_id": {
+        "path": "/control/caller/trusted",
+        "trust_domain": "poc.internal"
+      },
+      "store_svid": false,
+      "x509_svid_ttl": 90
+    },
+    {
+      "admin": false,
+      "created_at": "1791875687",
+      "dns_names": [],
+      "downstream": false,
+      "expires_at": "0",
+      "federates_with": [],
+      "hint": "",
+      "id": "01ca42c6-31b1-4f15-ac77-d0d4cd9295e6",
+      "jwt_svid_ttl": 0,
+      "parent_id": {
+        "path": "/spire/agent/k8s_psat/poc-k8s-f24dcec044c7/84817799-a340-4271-bf2b-10f2e08c7404",
+        "trust_domain": "poc.internal"
+      },
+      "revision_number": "0",
+      "selectors": [
+        {
+          "type": "k8s",
+          "value": "container-image:docker.io/library/import-2026-10-13@sha256:ed0147bca5aaa1ef1aa0791522082be1d61508db20112130ebea9d919adfa533"
+        },
+        {
+          "type": "k8s",
+          "value": "container-name:adapter"
+        },
+        {
+          "type": "k8s",
+          "value": "ns:poc-f24dcec044c7"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-label:poc-role:caller-unidentified"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-label:poc-run:f24dcec044c7"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-owner-uid:ReplicaSet:fc2fef51-1d52-43ba-ae83-c588791b5d08"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-uid:b5f134ea-6363-459a-badf-c86236e473fa"
+        },
+        {
+          "type": "k8s",
+          "value": "sa:caller-unidentified"
+        },
+        {
+          "type": "unix",
+          "value": "sha256:54ab561f048c8cb374a524ab40f98ed9c195c3404853c101ebdb250e9230dfe6"
+        },
+        {
+          "type": "unix",
+          "value": "uid:10002"
+        }
+      ],
+      "spiffe_id": {
+        "path": "/control/caller/unidentified",
+        "trust_domain": "poc.internal"
+      },
+      "store_svid": false,
+      "x509_svid_ttl": 90
+    },
+    {
+      "admin": false,
+      "created_at": "1791875681",
+      "dns_names": [],
+      "downstream": false,
+      "expires_at": "0",
+      "federates_with": [],
+      "hint": "",
+      "id": "63963f5f-f9ec-4880-824d-5feb9d0c1c70",
+      "jwt_svid_ttl": 0,
+      "parent_id": {
+        "path": "/spire/agent/k8s_psat/poc-k8s-f24dcec044c7/84817799-a340-4271-bf2b-10f2e08c7404",
+        "trust_domain": "poc.internal"
+      },
+      "revision_number": "0",
+      "selectors": [
+        {
+          "type": "k8s",
+          "value": "container-image:docker.io/library/import-2026-10-13@sha256:ed0147bca5aaa1ef1aa0791522082be1d61508db20112130ebea9d919adfa533"
+        },
+        {
+          "type": "k8s",
+          "value": "container-name:money"
+        },
+        {
+          "type": "k8s",
+          "value": "ns:poc-f24dcec044c7"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-label:poc-role:money"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-label:poc-run:f24dcec044c7"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-owner-uid:ReplicaSet:9fa818e8-8c96-44c4-a726-3bc11f0e242b"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-uid:af741bf3-1d61-4088-8a12-8df8fd8ca380"
+        },
+        {
+          "type": "k8s",
+          "value": "sa:money"
+        },
+        {
+          "type": "unix",
+          "value": "sha256:f3a16b0daa21d18b62959514d53fc9b11503472f54ce7aeaaa2d7d6b1cc71e36"
+        },
+        {
+          "type": "unix",
+          "value": "uid:1000"
+        }
+      ],
+      "spiffe_id": {
+        "path": "/money",
+        "trust_domain": "poc.internal"
+      },
+      "store_svid": false,
+      "x509_svid_ttl": 90
+    },
+    {
+      "admin": false,
+      "created_at": "1791875682",
+      "dns_names": [],
+      "downstream": false,
+      "expires_at": "0",
+      "federates_with": [],
+      "hint": "",
+      "id": "1c13e87a-dfaa-40f9-8477-58a4a6b4dcdb",
+      "jwt_svid_ttl": 0,
+      "parent_id": {
+        "path": "/spire/agent/k8s_psat/poc-k8s-f24dcec044c7/84817799-a340-4271-bf2b-10f2e08c7404",
+        "trust_domain": "poc.internal"
+      },
+      "revision_number": "0",
+      "selectors": [
+        {
+          "type": "k8s",
+          "value": "container-image:docker.io/library/import-2026-10-13@sha256:ed0147bca5aaa1ef1aa0791522082be1d61508db20112130ebea9d919adfa533"
+        },
+        {
+          "type": "k8s",
+          "value": "container-name:ui"
+        },
+        {
+          "type": "k8s",
+          "value": "ns:poc-f24dcec044c7"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-label:poc-role:ui"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-label:poc-run:f24dcec044c7"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-owner-uid:ReplicaSet:6241200d-c651-4dff-99a2-238f49b5239c"
+        },
+        {
+          "type": "k8s",
+          "value": "pod-uid:dde8bbe7-7b8d-437f-8eb0-ae70757c1883"
+        },
+        {
+          "type": "k8s",
+          "value": "sa:ui"
+        },
+        {
+          "type": "unix",
+          "value": "sha256:383977a6f97f12da2f4b51796f55bbed9b09c1be4eec70f7b27672e4f0e65b6f"
+        },
+        {
+          "type": "unix",
+          "value": "uid:1000"
+        }
+      ],
+      "spiffe_id": {
+        "path": "/ui",
+        "trust_domain": "poc.internal"
+      },
+      "store_svid": false,
+      "x509_svid_ttl": 90
+    }
+  ],
+  "observed_at_utc": "2026-10-13T07:52:31.173822+00:00",
+  "operational_lifecycle_fix_sha": "e53c616",
+  "owned_run": "f24dcec044c7",
+  "plan_sha": "be9c6b5869ba9ded5b40d992993fbe9293d74972",
+  "public_acceptance": {
+    "Host_proof_mode": "Go UI through verified loopback hostname/chain; public edge routing failure is recorded separately",
+    "actual_UI": {
+      "actual_status_index_digest": "sha256:ed0147bca5aaa1ef1aa0791522082be1d61508db20112130ebea9d919adfa533",
+      "all_containers_ready": true,
+      "exact_public_origin": true,
+      "image_id": "docker.io/library/import-2026-10-13@sha256:ed0147bca5aaa1ef1aa0791522082be1d61508db20112130ebea9d919adfa533",
+      "index_platform_conjunction_verified": true,
+      "namespace": "poc-f24dcec044c7",
+      "normal_binary_sha256": "383977a6f97f12da2f4b51796f55bbed9b09c1be4eec70f7b27672e4f0e65b6f",
+      "pod_uid": "dde8bbe7-7b8d-437f-8eb0-ae70757c1883",
+      "requested_platform_image": "docker.io/poc-spire/normal@sha256:d293a9696add73be90decfc88e19b8649ce224654ba2f81661218134bf37957d"
+    },
+    "browser_denials": [
+      {
+        "case": "missing-CSRF",
+        "status": 403
+      },
+      {
+        "case": "wrong-Origin",
+        "status": 403
+      },
+      {
+        "case": "wrong-Host",
+        "status": 403
+      }
+    ],
+    "cluster": "poc-k8s-f24dcec044c7",
+    "final_balances": {
+      "balances": {
+        "demo-a": 99800,
+        "demo-b": 100200
+      },
+      "expected_server_id": "spiffe://poc.internal/money",
+      "server_verified": true,
+      "version": 2
+    },
+    "initial_balances": {
+      "balances": {
+        "demo-a": 100000,
+        "demo-b": 100000
+      },
+      "expected_server_id": "spiffe://poc.internal/money",
+      "server_verified": true,
+      "version": 0
+    },
+    "origin": "https://spire.adianto.dev",
+    "public_wrong_Host_status": 502,
+    "run": "f24dcec044c7",
+    "scenarios": [
+      {
+        "evidence": {
+          "money_http_status": 200,
+          "money_result": {
+            "amount_minor": 100,
+            "balances": {
+              "demo-a": 99900,
+              "demo-b": 100100
+            },
+            "currency": "USD",
+            "replay": false,
+            "request_id": "9eac5354a0cd2100d3614e907ed549015b218586131e59fb960e76a5bad483c7",
+            "transfer_id": "489f5dc5a9c43cb4f7070a51ad3bf5962fde6246a43eacecb4103c92c46e6c17",
+            "verified_caller_id": "spiffe://poc.internal/caller/trusted",
+            "version": 1
+          },
+          "outcome": "transfer_succeeded",
+          "request_id": "9eac5354a0cd2100d3614e907ed549015b218586131e59fb960e76a5bad483c7",
+          "server_verified": true,
+          "stage": "money_http"
+        },
+        "scenario": "trusted",
+        "status": "done"
+      },
+      {
+        "evidence": {
+          "identity_eligibility": "no_matching_identity",
+          "outcome": "tls_rejected",
+          "request_id": "403049e12333cae58da11585f9ac6e4328f4b2359f032d1ee0e65d95f09837c6",
+          "server_verified": true,
+          "stage": "client_authentication"
+        },
+        "scenario": "unidentified",
+        "status": "done"
+      },
+      {
+        "evidence": {
+          "caller_diagnostics": {
+            "created_at": 1791876243,
+            "deadline": 1791876363,
+            "exists": true,
+            "initialized": true,
+            "money_instance_id": "b0abde82b07d843781dfbe7fc9a53b85",
+            "publication": "queued",
+            "request_id": "bfacbfd589b21e2b54da4945a47a33c4ae95ecaad91fa9dc6dfe097c18f7f6dd",
+            "scenario": "kafka-trusted",
+            "stream_id": "4b434ee64be546d6a79f68abeb1be632",
+            "variants": [
+              {
+                "digest": "a235ba0d25977b5c823f6803e54ac1d21a4b0ef2619ac0ae80927eceecba6250",
+                "expires_at": 1791876273,
+                "publication": "queued"
+              }
+            ]
+          },
+          "money_queries": [
+            {
+              "digest": "a235ba0d25977b5c823f6803e54ac1d21a4b0ef2619ac0ae80927eceecba6250",
+              "query_http_status": 200,
+              "receipt": {
+                "business_code": 200,
+                "business_result": {
+                  "amount_minor": 100,
+                  "balances": {
+                    "demo-a": 99800,
+                    "demo-b": 100200
+                  },
+                  "currency": "USD",
+                  "replay": false,
+                  "request_id": "bfacbfd589b21e2b54da4945a47a33c4ae95ecaad91fa9dc6dfe097c18f7f6dd",
+                  "transfer_id": "3994c868c648d2b9cec1c7ec4d849f1935bfbc857520c542a1ca25a6bdcd62d9",
+                  "verified_caller_id": "spiffe://poc.internal/caller/trusted",
+                  "version": 2
+                },
+                "digest": "a235ba0d25977b5c823f6803e54ac1d21a4b0ef2619ac0ae80927eceecba6250",
+                "disposition": "applied",
+                "instance_id": "b0abde82b07d843781dfbe7fc9a53b85",
+                "observed_at": 1791876244,
+                "reason": "transfer_applied",
+                "request_id": "bfacbfd589b21e2b54da4945a47a33c4ae95ecaad91fa9dc6dfe097c18f7f6dd",
+                "retain_until": 1791876424,
+                "verified_producer_id": "spiffe://poc.internal/caller/trusted"
+              }
+            }
+          ],
+          "outcome": "transfer_succeeded",
+          "provenance": "authenticated exact-Money receipt for the original producer and logical transfer",
+          "stage": "money_verified"
+        },
+        "scenario": "kafka-trusted",
+        "status": "done"
+      },
+      {
+        "evidence": {
+          "caller_diagnostics": {
+            "created_at": 1791876249,
+            "deadline": 1791876369,
+            "exists": true,
+            "initialized": true,
+            "money_instance_id": "b0abde82b07d843781dfbe7fc9a53b85",
+            "publication": "queued",
+            "request_id": "4e2bafd82af59d42995c4a0a85edd353800efa26640e5dd92200abf71c8b7893",
+            "scenario": "kafka-unidentified",
+            "stream_id": "4b434ee64be546d6a79f68abeb1be632",
+            "variants": [
+              {
+                "digest": "01a3aa7457de9ba95b7eca4b76e674ef3d82cdf2cf7b7de1e520d73d70555e38",
+                "expires_at": 1791876279,
+                "publication": "queued"
+              }
+            ]
+          },
+          "money_queries": [
+            {
+              "digest": "01a3aa7457de9ba95b7eca4b76e674ef3d82cdf2cf7b7de1e520d73d70555e38",
+              "query_http_status": 200,
+              "receipt": {
+                "digest": "01a3aa7457de9ba95b7eca4b76e674ef3d82cdf2cf7b7de1e520d73d70555e38",
+                "disposition": "rejected",
+                "instance_id": "b0abde82b07d843781dfbe7fc9a53b85",
+                "observed_at": 1791876249,
+                "reason": "malformed_jws",
+                "retain_until": 1791876429
+              }
+            }
+          ],
+          "outcome": "money_rejected",
+          "provenance": "authenticated Money rejection for exact record bytes; unattributed invalid record",
+          "stage": "money_verified"
+        },
+        "scenario": "kafka-unidentified",
+        "status": "done"
+      },
+      {
+        "evidence": {
+          "caller_diagnostics": {
+            "created_at": 1791876249,
+            "deadline": 1791876369,
+            "exists": true,
+            "initialized": true,
+            "money_instance_id": "b0abde82b07d843781dfbe7fc9a53b85",
+            "publication": "queued",
+            "request_id": "e7323997fef6967d9027b16b1477e8b91aacf170e0a0ced2e8572a44b76f7b4b",
+            "scenario": "kafka-tampered",
+            "stream_id": "4b434ee64be546d6a79f68abeb1be632",
+            "variants": [
+              {
+                "digest": "b98e002609d30a916728e70ce59a1a7f9aee8450182f0d20862ae12c347bbf2d",
+                "expires_at": 1791876279,
+                "publication": "queued"
+              }
+            ]
+          },
+          "money_queries": [
+            {
+              "digest": "b98e002609d30a916728e70ce59a1a7f9aee8450182f0d20862ae12c347bbf2d",
+              "query_http_status": 200,
+              "receipt": {
+                "digest": "b98e002609d30a916728e70ce59a1a7f9aee8450182f0d20862ae12c347bbf2d",
+                "disposition": "rejected",
+                "instance_id": "b0abde82b07d843781dfbe7fc9a53b85",
+                "observed_at": 1791876249,
+                "reason": "invalid_signature",
+                "retain_until": 1791876429
+              }
+            }
+          ],
+          "outcome": "money_rejected",
+          "provenance": "authenticated Money rejection for exact record bytes; unattributed invalid record",
+          "stage": "money_verified"
+        },
+        "scenario": "kafka-tampered",
+        "status": "done"
+      }
+    ],
+    "source_image_revision": "51a9f854b8728fbcc136dd82c9e25cc3104296d0"
+  },
+  "public_origin": "https://spire.adianto.dev",
+  "public_verifier_sha": "cd3fb62",
+  "retirement": {
+    "access_services_active": {
+      "cloudflared": true,
+      "nginx": true,
+      "ssh": true
+    },
+    "all_eight_old_containers_absent": true,
+    "no_global_Docker_prune": true,
+    "obsolete_preview_runtime_removed": true,
+    "old_container_names": [
+      "/poc-spire-local-ui-dd56511c20-ui-1",
+      "/poc-spire-local-ui-dd56511c20-trusted-caller-1",
+      "/poc-spire-local-ui-dd56511c20-untrusted-caller-1",
+      "/poc-spire-local-ui-dd56511c20-money-1",
+      "/poc-spire-local-ui-e30f828e94-money-1",
+      "/poc-spire-local-ui-e30f828e94-ui-1",
+      "/poc-spire-local-ui-e30f828e94-untrusted-caller-1",
+      "/poc-spire-local-ui-e30f828e94-trusted-caller-1"
+    ],
+    "old_native_public_supervisor_and_issuers_gone": true,
+    "old_projects": [
+      "poc-spire-local-ui-dd56511c20",
+      "poc-spire-local-ui-e30f828e94"
+    ],
+    "old_public_unit_masked": true,
+    "private_baseline_8fe59fe9e74c_removed": true,
+    "protected_checks": {
+      "default_context_unchanged": true,
+      "protected_containers_unchanged": true,
+      "retained_identity_unchanged": true
+    },
+    "protected_snapshot_excluded_only_exact_retired_ids": [
+      "3199c51fbff8ac62f8b69a086386a7889db49169da35c811e6e13e6635257ff4",
+      "2b1526e771a30451845089b86e447cf231f2cbd66f004bdc8b8f5c02d01229f8",
+      "09a4e74b091d71f8080b1ed4da0a85476728b3f38969edbdeeee59929d3a2b62",
+      "ac0b30badde6998b7fd7c062870b2fd3d6ea6d2f87d3516b31c3ea51e18e2401",
+      "b29fc2434f5d4ef3829d0ac4ee967a3309c77b32d650863d7e579096a92daa09",
+      "57eccaa01e5e3c9ce7f065f1b56ff02d88311ee36d7e3c4ba70810924566fb38",
+      "fe33f6a9a93e5b35c1d17fe1432b1be3128b059455686130a7cb4c13029d66b9",
+      "ad987ad7a545ae4f649523c673fc49fbd7ff6418712a94839ce8cedf95a5e0b0"
+    ],
+    "remaining_foreign_container_count": 4
+  },
+  "route": {
+    "TLS_exact_hostname": "spire.adianto.dev",
+    "active": "active",
+    "context": "kind-poc-k8s-f24dcec044c7",
+    "enabled": "enabled",
+    "only_UI_service_forwarded": true,
+    "renewal": {
+      "Money_balances_unchanged": true,
+      "UI_Pod_UID_unchanged": true,
+      "future_actual_ACME_issuance_observed": false,
+      "manual_existing_certificate_hook": "PASS",
+      "owned_UI_Secret_projection_matches_protected_PEM": true,
+      "same_browser_session_still_valid": true
+    },
+    "restart": {
+      "balances_unchanged": true,
+      "ledger_version": 2,
+      "passed": true,
+      "run_unchanged": true
+    },
+    "system_CA_validation": true,
+    "unit": "poc-spire-kubernetes-route.service",
+    "upstream": "https://127.0.0.1:18089"
+  },
+  "runtime": {
+    "Pod_ready_restarts": {
+      "caller-trusted": {
+        "adapter": {
+          "ready": true,
+          "restarts": 0
+        },
+        "caller": {
+          "ready": true,
+          "restarts": 0
+        },
+        "istio-proxy": {
+          "ready": true,
+          "restarts": 0
+        }
+      },
+      "caller-unidentified": {
+        "adapter": {
+          "ready": true,
+          "restarts": 0
+        },
+        "caller": {
+          "ready": true,
+          "restarts": 0
+        },
+        "istio-proxy": {
+          "ready": true,
+          "restarts": 0
+        }
+      },
+      "kafka": {
+        "istio-proxy": {
+          "ready": true,
+          "restarts": 0
+        },
+        "kafka": {
+          "ready": true,
+          "restarts": 0
+        }
+      },
+      "money": {
+        "istio-proxy": {
+          "ready": true,
+          "restarts": 0
+        },
+        "money": {
+          "ready": true,
+          "restarts": 0
+        }
+      },
+      "ui": {
+        "istio-proxy": {
+          "ready": true,
+          "restarts": 0
+        },
+        "ui": {
+          "ready": true,
+          "restarts": 0
+        }
+      }
+    },
+    "actual_UI_binary_matches_normal_manifest": true,
+    "cgroup_memory_events": "low 0\nhigh 0\nmax 2268\noom 0\noom_kill 0\noom_group_kill 0",
+    "current_operational_source_revision": "cd3fb62677ecc3c0ad20c57c8462101a689833fb",
+    "host_available_memory_bytes": 5117169664,
+    "image_source_revision": "51a9f854b8728fbcc136dd82c9e25cc3104296d0",
+    "node_limits": {
+      "Memory": 4294967296,
+      "MemorySwap": 4294967296,
+      "NanoCpus": 3000000000
+    },
+    "run": "f24dcec044c7"
+  },
+  "status": "public Kubernetes cutover/cleanup PASS; parent independent final review pending",
+  "validation": {
+    "Go_wrong_Host_response": 403,
+    "changed_doc_relative_links": 239,
+    "classification": "Unmatched public edge Host failed routing; authenticated direct Go Host rejection is403. This edge502 is not claimed Go403 or SPIRE identity rejection.",
+    "existing_Kubernetes_Python_tests": 21,
+    "named_loopback_HTTPS_upstream_certificate_hostname_chain": "PASS",
+    "post_sync_strict_items": 13,
+    "post_sync_strict_result": "PASS",
+    "public_vs_private_startup_continuity_semantics": "PASS controlled deterministic mode",
+    "public_wrong_Host_response": 502,
+    "result": "PASS"
+  }
+}

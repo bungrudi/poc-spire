@@ -9,7 +9,7 @@ A small explicit public profile supplies `https://spire.adianto.dev` and the
 existing owner-only browser PEM to Kubernetes UI creation. Only UI receives that
 browser key; all workload/broker trust and exact process/route permissions remain.
 A systemd service supervises the owned `kubectl port-forward` at 127.0.0.1:18089.
-The existing Nginx site's HTTPS upstream port changes to18089, retaining public
+The existing Nginx site's HTTPS upstream port changes to 18089, retaining public
 certificate/root/hostname verification. The existing renewal hook updates the
 same protected PEM and the existing owned UI Secret; whole-directory projection
 and Go TLS reload avoid an application restart.

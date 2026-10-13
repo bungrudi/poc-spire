@@ -1,5 +1,9 @@
 # Kubernetes/Istio SPIRE baseline
 
+Public supersession, 13 October 2026: the named domain now serves the
+[main-local public Kubernetes profile](kubernetes-public.md). This file retains
+the earlier private-baseline checkpoint and its separately scoped operations.
+
 The approved isolated profile runs all demo services, SPIRE/CSI and Kafka inside
 one owned kind cluster. Ordinary Istio sidecars use the default Istiod CA for
 outer TLS; Go Money/control TLS and original-producer JWS use independent SPIRE

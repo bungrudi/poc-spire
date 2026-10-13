@@ -132,3 +132,7 @@ explains the services through one fake transfer, with rendered Mermaid diagrams
 and excerpts from the Go sender and receiver. Its portable source is in
 [docs/explainer](docs/explainer/README.md). It is an illustrative guide; use
 [spire.adianto.dev](https://spire.adianto.dev/) to exercise the running demo.
+
+Current public deployment: [Kubernetes five-scenario runbook](docs/kubernetes-public.md)
+and [sanitized public evidence](docs/evidence/kubernetes-public-current.json).
+The earlier two-button Compose public/preview runtimes are retired.

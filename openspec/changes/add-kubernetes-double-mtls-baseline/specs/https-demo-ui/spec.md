@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: UI-02 Fail-closed HTTPS and browser certificate replacement
-Demo startup MUST require explicit mode, exact HTTPS origin and matching current browser certificate/key. Go UI SHALL serve HTTPS; the existing Nginx edge SHALL retain verified re-encrypted upstream HTTPS separate from workload PKI. Kubernetes loopback access SHALL use direct UI HTTPS without installing/reusing that edge. Atomic combined-PEM replacement SHALL load on the next handshake without resetting sessions/Money.
+Demo startup MUST require explicit mode, exact HTTPS origin and matching current browser certificate/key. Go UI SHALL serve HTTPS. The named public profile SHALL retain existing Nginx with verified HTTPS upstream and exact Host/Origin; private Kubernetes loopback access remains direct HTTPS. Browser TLS MUST remain separate from workload PKI and atomic PEM renewal SHALL preserve sessions/Money.
 
 #### Scenario: Valid configuration and atomic renewal
 - **WHEN** a valid hostname-matching PEM is provisioned or atomically replaced with another valid PEM
@@ -16,6 +16,12 @@ Demo startup MUST require explicit mode, exact HTTPS origin and matching current
 #### Scenario: Kubernetes loopback browser access
 - **WHEN** the isolated Kubernetes profile forwards its browser port
 - **THEN** literal loopback exposes the matching Go UI HTTPS certificate and current session/CSRF/Host/origin controls, without changing the existing Nginx/public endpoint
+
+
+#### Scenario: Named Kubernetes public cutover
+- **WHEN** the owner-authorized Kubernetes profile serves spire.adianto.dev
+- **THEN** existing Nginx validates the exact upstream hostname/chain over a supervised literal-loopback route and UI enforces the exact public Origin/Host
+- **AND** browser renewal updates only the owned UI Secret without exporting workload credentials or restarting Money
 
 ### Requirement: UI-05 Read-only workload identity and bounded resources
 While its run is valid, UI MUST use only its observer SVID for balances/enabled Kafka metadata/receipts, verifying exact Money. Compose triggers remain private UDS; Kubernetes triggers MUST use exact-ID adapters in PC-07 without caller mounts/keys. All scenarios SHALL share 64 attempts, two workers, eight dispatches/minute per principal and 128 sessions; bounded bodies/no unsafe eviction remain. UI MUST receive no Kafka/admin credentials or producer keys.

@@ -20,3 +20,10 @@ by the parent; no agent review substitutes for human authorization/acceptance.
 [Authorized-scope artifact snapshot](authorized-scope-artifacts.json) captures the
 exact initial proposal/design/deltas/tasks before implementation. It records the
 owner-authorized scope without inventing review of later agent-authored text.
+
+Implementation: main fast-forwarded to `59e069d` after preserving local WIP.
+Planning `be9c6b5`, clean normal build `51a9f85`, bounded ownership lifecycle fix
+`e53c616` and verifier `cd3fb62` are declared independently; Go/application code
+is unchanged. Named public checks and exact cleanup pass with modes/limits in
+[public evidence](../../../docs/evidence/kubernetes-public-current.json).
+Final parent route/source/cleanup verification remains pending after publication.
