@@ -198,9 +198,9 @@ os.execv(DOCKER,[DOCKER,*args])
     return directory
 
 
-def start():
+def start(*, public_route_owned=False):
     result = preflight()
-    before = protected_snapshot()
+    before = protected_snapshot(public_optional=True) if public_route_owned else protected_snapshot()
     run = uuid.uuid4().hex[:12]
     cluster = 'poc-k8s-' + run
     value = {'run': run, 'cluster': cluster, 'node': cluster + '-control-plane',
@@ -283,7 +283,7 @@ nodes:
         if item['Config']['Labels'].get(OWNER) != run:
             raise RuntimeError('owned node label mismatch')
         result['actual_node_limits'] = {k: limits[k] for k in ('Memory', 'MemorySwap', 'NanoCpus')}
-        result['continuity'] = continuity(before)
+        result['continuity'] = continuity(before, public_route_owned=True) if public_route_owned else continuity(before)
         if not all(result['continuity'].values()) or memory() < 2 * GIB:
             raise RuntimeError('KB-25/27: protected continuity/reserve check failed')
         result['cluster'] = cluster

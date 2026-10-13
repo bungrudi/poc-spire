@@ -21,7 +21,7 @@ def start(public=False):
         profile = provisioned_profile()
     revision = runtime.execute(['git','rev-parse','HEAD']).strip()
     try:
-        runtime.start()
+        runtime.start(public_route_owned=True) if public else runtime.start()
         value = runtime.descriptor()
         if profile is not None:
             runtime.private_json(Path(value['work'])/'public-profile.json', profile)
