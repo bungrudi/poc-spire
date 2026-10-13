@@ -36,6 +36,21 @@ func readGuard(path string) (guard, error) {
 	return g, nil
 }
 
+const destructiveExit = 78
+
+func terminationMessage(role, run, pod string) string {
+	return "poc-spire:destructive-startup-state:" + role + ":" + run + ":" + pod
+}
+
+func destructiveState(role, run, pod string) {
+	// Kubernetes mounts this dedicated file even with a read-only root. No data/key contents are exported.
+	if err := os.WriteFile("/dev/termination-log", []byte(terminationMessage(role, run, pod)), 0644); err != nil {
+		fmt.Fprintln(os.Stderr, "startup_destructive_signal_unavailable")
+		os.Exit(1)
+	}
+	os.Exit(destructiveExit)
+}
+
 func main() {
 	install := flag.String("install", "", "copy this startup helper to an owned emptyDir")
 	path := flag.String("guard", "/run/guard/run.json", "read-only run guard")
@@ -76,17 +91,17 @@ func main() {
 			if *role == "kafka" {
 				cluster, err := os.ReadFile("/config/cluster-id")
 				if err != nil || len(cluster) > 128 || !statecheck.Check("kafka", "/var/lib/kafka/data", run, pod, os.Getenv("POC_STREAM"), string(cluster), g.Phase == "running").Valid {
-					panic("run_invalid")
+					destructiveState(*role, run, pod)
 				}
 			}
 			if *role == "spire-server" && g.Phase == "running" && !statecheck.Check("spire-server", "/run/spire/data", run, pod, "", "", false).Valid {
-				panic("run_invalid")
+				destructiveState(*role, run, pod)
 			}
 			if g.Phase == "running" || g.Phase == "bootstrap" {
 				for _, required := range requiredFiles {
 					info, err := os.Stat(required)
 					if err != nil || !info.Mode().IsRegular() || info.Size() == 0 {
-						panic("run_invalid")
+						destructiveState(*role, run, pod)
 					}
 				}
 			} else if g.Phase != "bootstrap" {

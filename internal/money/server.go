@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -49,7 +50,16 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	write := func(status int, value any) {
 		h.mu.Lock()
-		json.NewEncoder(h.audit).Encode(map[string]any{"event": "money_request", "verified_peer": id, "method": r.Method, "path": r.URL.Path, "status": status})
+		observation := map[string]any{"event": "money_request", "verified_peer": id, "method": r.Method, "path": r.URL.Path, "status": status,
+			"at_utc": time.Now().UTC().Format(time.RFC3339Nano), "remote": r.RemoteAddr}
+		if local, ok := r.Context().Value(http.LocalAddrContextKey).(net.Addr); ok {
+			observation["local"] = local.String()
+		}
+		if r.TLS != nil && r.TLS.HandshakeComplete {
+			observation["tls_version"] = tls.VersionName(r.TLS.Version)
+			observation["tls_session_resumed"] = r.TLS.DidResume
+		}
+		json.NewEncoder(h.audit).Encode(observation)
 		h.mu.Unlock()
 		w.WriteHeader(status)
 		json.NewEncoder(w).Encode(value)

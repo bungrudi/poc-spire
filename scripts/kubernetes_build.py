@@ -21,7 +21,9 @@ def main():
     (directory / 'Dockerfile').write_text('FROM scratch\nCOPY run-guard /run-guard\nUSER 0:0\nENTRYPOINT ["/run-guard"]\n')
     (directory / '.dockerignore').write_text('*\n!Dockerfile\n!run-guard\n')
     tag = 'poc-k8s-bootstrap:' + value['run']
+    intent = runtime.image_build_intent(value,'bootstrap',tag)
     runtime.execute([runtime.DOCKER, 'build', '--network', 'none', '--label', runtime.OWNER + '=' + value['run'], '-t', tag, directory], timeout=120)
+    runtime.image_created(value,intent)
     inspected = runtime.docker_json('image', 'inspect', tag)[0]
     store_id = inspected['Id']
     source = directory / 'docker.tar'

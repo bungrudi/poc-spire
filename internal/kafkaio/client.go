@@ -65,7 +65,7 @@ func options(cfg Config) ([]kgo.Opt, error) {
 		return nil, errors.New("broker_credential_unavailable")
 	}
 	tlsConfig := &tls.Config{MinVersion: tls.VersionTLS13, RootCAs: roots, Certificates: []tls.Certificate{pair}, ServerName: "kafka"}
-	return []kgo.Opt{kgo.SeedBrokers(cfg.Brokers...), kgo.DialTLSConfig(tlsConfig), kgo.DialTimeout(2 * time.Second), kgo.RequestTimeoutOverhead(time.Second), kgo.BrokerMaxReadBytes(131072), kgo.BrokerMaxWriteBytes(131072), kgo.FetchMaxBytes(65536), kgo.FetchMaxPartitionBytes(65536), kgo.ProducerBatchMaxBytes(65536)}, nil
+	return []kgo.Opt{kgo.SeedBrokers(cfg.Brokers...), kgo.DialTLSConfig(tlsConfig), kgo.WithHooks(&tlsObservation{audit: os.Stderr}), kgo.DialTimeout(2 * time.Second), kgo.RequestTimeoutOverhead(time.Second), kgo.BrokerMaxReadBytes(131072), kgo.BrokerMaxWriteBytes(131072), kgo.FetchMaxBytes(65536), kgo.FetchMaxPartitionBytes(65536), kgo.ProducerBatchMaxBytes(65536)}, nil
 }
 func Producer(cfg Config) (*kgo.Client, error) {
 	opts, err := options(cfg)

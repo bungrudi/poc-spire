@@ -285,6 +285,42 @@ nodes:
         raise
 
 
+def image_build_intent(value, profile, tag):
+    path = Path(value['work']) / (profile+'-image-intent.json')
+    if path.exists() or path.is_symlink():
+        raise RuntimeError('owned image creation already started')
+    private_json(path, {'run':value['run'],'tag':tag,'phase':'build-started'})
+    return path
+
+
+def image_created(value, intent):
+    record = json.loads(intent.read_text())
+    inspected = docker_json('image','inspect',record['tag'])[0]
+    if record['run'] != value['run'] or inspected['Config']['Labels'].get(OWNER) != value['run']:
+        raise RuntimeError('created image ownership differs')
+    record.update(phase='created',docker_image_id=inspected['Id'])
+    private_json(intent,record)
+
+
+def cleanup_image_intents(value):
+    for name in ('bootstrap','feasibility','normal','test'):
+        path=Path(value['work'])/(name+'-image-intent.json')
+        if not path.exists():continue
+        record=json.loads(path.read_text())
+        tag='poc-k8s-'+name+':'+value['run']
+        if record.get('run')!=value['run'] or record.get('tag')!=tag:
+            raise RuntimeError('cleanup refused foreign image intent')
+        probe=subprocess.run([DOCKER,'image','inspect',tag],capture_output=True,text=True)
+        if probe.returncode!=0:continue
+        items=json.loads(probe.stdout)
+        if len(items)!=1 or items[0]['Config']['Labels'].get(OWNER)!=value['run']:
+            raise RuntimeError('cleanup refused foreign image tag; ownership retained')
+        expected=record.get('docker_image_id')
+        if expected and items[0]['Id']!=expected:
+            raise RuntimeError('cleanup refused reassigned image; ownership retained')
+        execute([DOCKER,'image','rm',tag])
+
+
 def owned_image_id(record):
     if 'docker_image_id' in record:
         return record['docker_image_id']
@@ -330,6 +366,7 @@ def stop():
                 if probe.stdout.strip() != owned_image_id(built):
                     raise RuntimeError('cleanup refused reassigned image tag; ownership retained')
                 execute([DOCKER, 'image', 'rm', built['tag']])
+    cleanup_image_intents(value)
     checks = continuity(before)
     if not all(checks.values()):
         raise RuntimeError('protected continuity failure; descriptor retained')

@@ -158,7 +158,9 @@ def main(profile="feasibility"):
     (directory / 'Dockerfile').write_text('FROM scratch\nCOPY ' + ' '.join(names) + ' /\nUSER 1000:1000\nENTRYPOINT ["/money"]\n')
     (directory / '.dockerignore').write_text('*\n!Dockerfile\n' + ''.join('!' + n + '\n' for n in names))
     tag = 'poc-k8s-'+profile+':' + value['run']
+    intent = runtime.image_build_intent(value,profile,tag)
     runtime.execute([runtime.DOCKER, 'build', '--network', 'none', '--label', runtime.OWNER + '=' + value['run'], '-t', tag, directory], timeout=120)
+    runtime.image_created(value,intent)
     saved = directory / 'docker.tar'
     runtime.execute([runtime.DOCKER, 'image', 'save', '--output', saved, tag], timeout=120)
     archive = directory / 'image.oci.tar'

@@ -102,5 +102,33 @@ class OwnershipTests(unittest.TestCase):
                 self.assertFalse(capture.exists())
 
 
+
+class ImageFailureCleanupTests(unittest.TestCase):
+    def test_export_failure_after_created_tag_keeps_verified_cleanup_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            value={'run':'abcdef012345','work':directory};tag='poc-k8s-normal:'+value['run']
+            intent=runtime.image_build_intent(value,'normal',tag)
+            image={'Id':'sha256:created','Config':{'Labels':{runtime.OWNER:value['run']}}}
+            with patch.object(runtime,'docker_json',return_value=[image]):runtime.image_created(value,intent)
+            failed=subprocess.CompletedProcess([],0,json.dumps([image]),'')
+            with patch.object(runtime.subprocess,'run',return_value=failed),patch.object(runtime,'execute') as execute:
+                runtime.cleanup_image_intents(value)
+                execute.assert_called_once_with([runtime.DOCKER,'image','rm',tag])
+            self.assertFalse((Path(directory)/'normal-image.json').exists())
+            image['Id']='sha256:reassigned'
+            with patch.object(runtime.subprocess,'run',return_value=subprocess.CompletedProcess([],0,json.dumps([image]),'')),patch.object(runtime,'execute') as execute:
+                with self.assertRaisesRegex(RuntimeError,'reassigned'):runtime.cleanup_image_intents(value)
+                execute.assert_not_called()
+
+    def test_unrecorded_build_timeout_can_only_remove_exact_run_labeled_tag(self):
+        with tempfile.TemporaryDirectory() as directory:
+            value={'run':'abcdef012345','work':directory};tag='poc-k8s-bootstrap:'+value['run']
+            runtime.image_build_intent(value,'bootstrap',tag)
+            image={'Id':'sha256:unrecorded','Config':{'Labels':{runtime.OWNER:'foreign'}}}
+            with patch.object(runtime.subprocess,'run',return_value=subprocess.CompletedProcess([],0,json.dumps([image]),'')),patch.object(runtime,'execute') as execute:
+                with self.assertRaisesRegex(RuntimeError,'foreign image tag'):runtime.cleanup_image_intents(value)
+                execute.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main()

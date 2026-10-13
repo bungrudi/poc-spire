@@ -14,7 +14,7 @@ class GuardTests(unittest.TestCase):
         roles=['money','ui','caller-trusted','caller-unidentified','kafka']
         baseline={'run':run,'namespace_uid':'namespace','spire_namespace_uid':'spire-ns',
                   'server_pod_uid':'issuer','pods':{r:r+'-uid' for r in roles},'owners':{r:r+'-owner' for r in roles},
-                  'stream':'a'*32,'states':{r:'a'*64 for r in ['caller-trusted','caller-unidentified','kafka','spire-server']},
+                  'stream':'a'*32,'image_ids':{r:'image@sha256:actual' for r in ['caller-trusted','caller-unidentified','kafka','spire-server']},'states':{r:'a'*64 for r in ['caller-trusted','caller-unidentified','kafka','spire-server']},
                   'guard_uids':{ns:'app-guard',sns:'spire-guard'},'bundle_uids':{ns:'app-bundle',sns:'spire-bundle'}}
         pods=[{'metadata':{'name':r,'uid':r+'-uid','resourceVersion':'7','labels':{'poc-role':r},
                            'ownerReferences':[{'kind':'ReplicaSet','uid':r+'-owner'}]}} for r in roles]
@@ -79,4 +79,37 @@ class GuardTests(unittest.TestCase):
             self.assertIsNone(guard.probe(value,'caller-trusted',pod,'a'*32))
 
 
-if __name__=='__main__':unittest.main()
+
+class StartupTerminationTests(unittest.TestCase):
+    def fixture(self):
+        value={'run':'abcdef012345','work':'/tmp/owned','cluster':'owned'}
+        image='repo@sha256:actual'
+        pod={'metadata':{'name':'kafka','uid':'original'},'status':{'containerStatuses':[{'name':'kafka','imageID':image,
+             'state':{'waiting':{'reason':'CrashLoopBackOff'}},'lastState':{'terminated':{'exitCode':78,
+             'message':'poc-spire:destructive-startup-state:kafka:abcdef012345:original'}}}]}}
+        return value,image,pod
+
+    def test_exact_owned_source_state_failure_is_detected_even_in_crashloop(self):
+        value,image,pod=self.fixture()
+        with patch.object(guard.subprocess,'run') as execute:
+            self.assertEqual(guard.probe(value,'kafka',pod,'a'*32,True,image),{'valid':False})
+            execute.assert_not_called()
+        status=pod['status']['containerStatuses'][0]
+        status['state']={'running':{}}
+        self.assertTrue(guard.state_loss_termination(value,'kafka',pod,status,image),'last destructive startup must not be forgotten after repair')
+
+    def test_ordinary_outage_wrong_message_or_changed_image_has_no_state_loss_signal(self):
+        for alteration in ('ordinary-exit','missing-message','wrong-pod','wrong-run','wrong-image'):
+            value,image,pod=self.fixture();status=pod['status']['containerStatuses'][0];state=status['lastState']['terminated']
+            if alteration=='ordinary-exit':state['exitCode']=137
+            if alteration=='missing-message':state.pop('message')
+            if alteration=='wrong-pod':state['message']=state['message'].replace('original','foreign')
+            if alteration=='wrong-run':state['message']=state['message'].replace('abcdef012345','foreign')
+            if alteration=='wrong-image':status['imageID']='repo@sha256:foreign'
+            with self.subTest(alteration=alteration),patch.object(guard.subprocess,'run') as execute:
+                self.assertIsNone(guard.probe(value,'kafka',pod,'a'*32,True,image))
+                execute.assert_not_called()
+
+
+if __name__ == '__main__':
+    unittest.main()

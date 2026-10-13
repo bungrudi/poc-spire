@@ -60,10 +60,28 @@ def stop(value):
     marker.unlink()
 
 
-def probe(value, role, pod, stream, running=False):
+def state_loss_termination(value, role, pod, status, expected_image):
+    if role not in ('kafka', 'spire-server') or not expected_image or status.get('imageID') != expected_image:
+        return False
+    message = 'poc-spire:destructive-startup-state:' + role + ':' + value['run'] + ':' + pod['metadata']['uid']
+    for state in (status.get('state', {}), status.get('lastState', {})):
+        terminated = state.get('terminated', {})
+        if terminated.get('exitCode') == 78 and terminated.get('message') == message:
+            return True
+    return False
+
+
+def requesting_image(role, pod):
+    container = 'server' if role == 'spire-server' else 'caller' if role.startswith('caller-') else role
+    return next((s.get('imageID') for s in pod.get('status', {}).get('containerStatuses', []) if s['name'] == container), None)
+
+
+def probe(value, role, pod, stream, running=False, expected_image=None):
     ns = ('spire-' if role == 'spire-server' else 'poc-') + value['run']
     container = 'server' if role == 'spire-server' else 'caller' if role.startswith('caller-') else 'kafka'
     status = next((s for s in pod.get('status', {}).get('containerStatuses', []) if s['name'] == container), {})
+    if state_loss_termination(value, role, pod, status, expected_image):
+        return {'valid': False}
     if not status.get('state', {}).get('running'):
         return None  # A stopped/restarting container is not evidence of destructive state loss.
     helper = '/guard-bin/kubernetes-init' if role == 'spire-server' else '/helpers/kubernetes-init' if role == 'kafka' else '/kubernetes-init'
@@ -118,7 +136,7 @@ def initial(value):
     baseline = {'run': value['run'], **owned, 'server_pod_uid': issuer['server_pod_uid'],
                 'spire_namespace_uid': get(value, sns, 'namespace', sns)['metadata']['uid'],
                 'guard_uids': {n: get(value, n, 'configmap', 'run-guard')['metadata']['uid'] for n in (ns, sns)},
-                'bundle_uids': {n: get(value,n,'configmap','spire-bundle')['metadata']['uid'] for n in (ns,sns)}, 'states': {}}
+                'bundle_uids': {n: get(value,n,'configmap','spire-bundle')['metadata']['uid'] for n in (ns,sns)}, 'states': {}, 'image_ids': {}}
     for role in ('caller-trusted', 'caller-unidentified', 'kafka', 'spire-server'):
         for _ in range(30):
             p = get(value, sns, 'pod', 'spire-server') if role == 'spire-server' else get(value, ns, 'pod', pods[role]['metadata']['name'])
@@ -129,6 +147,10 @@ def initial(value):
         if not result or not result.get('valid'):
             raise RuntimeError('initialized state not proved before observer startup')
         baseline['states'][role] = result['incarnation']
+        image = requesting_image(role, p)
+        if not image or '@sha256:' not in image:
+            raise RuntimeError('immutable initialized requesting-container image unavailable')
+        baseline['image_ids'][role] = image
     runtime.private_json(work / 'guard-ownership.json', baseline)
     child = subprocess.Popen(command(value), cwd=runtime.ROOT, stdin=subprocess.DEVNULL,
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
@@ -228,7 +250,11 @@ def observe(value, baseline):
             return 'original_public_trust_projection_lost_or_replaced'
     for role in baseline['states']:
         p = server if role == 'spire-server' else pods[role]
-        result = probe(value, role, p, baseline['stream'], snapshot['phase'] == 'running')
+        actual_image = requesting_image(role, p)
+        expected_image = baseline['image_ids'][role]
+        if actual_image and actual_image != expected_image:
+            return 'original_' + role + '_requesting_image_changed'
+        result = probe(value, role, p, baseline['stream'], snapshot['phase'] == 'running', expected_image)
         if result is None:
             continue
         if not result['valid'] or result['incarnation'] != baseline['states'][role]:

@@ -2,10 +2,13 @@ package money
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"io"
+	"net"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
@@ -130,5 +133,43 @@ func TestHTTPHistoryCapacityCannotForgetOrAuthorizeKeys(t *testing.T) {
 	snapshot := book.Snapshot()
 	if snapshot.Balances["demo-a"]+snapshot.Balances["demo-b"] != 200000 {
 		t.Fatal("Balance conservation failed")
+	}
+}
+
+func TestRequestObservationUsesConnectionMetadataWithoutSensitiveInputs(t *testing.T) {
+	var audit bytes.Buffer
+	h := &handler{ledger: ledger.New(10), audit: &audit}
+	r := httptest.NewRequest("POST", "/transfer?token=QUERY_SECRET", strings.NewReader("JWS_BODY_SECRET"))
+	r.Header.Set("Authorization", "TOKEN_SECRET")
+	r.Header.Set("Cookie", "COOKIE_SECRET")
+	r.Header.Set("X-Forwarded-For", "FORGED_REMOTE")
+	r.RemoteAddr = "127.0.0.6:41013"
+	r = r.WithContext(context.WithValue(r.Context(), http.LocalAddrContextKey, &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 8443}))
+	uri, _ := url.Parse(identity.Trusted.String())
+	r.TLS = &tls.ConnectionState{Version: tls.VersionTLS13, HandshakeComplete: true, PeerCertificates: []*x509.Certificate{{Raw: []byte("SVID_CERT_SECRET"), URIs: []*url.URL{uri}, NotBefore: time.Now().Add(-time.Minute), NotAfter: time.Now().Add(time.Minute)}}}
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	var event map[string]any
+	if err := json.Unmarshal(audit.Bytes(), &event); err != nil {
+		t.Fatal(err)
+	}
+	if w.Code != 400 || event["status"] != float64(400) || event["verified_peer"] != identity.Trusted.String() || event["remote"] != "127.0.0.6:41013" || event["local"] != "127.0.0.1:8443" || event["tls_version"] != "TLS 1.3" || event["tls_session_resumed"] != false {
+		t.Fatal(event, w.Code)
+	}
+	stamp, err := time.Parse(time.RFC3339Nano, event["at_utc"].(string))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, offset := stamp.Zone()
+	if offset != 0 {
+		t.Fatal("observation is not UTC")
+	}
+	for _, secret := range []string{"QUERY_SECRET", "JWS_BODY_SECRET", "TOKEN_SECRET", "COOKIE_SECRET", "SVID_CERT_SECRET", "FORGED_REMOTE"} {
+		if strings.Contains(audit.String(), secret) {
+			t.Fatal("sensitive/arbitrary input reached audit")
+		}
+	}
+	if h.ledger.Snapshot().Version != 0 {
+		t.Fatal("observation changed rejection behavior")
 	}
 }

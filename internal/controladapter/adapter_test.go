@@ -1,6 +1,7 @@
 package controladapter
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -142,5 +143,46 @@ func TestKafkaRejectsCaseAliasesWrongKeysAndTypesBeforeUDS(t *testing.T) {
 		if w.Code != 400 {
 			t.Fatal(w.Code, w.Body.String())
 		}
+	}
+}
+
+func TestControlObservationRetainsPolicyAndExportsOnlyConnectionFields(t *testing.T) {
+	var audit bytes.Buffer
+	now := time.Now()
+	r := request(identity.Trusted.String(), "JWS_BODY_SECRET", now)
+	r.URL.RawQuery = "token=QUERY_SECRET"
+	r.Header.Set("Cookie", "COOKIE_SECRET")
+	r.Header.Set("Authorization", "TOKEN_SECRET")
+	r.Header.Set("X-Forwarded-For", "FORGED_REMOTE")
+	r.RemoteAddr = "127.0.0.6:41014"
+	r.TLS.Version = tls.VersionTLS13
+	r.TLS.PeerCertificates[0].Raw = []byte("SVID_CERT_SECRET")
+	r = r.WithContext(context.WithValue(r.Context(), http.LocalAddrContextKey, &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 9001}))
+	h := observe(Handler(Config{Role: "trusted", Socket: "/absent", RunValid: func() bool { return true }}), "trusted", &audit)
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	var event map[string]any
+	if err := json.Unmarshal(audit.Bytes(), &event); err != nil {
+		t.Fatal(err)
+	}
+	if w.Code != 403 || event["status"] != float64(403) || event["verified_peer"] != identity.Trusted.String() || event["local"] != "127.0.0.1:9001" || event["remote"] != "127.0.0.6:41014" || event["tls_version"] != "TLS 1.3" || event["tls_session_resumed"] != false {
+		t.Fatal(event, w.Code)
+	}
+	if _, err := time.Parse(time.RFC3339Nano, event["at_utc"].(string)); err != nil {
+		t.Fatal(err)
+	}
+	for _, secret := range []string{"JWS_BODY_SECRET", "QUERY_SECRET", "COOKIE_SECRET", "TOKEN_SECRET", "SVID_CERT_SECRET", "FORGED_REMOTE"} {
+		if strings.Contains(audit.String(), secret) {
+			t.Fatal("sensitive/arbitrary input reached audit")
+		}
+	}
+	r = request(identity.Observer.String(), "", now)
+	r.Method = "GET"
+	r.URL.Path = "/SECRET_DESTINATION"
+	w = httptest.NewRecorder()
+	audit.Reset()
+	h.ServeHTTP(w, r)
+	if strings.Contains(audit.String(), "SECRET_DESTINATION") || !strings.Contains(audit.String(), "unsupported") {
+		t.Fatal("unsupported URL was exported")
 	}
 }

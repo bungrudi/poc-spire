@@ -8,8 +8,10 @@ import (
 	"errors"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
@@ -172,11 +174,69 @@ func Handler(cfg Config) http.Handler {
 	})
 }
 
+// observationResponse records only the response status; it does not inspect or retain bodies.
+type observationResponse struct {
+	http.ResponseWriter
+	status int
+	wrote  bool
+}
+
+func (w *observationResponse) WriteHeader(status int) {
+	if !w.wrote {
+		w.status = status
+		w.wrote = true
+	}
+	w.ResponseWriter.WriteHeader(status)
+}
+func (w *observationResponse) Write(body []byte) (int, error) {
+	if !w.wrote {
+		w.status = http.StatusOK
+		w.wrote = true
+	}
+	return w.ResponseWriter.Write(body)
+}
+
+func observe(next http.Handler, role string, audit io.Writer) http.Handler {
+	var mutex sync.Mutex
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := &observationResponse{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(response, r)
+		observation := map[string]any{"event": "control_request", "role": role, "at_utc": time.Now().UTC().Format(time.RFC3339Nano),
+			"remote": r.RemoteAddr, "method": r.Method, "status": response.status}
+		// Fixed route labels avoid exporting unsupported URLs or arbitrary input.
+		route := "unsupported"
+		switch {
+		case r.URL.Path == "/attempt":
+			route = "/attempt"
+		case r.URL.Path == "/attempt/kafka":
+			route = "/attempt/kafka"
+		case strings.HasPrefix(r.URL.Path, "/attempt/kafka/"):
+			route = "/attempt/kafka/{id}"
+		}
+		observation["path"] = route
+		if local, ok := r.Context().Value(http.LocalAddrContextKey).(net.Addr); ok {
+			observation["local"] = local.String()
+		}
+		if r.TLS != nil && r.TLS.HandshakeComplete {
+			observation["tls_version"] = tls.VersionName(r.TLS.Version)
+			observation["tls_session_resumed"] = r.TLS.DidResume
+			if len(r.TLS.PeerCertificates) > 0 {
+				if peer, err := x509svid.IDFromCert(r.TLS.PeerCertificates[0]); err == nil {
+					observation["verified_peer"] = peer.String()
+				}
+			}
+		}
+		mutex.Lock()
+		defer mutex.Unlock()
+		json.NewEncoder(audit).Encode(observation)
+	})
+}
+
 func Server(source *workloadapi.X509Source, cfg Config, audit io.Writer) *http.Server {
 	if audit == nil {
 		audit = io.Discard
 	}
-	server := &http.Server{Handler: Handler(cfg), TLSConfig: identity.ServerTLS(source, source),
+	server := &http.Server{Handler: observe(Handler(cfg), cfg.Role, audit), TLSConfig: identity.ServerTLS(source, source),
 		TLSNextProto: map[string]func(*http.Server, *tls.Conn, http.Handler){}, ReadHeaderTimeout: time.Second,
 		ReadTimeout: 2 * time.Second, WriteTimeout: 12 * time.Second, MaxHeaderBytes: 2048,
 		ErrorLog: log.New(audit, "control_tls: ", 0)}
