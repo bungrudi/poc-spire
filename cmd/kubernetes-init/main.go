@@ -15,6 +15,7 @@ import (
 	"poc-spire/internal/kafkacaller"
 	"poc-spire/internal/kafkacmd"
 	"poc-spire/internal/runguard"
+	"poc-spire/internal/statecheck"
 )
 
 func wait(path, run, role, pod string) error {
@@ -49,9 +50,32 @@ func main() {
 	state := flag.String("state", "", "own private state directory")
 	stream := flag.String("stream", "", "owned stream")
 	install := flag.String("install", "", "copy bootstrap helpers")
+	verify := flag.Bool("verify-state", false, "inspect initialized state without mutation")
+	topic := flag.Bool("require-topic", false, "require initialized broker topic")
 	flag.Parse()
+	if *verify {
+		cluster := ""
+		if *role == "kafka" {
+			data, err := os.ReadFile("/config/cluster-id")
+			if err == nil && len(data) <= 128 {
+				cluster = string(data)
+			}
+		}
+		result := statecheck.Check(*role, *state, *run, os.Getenv("POC_POD_UID"), *stream, cluster, *topic)
+		json.NewEncoder(os.Stdout).Encode(result)
+		if result.Unavailable {
+			os.Exit(21)
+		}
+		if !result.Valid {
+			os.Exit(20)
+		}
+		return
+	}
 	if *install != "" {
-		for name, binary := range map[string]string{"run-guard": "kubernetes-run-guard", "bundle-publisher": "bundle-publisher", "kubernetes-init": "kubernetes-init"} {
+		for name, binary := range map[string]string{"run-guard": "kubernetes-run-guard", "bundle-publisher": "bundle-publisher", "kubernetes-init": "kubernetes-init", "kubernetes-broker-ready": "kubernetes-broker-ready"} {
+			if name == "kubernetes-broker-ready" && *install != "/helpers" {
+				continue
+			}
 			data, err := os.ReadFile("/" + binary)
 			if err != nil {
 				os.Exit(1)

@@ -100,6 +100,41 @@ def descriptor_graph(source, inspected):
                 'config_digest': obj['config']['digest'], 'filesystem_diff_ids': config['rootfs']['diff_ids']}
 
 
+def components(profile):
+    if profile not in ('normal', 'test', 'feasibility'):
+        raise ValueError('unknown artifact profile')
+    names = ['money', 'trusted-caller', 'untrusted-caller', 'ui']
+    if profile != 'feasibility':
+        names += ['control-adapter', 'kubernetes-init', 'bundle-publisher', 'kubernetes-run-guard', 'kubernetes-ready', 'kubernetes-broker-ready']
+    if profile != 'normal':
+        names += ['kafka-init', 'control-client', 'security-client', 'attestation-approved', 'attestation-ineligible']
+    if profile == 'test':
+        names.append('kubernetes-destination-probe')
+    return names
+
+
+def file_inventory(source, expected):
+    # Inspect real exported filesystem bytes, independently of the COPY/source list.
+    found = {}
+    with tarfile.open(source) as archive:
+        manifests = json.load(archive.extractfile('manifest.json'))
+        if len(manifests) != 1 or len(manifests[0]['Layers']) != 1:
+            raise ValueError('owned scratch image must have exactly one filesystem layer')
+        body = archive.extractfile(manifests[0]['Layers'][0]).read()
+        with tarfile.open(fileobj=io.BytesIO(body), mode='r:*') as layer:
+            for member in layer.getmembers():
+                if member.isdir():
+                    continue
+                name = member.name.removeprefix('./').removeprefix('/')
+                if not member.isfile() or name not in expected or name in found:
+                    raise ValueError('unexpected image filesystem component')
+                found[name] = {'sha256': hashlib.sha256(layer.extractfile(member).read()).hexdigest(),
+                               'size': member.size, 'mode': oct(member.mode)}
+    if set(found) != set(expected):
+        raise ValueError('image component inventory differs')
+    return found
+
+
 def main(profile="feasibility"):
     value = runtime.descriptor()
     work = Path(value['work'])
@@ -111,15 +146,15 @@ def main(profile="feasibility"):
         raise RuntimeError('aliased build directory')
     directory.mkdir(mode=0o700, exist_ok=True)
     env = {**os.environ, 'CGO_ENABLED': '0', 'GOTOOLCHAIN': 'local', 'GOMAXPROCS': '2', 'GOFLAGS': '-p=2'}
-    names = ['money','trusted-caller','untrusted-caller','ui','kafka-init','control-client','security-client']
-    if profile != 'feasibility': names += ['control-adapter','kubernetes-init','bundle-publisher','kubernetes-run-guard','kubernetes-ready']
+    names = components(profile)
     for name in names:
+        if name.startswith('attestation-'):
+            continue
         runtime.execute(['go','build','-trimpath',*(['-tags','kafkatest'] if profile=='test' else []),'-o',directory/name,'./cmd/'+name], env=env, timeout=120)
-    for role in ('approved', 'ineligible'):
+    for role in (() if profile == 'normal' else ('approved', 'ineligible')):
         name = 'attestation-' + role
         runtime.execute(['go', 'build', '-trimpath', '-ldflags', '-X main.buildRole=' + role,
                          '-o', directory / name, './cmd/attestation-fixture'], env=env, timeout=120)
-        names.append(name)
     (directory / 'Dockerfile').write_text('FROM scratch\nCOPY ' + ' '.join(names) + ' /\nUSER 1000:1000\nENTRYPOINT ["/money"]\n')
     (directory / '.dockerignore').write_text('*\n!Dockerfile\n' + ''.join('!' + n + '\n' for n in names))
     tag = 'poc-k8s-'+profile+':' + value['run']
@@ -146,6 +181,11 @@ def main(profile="feasibility"):
         raise RuntimeError('native/exported OCI config differs')
     if runtime.docker_json('image', 'inspect', tag)[0]['Id'] != image_config:
         raise RuntimeError('image tag changed while hashing/exporting')
+    inventory = file_inventory(saved, names)
+    if any(inventory[n]['sha256'] != hashlib.sha256((directory / n).read_bytes()).hexdigest() for n in names):
+        raise RuntimeError('actual image executable differs from built source artifact')
+    records['verified_file_inventory'] = inventory
+    records['test_tags'] = ['kafkatest'] if profile == 'test' else []
     records['docker_image_id'] = image_config
     records['native_descriptor_graph'] = graph
     with archive.open('rb') as input_stream:

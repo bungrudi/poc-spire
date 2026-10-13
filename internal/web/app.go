@@ -23,6 +23,7 @@ import (
 
 type Config struct {
 	KafkaStream                string
+	Run                        string
 	Origin                     string
 	Local                      bool
 	Capacity, Concurrent, Rate int
@@ -79,6 +80,9 @@ func New(ctx context.Context, config Config, deps Dependencies) (*App, error) {
 	host, err := validate(config)
 	if err != nil {
 		return nil, err
+	}
+	if config.Run != "" && (config.Local || !regexp.MustCompile(`^[0-9a-f]{12}$`).MatchString(config.Run) || deps.RunValid == nil) {
+		return nil, errors.New("guarded Kubernetes browser run required")
 	}
 	if deps.Execute == nil || deps.Balances == nil {
 		return nil, errors.New("authenticated workload dependencies required")
@@ -185,7 +189,11 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.render(w, r, s)
 		return
 	case r.Method == "GET" && r.URL.Path == "/api/session":
-		reply(w, 200, map[string]string{"role": s.Principal.Role, "csrf_token": s.CSRF, "auth_profile": map[bool]string{true: "local OS-owner login", false: "assumed demo operator; human not authenticated"}[a.config.Local]})
+		session := map[string]string{"role": s.Principal.Role, "csrf_token": s.CSRF, "auth_profile": map[bool]string{true: "local OS-owner login", false: "assumed demo operator; human not authenticated"}[a.config.Local]}
+		if a.config.Run != "" {
+			session["run_id"] = a.config.Run
+		}
+		reply(w, 200, session)
 		return
 	case r.Method == "POST" && r.URL.Path == "/auth/logout":
 		if c, err := r.Cookie("poc_session"); err == nil {

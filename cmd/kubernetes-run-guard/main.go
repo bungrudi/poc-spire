@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"poc-spire/internal/statecheck"
 	"syscall"
 	"time"
 )
@@ -71,6 +72,15 @@ func main() {
 			}
 			if g.Phase == "running" && *role == "spire-server" {
 				requiredFiles = []string{"/run/spire/data/keys.json", "/run/spire/data/database.sqlite3"}
+			}
+			if *role == "kafka" {
+				cluster, err := os.ReadFile("/config/cluster-id")
+				if err != nil || len(cluster) > 128 || !statecheck.Check("kafka", "/var/lib/kafka/data", run, pod, os.Getenv("POC_STREAM"), string(cluster), g.Phase == "running").Valid {
+					panic("run_invalid")
+				}
+			}
+			if *role == "spire-server" && g.Phase == "running" && !statecheck.Check("spire-server", "/run/spire/data", run, pod, "", "", false).Valid {
+				panic("run_invalid")
 			}
 			if g.Phase == "running" || g.Phase == "bootstrap" {
 				for _, required := range requiredFiles {

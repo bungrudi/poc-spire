@@ -152,6 +152,12 @@ def kube(value, *args, timeout=120, data=None):
                     '--context', 'kind-' + value['cluster'], *args], timeout=timeout, data=data)
 
 
+def apply_csi_workloads(value, manifest, *, data=None, timeout=120):
+    # Record intent before the request: timeout/partial apply can already have mounted CSI Pods.
+    (Path(value['work']) / 'apps-mounted').write_text('owned app CSI mount intent\n')
+    return kube(value, 'apply', '-f', manifest, data=data, timeout=timeout)
+
+
 def wrapper(value):
     directory = Path(value['work']) / 'docker-wrapper'
     directory.mkdir(mode=0o700)
@@ -284,6 +290,8 @@ def owned_image_id(record):
 def stop():
     value = descriptor()
     before = json.loads((Path(value['work']) / 'protected-baseline.json').read_text())
+    from kubernetes_guard import stop as stop_observer
+    stop_observer(value)
     ids = execute([DOCKER, 'ps', '-aq', '--filter', 'name=^' + value['node'] + '$']).split()
     if ids:
         if len(ids) != 1:

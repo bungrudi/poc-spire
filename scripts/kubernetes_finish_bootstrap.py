@@ -8,6 +8,7 @@ import yaml
 import kubernetes_demo as runtime
 from kubernetes_attestation import admin, observed, register
 from attestation import spiffe_ids
+import kubernetes_guard as guard_runner
 
 
 def main():
@@ -28,11 +29,12 @@ def main():
         item,image_id=observed(value,byrole[role]['metadata']['name'],container)
         if item['metadata']['uid']!=owned['pods'][role] or item['metadata']['ownerReferences'][0]['uid']!=owned['owners'][role]:raise RuntimeError('actual owner/Pod changed')
         register(value,expected,sid,item,container,image_id,image['binary_sha256'][binary],uid)
+    guard_runner.initial(value)
     kafka=byrole['kafka']['metadata']['name']
     for attempt in range(90):
         pod=json.loads(runtime.kube(value,'-n',ns,'get','pod',kafka,'-o','json'))
         status=next((s for s in pod.get('status',{}).get('containerStatuses',[]) if s['name']=='kafka'),None)
-        if status and status.get('state',{}).get('running'):break
+        if status and status.get('ready'):break
         time.sleep(1)
     else:raise RuntimeError('guarded stock broker did not start')
     pins=json.loads((runtime.ROOT/'infra/kubernetes-baseline/artifacts.json').read_text());kafka_image=next(i['immutable_reference'] for i in pins['images'] if i['reference'].startswith('apache/kafka:'))
@@ -50,8 +52,7 @@ def main():
     runtime.kube(value,'-n',ns,'wait','--for=condition=Complete','job/kafka-admin','--timeout=120s',timeout=130)
     runtime.kube(value,'-n',ns,'delete','job','kafka-admin','--wait=true','--timeout=60s',timeout=70)
     runtime.kube(value,'-n',ns,'delete','secret','kafka-admin-pki',timeout=30)
-    guard={'run':value['run'],'phase':'running','pods':owned['pods']}
-    runtime.kube(value,'-n',ns,'patch','configmap','run-guard','--type=merge','-p',json.dumps({'data':{'run.json':json.dumps(guard)}}))
+    guard_runner.promote(value)
     for role in ('money','caller-trusted','caller-unidentified','ui'):
         runtime.kube(value,'-n',ns,'rollout','status','deployment/'+role,'--timeout=180s',timeout=190)
     runtime.private_json(work/'full-bootstrap-result.json',{'run':value['run'],'stream':owned['stream'],'complete_native_ui_readiness':True,

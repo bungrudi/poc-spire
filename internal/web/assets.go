@@ -22,6 +22,8 @@ let session=null;
 const pending=new Set();
 function keyName(kind){return "poc-key-"+kind;}
 function completedName(kind){return "poc-completed-"+kind;}
+function runName(kind){return "poc-run-"+kind;}
+function staleRun(kind,key){return Boolean(key&&session.run_id&&sessionStorage.getItem(runName(kind))!==session.run_id);}
 function streamName(kind){return "poc-stream-"+kind;}
 function isKafka(kind){return kind.startsWith("kafka-");}
 function menu(){return document.getElementById("kafka-menu");}
@@ -35,10 +37,10 @@ async function attempt(kind){
  const button=document.querySelector(kafka?'[data-scenario="'+kind+'"]':'[data-caller="'+kind+'"]');
  const out=document.getElementById(kind+"-result");button.disabled=true;
  let key=sessionStorage.getItem(keyName(kind));
- if(!key){key=crypto.randomUUID();sessionStorage.setItem(keyName(kind),key);if(kafka)sessionStorage.setItem(streamName(kind),menu().dataset.stream);}
+ if(!key){key=crypto.randomUUID();sessionStorage.setItem(keyName(kind),key);if(kafka)sessionStorage.setItem(streamName(kind),menu().dataset.stream);if(session.run_id)sessionStorage.setItem(runName(kind),session.run_id);}
  sessionStorage.removeItem(completedName(kind));
  try{
-  if(kafka&&sessionStorage.getItem(streamName(kind))!==menu().dataset.stream)throw new Error("This key belongs to an earlier demo run. Start an explicit new logical attempt for the current run; the previous outcome stays unknown.");
+  if(staleRun(kind,key)||(kafka&&sessionStorage.getItem(streamName(kind))!==menu().dataset.stream))throw new Error("This key belongs to an earlier demo run. Start an explicit new logical attempt for the current run; the previous outcome stays unknown.");
   const body=kafka?{scenario:kind,browser_key:key,stream_id:sessionStorage.getItem(streamName(kind))}:{caller:kind,browser_key:key};
   let a=await api(kafka?"/api/kafka-attempts":"/api/attempts",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":session.csrf_token},body:JSON.stringify(body)});
   for(let i=0;i<(kafka?85:35)&&a.status==="pending";i++){
@@ -55,10 +57,10 @@ async function attempt(kind){
 function newAttempt(kind){
  if(pending.has(kind)||!enabled(kind))return;
  const out=document.getElementById(kind+"-result");const key=sessionStorage.getItem(keyName(kind));
- const priorStream=sessionStorage.getItem(streamName(kind));const changedRun=isKafka(kind)&&key&&priorStream!==menu().dataset.stream;
+ const priorStream=sessionStorage.getItem(streamName(kind));const changedRun=staleRun(kind,key)||(isKafka(kind)&&key&&priorStream!==menu().dataset.stream);
  if(key&&!changedRun&&sessionStorage.getItem(completedName(kind))!==key){out.textContent="Resolve the unknown outcome with the same key before starting another attempt.";return;}
- if(changedRun)sessionStorage.setItem("poc-prior-"+kind,JSON.stringify({browser_key:key,stream_id:priorStream,outcome:"unknown"}));
- sessionStorage.removeItem(keyName(kind));sessionStorage.removeItem(completedName(kind));if(isKafka(kind))sessionStorage.removeItem(streamName(kind));
+ if(changedRun)sessionStorage.setItem("poc-prior-"+kind,JSON.stringify({browser_key:key,run_id:sessionStorage.getItem(runName(kind)),stream_id:priorStream,outcome:"unknown"}));
+ sessionStorage.removeItem(keyName(kind));sessionStorage.removeItem(completedName(kind));sessionStorage.removeItem(runName(kind));if(isKafka(kind))sessionStorage.removeItem(streamName(kind));
  out.textContent=changedRun?"New logical attempt selected for this demo run. The earlier run's outcome remains unknown. Click the publish button.":"New logical attempt selected. Click the caller button.";
 }
 async function init(){

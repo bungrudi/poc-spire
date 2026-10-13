@@ -39,7 +39,7 @@ def app_objects(value,image,stream,work):
     items=[]
     for sa in ('money','ui','caller-trusted','caller-unidentified','kafka','kafka-admin'):
         items.append({'apiVersion':'v1','kind':'ServiceAccount','metadata':{'name':sa,'namespace':ns},'automountServiceAccountToken':False})
-    items.append({'apiVersion':'v1','kind':'ConfigMap','metadata':{'name':'run-guard','namespace':ns},
+    items.append({'apiVersion':'v1','kind':'ConfigMap','metadata':{'name':'run-guard','namespace':ns,'labels':{'poc-run':value['run']}},
                   'data':{'run.json':json.dumps({'run':value['run'],'phase':'bootstrap','pods':{}})}})
     for role,folder in [('money','money-pki'),('caller-trusted','trusted-pki'),('caller-unidentified','untrusted-pki')]:
         directory=work/folder
@@ -58,7 +58,7 @@ def app_objects(value,image,stream,work):
     for role in ('money','ui','caller-trusted','caller-unidentified','kafka'):
         labels={'poc-run':value['run'],'poc-role':role}
         volumes=[{'name':'guard','configMap':{'name':'run-guard'}},{'name':'tmp','emptyDir':{'medium':'Memory','sizeLimit':'16Mi'}}]
-        containers=[];init=[];annotations={}
+        containers=[];init=[];annotations={'sidecar.istio.io/nativeSidecar':'false'}
         if role=='kafka':
             volumes += [{'name':'data','emptyDir':{'sizeLimit':'256Mi'}},{'name':'config','configMap':{'name':'kafka-config','defaultMode':0o444}},
                         {'name':'pki','secret':{'secretName':'kafka-pki','defaultMode':0o440}},
@@ -72,8 +72,10 @@ def app_objects(value,image,stream,work):
                    'volumeMounts':[{'name':'helpers','mountPath':'/helpers','readOnly':True},{'name':'guard','mountPath':'/run/guard','readOnly':True},
                                    {'name':'data','mountPath':'/var/lib/kafka/data'},{'name':'config','mountPath':'/config','readOnly':True},{'name':'pki','mountPath':'/pki','readOnly':True},{'name':'tmp','mountPath':'/tmp'}]}]
             containers=[{'name':'kafka','image':kafka_image,'command':['/helpers/run-guard'],
-                         'args':['-role','kafka','--','/bin/bash','/config/kubernetes-broker-run.sh'],'env':env(value)+[{'name':'KAFKA_HEAP_OPTS','value':'-Xms256m -Xmx384m'}],
+                         'args':['-role','kafka','--','/bin/bash','/config/kubernetes-broker-run.sh'],'env':env(value)+[{'name':'POC_STREAM','value':stream},{'name':'KAFKA_HEAP_OPTS','value':'-Xms256m -Xmx384m'}],
                          'securityContext':security(),'resources':{'requests':{'cpu':'250m','memory':'384Mi'},'limits':{'cpu':'1000m','memory':'704Mi'}},
+                         'startupProbe':{'exec':{'command':['/helpers/kubernetes-broker-ready']},'periodSeconds':3,'timeoutSeconds':3,'failureThreshold':60},
+                         'readinessProbe':{'exec':{'command':['/helpers/kubernetes-broker-ready']},'periodSeconds':3,'timeoutSeconds':3,'failureThreshold':2},
                          'volumeMounts':[{'name':'helpers','mountPath':'/helpers','readOnly':True},{'name':'guard','mountPath':'/run/guard','readOnly':True},{'name':'data','mountPath':'/var/lib/kafka/data'},
                                          {'name':'config','mountPath':'/config','readOnly':True},{'name':'pki','mountPath':'/pki','readOnly':True},{'name':'tmp','mountPath':'/tmp'},{'name':'logs','mountPath':'/opt/kafka/logs'}]}]
             annotations['traffic.sidecar.istio.io/excludeOutboundPorts']='9094'
@@ -135,8 +137,7 @@ def main():
     adminpki=pkidir/'admin-pki';(adminpki/'client.pem').write_text((adminpki/'client.key').read_text()+(adminpki/'client.pem').read_text())
     image=json.loads((work/'normal-image.json').read_text());objects=app_objects(value,image,stream,pkidir)
     private_manifest=work/'application-private.yaml';private_manifest.write_text(yaml.safe_dump_all(objects,sort_keys=False));private_manifest.chmod(0o600)
-    runtime.kube(value,'apply','-f',str(private_manifest),timeout=120)
-    (work/'apps-mounted').write_text('full owned app CSI mounts\n')
+    runtime.apply_csi_workloads(value,str(private_manifest),timeout=120)
     expected_roles={'money','ui','caller-trusted','caller-unidentified','kafka'}
     for _ in range(90):
         pods=json.loads(runtime.kube(value,'-n',ns,'get','pods','-o','json'))['items']

@@ -164,3 +164,49 @@ floor silently relaxed. Resume the full ordered bootstrap only after the origina
 floor is met. A different budget/floor/host arrangement would require an explicit
 reviewed scope change before dependent execution. Full deployment/KB/JS runtime
 acceptance and final independent review remain pending; task 7.1 is unchecked.
+
+
+## Full development bootstrap and review corrections — 13 October 2026
+
+The original capacity floor subsequently passed unchanged, and development run
+`e643347540ac` reached healthy SPIRE/PSAT/CSI and completed/removed the injected
+Kafka topic/ACL Job. Full application readiness failed: the exact owner selector
+omitted the `ReplicaSet` kind required by the pinned SPIRE plugin. The pinned
+upstream source and actual agent selector metadata independently confirmed the
+required `pod-owner-uid:ReplicaSet:<uid>` format. Owner binding is retained.
+The injector also defaulted application Pods to native sidecars; source now
+explicitly requests regular sidecars for apps and reserves native mode for the
+Job. This failed run was fully removed; public HTTPS, protected PID/start time,
+retained identity/permissions and default context continuity all passed.
+
+Review corrections bind native readiness markers to a live process start and
+PID namespace, cap reads before allocation, and verify cached own SVID paths
+with the existing SPIFFE SDK. SIGKILL/retained-marker and empty/unrelated/expired
+trust checks pass; valid cached paths remain accepted without issuer access.
+Normal images exclude adversarial fixtures and export-verified component/file
+inventories; test/feasibility artifacts retain explicit fixture separation.
+
+The trusted setup runner now observes original Pod/namespace/owner identities
+and initialized caller/broker/issuer stores, preserving a monotonic invalidity
+record and updating both read-only guards on detected loss. Caller publication
+lock contention and exec/API/issuer availability failures are distinct from
+observed destructive loss. Once invalid, same-run promotion is refused. Scoped
+Pod annotations prompt projected guard refresh. No app API/admin mount is added.
+Native broker readiness requires a verified TLS 1.3 Kafka response, not a local
+TCP accept. Browser context binds both transports to the Kubernetes run; stale
+keys require explicit new work and preserve the earlier unknown outcome. Default
+Compose session/Sync behavior remains unchanged.
+
+CSI mount intent is recorded before a possibly partial apply, so failure cleanup
+still unmounts owned app workloads before node/driver removal. The full ordered
+runner owns failure cleanup and the ephemeral observation process. These are
+source-level/development corrections: real restart/outage/state-loss, exact
+propagation, corrected sidecar placement, all KB/JS acceptance and final freeze
+are still NOT RUN. Task 7.1 remains unchecked pending final parent review.
+
+
+Focused review regressions plus the full normal Go race suite with explicit
+independent Node JOSE enabled, vet, 37 deterministic Python checks, browser
+control execution and strict 10-item OpenSpec validation pass for this source
+checkpoint. The observation process and corrected topology still require the
+fresh real run; this checkpoint closes no additional acceptance task.

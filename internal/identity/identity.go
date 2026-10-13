@@ -73,17 +73,35 @@ func HTTPClient(config *tls.Config) (*http.Client, *http.Transport) {
 }
 
 // Current checks cached source material without equating a disconnected issuer watch with revocation.
-func Current(source *workloadapi.X509Source) bool {
+func Current(source interface {
+	x509svid.Source
+	x509bundle.Source
+}) bool {
 	svid, err := source.GetX509SVID()
-	if err != nil || len(svid.Certificates) == 0 {
+	if err != nil || svid == nil || len(svid.Certificates) == 0 {
 		return false
 	}
 	now := time.Now()
 	for _, cert := range svid.Certificates {
-		if now.Before(cert.NotBefore) || !now.Before(cert.NotAfter) {
+		if cert == nil || now.Before(cert.NotBefore) || !now.Before(cert.NotAfter) {
 			return false
 		}
 	}
-	_, err = source.GetX509BundleForTrustDomain(svid.ID.TrustDomain())
-	return err == nil
+	verifiedID, chains, err := x509svid.Verify(svid.Certificates, source, x509svid.WithTime(now))
+	if err != nil || verifiedID != svid.ID {
+		return false
+	}
+	for _, chain := range chains {
+		valid := true
+		for _, cert := range chain {
+			if now.Before(cert.NotBefore) || !now.Before(cert.NotAfter) {
+				valid = false
+				break
+			}
+		}
+		if valid {
+			return true
+		}
+	}
+	return false
 }

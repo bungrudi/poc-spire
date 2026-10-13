@@ -35,7 +35,8 @@ def pod(value, image, name, sa, role, command, adapter=False):
                                             {'name': 'control', 'mountPath': '/control'}]})
         volumes.append({'name': 'control', 'emptyDir': {'sizeLimit': '1Mi'}})
     return {'apiVersion': 'v1', 'kind': 'Pod', 'metadata': {'name': name, 'namespace': 'poc-' + value['run'],
-             'labels': {'poc-run': value['run'], 'poc-role': role}},
+             'labels': {'poc-run': value['run'], 'poc-role': role},
+             'annotations': {'sidecar.istio.io/nativeSidecar': 'false'}},
             'spec': {'serviceAccountName': sa, 'automountServiceAccountToken': False,
                      'securityContext': {'fsGroup': 1000, 'seccompProfile': {'type': 'RuntimeDefault'}},
                      'containers': containers, 'volumes': volumes}}
@@ -62,7 +63,7 @@ def register(value, parent, sid, item, container, image_id, binary_hash, uid):
     owners=item['metadata'].get('ownerReferences',[])
     if owners:
         if len(owners)!=1 or not owners[0].get('controller') or owners[0]['kind']!='ReplicaSet':raise RuntimeError('unexpected requesting-Pod owner')
-        selectors.append('k8s:pod-owner-uid:'+owners[0]['uid'])
+        selectors.append('k8s:pod-owner-uid:'+owners[0]['kind']+':'+owners[0]['uid'])
     entries = json.loads(admin(value, 'entry', 'show', '-socketPath', '/run/spire/admin/api.sock', '-output', 'json')).get('entries', [])
     matching = [entry for entry in entries if sid in spiffe_ids(entry.get('spiffe_id', {}))]
     if matching:
@@ -106,7 +107,7 @@ def main(resume=False):
                 {'apiVersion': 'networking.istio.io/v1', 'kind': 'DestinationRule', 'metadata': {'name': 'money', 'namespace': ns},
                  'spec': {'host': 'money.' + ns + '.svc.cluster.local', 'trafficPolicy': {'tls': {'mode': 'ISTIO_MUTUAL'}}}}]
     if not resume:
-        runtime.kube(value, 'apply', '-f', '-', data=yaml.safe_dump_all(objects), timeout=120)
+        runtime.apply_csi_workloads(value, '-', data=yaml.safe_dump_all(objects), timeout=120)
         pods = json.loads(runtime.kube(value, '-n', ns, 'get', 'pods', '-o', 'json'))['items']
         runtime.private_json(marker, {'run': value['run'], 'pods': {p['metadata']['name']: p['metadata']['uid'] for p in pods}})
     else:

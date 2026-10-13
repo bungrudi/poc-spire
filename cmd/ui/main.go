@@ -68,6 +68,9 @@ func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	config := web.Config{Origin: *origin, Local: local, KafkaStream: *kafkaStream}
+	if *guardPath != "" {
+		config.Run = *runID
+	}
 	var browserTLS *tls.Config
 	if !local {
 		if _, err := browserCertificate(*tlsCert, *tlsKey, *origin); err != nil {

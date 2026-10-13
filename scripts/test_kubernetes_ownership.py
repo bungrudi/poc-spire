@@ -10,6 +10,17 @@ import kubernetes_demo as runtime
 
 
 class OwnershipTests(unittest.TestCase):
+    def test_partial_csi_apply_records_unmount_intent_before_mutation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            marker = Path(directory) / 'apps-mounted'
+            def fail(*args, **kwargs):
+                self.assertTrue(marker.exists(), 'CSI unmount intent was recorded too late')
+                raise RuntimeError('partial apply timeout')
+            with patch.object(runtime, 'kube', side_effect=fail):
+                with self.assertRaisesRegex(RuntimeError, 'partial apply timeout'):
+                    runtime.apply_csi_workloads({'work':directory}, '-', data='owned secret fixture')
+            self.assertTrue(marker.exists(), 'cleanup lost partial CSI apply intent')
+
     def test_typed_store_descriptor_cleanup_record_needs_no_config_alias(self):
         record = {'docker_image_id': 'sha256:index', 'native_descriptor_graph': {'config_digest': 'sha256:config'}}
         self.assertEqual(runtime.owned_image_id(record), 'sha256:index')
