@@ -251,3 +251,20 @@ These are development functional proofs, not full KB/JS acceptance or actual
 per-flow outer/inner TLS correlation. Restart/outage/destructive loss, exact
 negative attestation/layer probes, bounded pressure and final review remain.
 No additional task checkbox is closed by this partial evidence.
+
+
+## Bounded documentation checkpoint — 13 October 2026
+
+The owner-approved narrowing in [review](review.md) supersedes the earlier
+all-KB/JS reliability completion instructions above; they are historical progress,
+not current requirements. [Acceptance](acceptance.md) retains core security/layer,
+five-scenario, reproducibility/basic cleanup/coexistence proof and explicitly
+DEFERs reliability extensions. Final core tests/review remain pending.
+
+Batch A changes planning documentation only. Tested runtime source remains
+`18c5f51`, development evidence `12d3dc6`. Eight uncommitted source/test files
+contain startup-failure signaling/image checks and image-intent cleanup; they
+remain undeployed and were neither edited nor committed in this batch. No issuer
+integrity/lineage implementation or dependency was added. Existing working guards
+are preserved without claiming exhaustive integrity or recovery. No runtime or
+failure probe was run for this documentation amendment.

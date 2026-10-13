@@ -23,7 +23,7 @@ The unidentified caller SHALL obtain no app SVID/key and load authentic public S
 - **THEN** their existing operations can continue until actual validity/guard boundaries; availability alone is not identity invalidation or claimed immediate revocation
 
 ### Requirement: IC-04 Explicit state retention and recovery boundaries
-Approved retained/native and remote-demo identity restart contracts SHALL remain unchanged. Kubernetes identity/state SHALL be disposable within its owned run, without durability/PVC/backup/HA requirements. Container restart may reuse intact run state; destructive issuer/Pod/trust loss MUST invalidate the run and require explicit fresh start. No retained trust reset, silent policy broadening or automatic old-attempt republication is allowed.
+Approved retained/native and remote-demo identity restart contracts SHALL remain unchanged. Kubernetes identity/state SHALL be disposable: on a failed or corrupt issuer/run the operator MUST stop and explicitly recreate the whole owned cluster with new trust/run/stream. No retained trust reset, silent policy broadening, automatic old-attempt republication or durability/recovery claim is allowed. Automatic issuer database/key integrity or lineage and exhaustive same-Pod/crash/outage recovery are DEFERRED; current credential/trust validity rules remain unchanged.
 
 #### Scenario: Retained substrate restarts
 - **WHEN** its server/agent restart from approved protected state
@@ -40,7 +40,7 @@ Approved retained/native and remote-demo identity restart contracts SHALL remain
 
 #### Scenario: Disposable Kubernetes issuer is lost
 - **WHEN** a guarded SPIRE Server Pod/trust incarnation or expected identity state is destructively replaced
-- **THEN** same-run bootstrap refuses to invent continuity; the operator performs explicit owned fresh start with new trust/run/stream and old logical results remain unknown
+- **THEN** the operator stops and explicitly recreates the whole owned cluster with new trust/run/stream; continuity is not invented and old logical results may remain unknown
 
 #### Scenario: In-cluster agent is unavailable
 - **WHEN** the node Agent/CSI cannot supply required fresh material or its current cache expires
@@ -49,8 +49,8 @@ Approved retained/native and remote-demo identity restart contracts SHALL remain
 
 ## Traceability and proposed coverage
 
-All original modified-block scenarios are retained. New Kubernetes scenarios are
-NOT RUN. [Profile](../../profile.md), [KB acceptance](../../acceptance.md) and
-[references](../../references.md) define the proposed gates. Current source and
-main contracts remain unchanged at `98f0fa3`; existing evidence is background,
-not Kubernetes proof.
+Original modified-block scenarios and existing Compose contracts remain unchanged.
+[Review](../../review.md) records the 13 October scope narrowing.
+[Profile](../../profile.md) and [acceptance](../../acceptance.md) retain core
+security checks and explicitly defer extended Kubernetes recovery. Development
+proofs are provisional; final core acceptance is pending. No deferral is a PASS.

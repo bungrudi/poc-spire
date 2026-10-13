@@ -29,7 +29,7 @@ Opt-in callers SHALL keep POST /attempt/kafka with exactly request_id, scenario 
 - **THEN** the command is rejected before publication and the old POST /attempt contract remains unchanged
 
 ### Requirement: PC-06 Initialized bounded retry state
-Runner SHALL initialize one stream-bound caller manifest/index before startup, retaining at most 64 immutable descriptors/four variants atomically before publication. Callers MUST NOT repair missing/corrupt state. Intact same-run container/UI restart preserves original deadline, instance and digests; new IDs at capacity fail without eviction. Kubernetes destructive Pod/state loss MUST refuse same-run initialization/publication and require explicit fresh-run reset.
+Runner SHALL initialize one stream-bound caller manifest/index before startup, retaining at most 64 immutable descriptors/four variants atomically before publication. Callers MUST NOT repair missing/corrupt state; new IDs at capacity fail without eviction and original ID/deadline/unknown-result semantics remain. Existing Compose intact-restart recovery contracts remain unchanged. Failed/corrupt Kubernetes runs require operator whole-cluster stop/recreate under KR-04; automatic state-loss detection and exhaustive Kubernetes restart/variant recovery validation are DEFERRED. The original recovery scenarios below remain Compose contracts and are not a new Kubernetes recovery guarantee.
 
 #### Scenario: Lost publish response then restart
 - **WHEN** publication may have happened but its control response is lost and UI/caller container restarts in the same run
@@ -41,7 +41,7 @@ Runner SHALL initialize one stream-bound caller manifest/index before startup, r
 
 #### Scenario: Kubernetes caller Pod is replaced
 - **WHEN** a caller Pod UID changes or expected initialized state is lost within its current run
-- **THEN** startup/control refuses recreation of the old attempt and reports unknown/reset; only an explicit new run can initialize a fresh store
+- **THEN** the operator stops and explicitly recreates the whole owned run rather than repairing it or automatically republishing old attempts; no same-run recovery is promised
 
 
 ## ADDED Requirements
@@ -67,8 +67,8 @@ Each Kubernetes caller Pod SHALL have a separately attested control-only adapter
 
 ## Traceability and proposed coverage
 
-All original modified-block scenarios are retained. New Kubernetes scenarios are
-NOT RUN. [Profile](../../profile.md), [KB acceptance](../../acceptance.md) and
-[references](../../references.md) define the proposed gates. Current source and
-main contracts remain unchanged at `98f0fa3`; existing evidence is background,
-not Kubernetes proof.
+Original modified-block scenarios and existing Compose contracts remain unchanged.
+[Review](../../review.md) records the 13 October scope narrowing.
+[Profile](../../profile.md) and [acceptance](../../acceptance.md) retain core
+security checks and explicitly defer extended Kubernetes recovery. Development
+proofs are provisional; final core acceptance is pending. No deferral is a PASS.

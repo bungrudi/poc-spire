@@ -51,28 +51,19 @@ The cluster SHALL enforce role-scoped network policy and explicit mesh flows, no
 - **THEN** implementation stops at the named gate without evicting other workloads, widening app privilege or changing physical-host security settings
 
 ### Requirement: KR-04 Disposable state and explicit reset
-No durability, HA, backup or PVC feature SHALL be required. Within a run, bounded replay/unknown-result contracts MUST remain. Startup MUST bind initialized state to expected run/Pod/trust identities; destructive replacement/loss SHALL stop both Sync/Kafka UI/adapter dispatch and refuse same-run reinitialization/publication. Explicit fresh start MUST use new run/trust/stream boundaries.
+Kubernetes run state SHALL be disposable. On a failed or corrupt run, the operator MUST stop the whole owned cluster and explicitly recreate a fresh run/trust/stream. Existing useful guards SHALL remain; no silent state repair, registration broadening, automatic old-attempt republication or durability claim is permitted. Automatic integrity/loss monitoring and exhaustive same-Pod/crash recovery are not required by this bounded PoC. Existing Compose contracts SHALL remain unchanged.
 
-#### Scenario: Container restarts with intact volumes
-- **WHEN** UI, caller or adapter containers restart within their existing Pod/run
-- **THEN** surviving initialized caller state can recover original IDs/deadlines/variants; UI session loss does not reset a continuing Money ledger
-
-#### Scenario: Money process restarts
-- **WHEN** Money restarts even with the same Pod UID
-- **THEN** memory resets and instance nonce changes, unknown results remain unknown and a retained valid command can apply again without a durable claim
-
-#### Scenario: Caller broker or issuer state is lost
-- **WHEN** expected initialized data or a guarded stateful Pod/trust incarnation is destructively replaced
-- **THEN** run readiness/control fails closed, old attempts are not recreated/re-published and recovery requires an explicit run-wide fresh start
-
-#### Scenario: Invalid Kubernetes run stops both transports
-- **WHEN** destructive caller Kafka-state or guarded Pod/trust loss invalidates the Kubernetes run
-- **THEN** new UI creation/retry and adapter forwarding for Sync and Kafka return 503 run_invalid without new caller invocation until explicit fresh-run reset
-- **AND** already submitted work remains unknown/history-backed rather than undone; the existing Compose Sync-survival expectation is unchanged
+#### Scenario: Kubernetes run fails or is corrupt
+- **WHEN** a Kubernetes run fails or its disposable state is corrupt or lost
+- **THEN** the operator stops the whole owned cluster and explicitly recreates it; previous logical outcomes may remain unknown and no same-run recovery is promised
 
 #### Scenario: Fresh start is repeated
 - **WHEN** the operator deliberately tears down and recreates a run
-- **THEN** only owned resources are removed, new trust/stream/context is initialized once and old browser context cannot silently resume publication
+- **THEN** only owned resources are removed, new trust/run/stream/context is initialized once and old browser context cannot silently resume publication
+
+#### Scenario: Memory-only limitation is described
+- **WHEN** Money or the whole run starts a new lifetime
+- **THEN** balances/history/receipts may reset and manually reused IDs may act anew, without a durable or cross-run exactly-once guarantee
 
 ### Requirement: KR-05 Ownership and cleanup
 Every run SHALL identify its cluster, kubeconfig, namespace/Pod UIDs, temporary credentials and processes. Collision, startup failure and shutdown MUST remove only owned resources with verifiable bounded cleanup. Default kubecontext, public endpoint, unrelated workloads and retained identity MUST NOT be changed or reused.
@@ -86,34 +77,35 @@ Every run SHALL identify its cluster, kubeconfig, namespace/Pod UIDs, temporary 
 - **THEN** cleanup completion is checked, incomplete cleanup remains failed/retryable and actual protected service/state continuity is recorded
 
 ### Requirement: KR-06 Reproducible validated baseline freeze
-Freeze MUST follow committed final source/configuration, immutable component/app artifacts, complete parity/security acceptance and independent review. Actual topology/resources and runtime manifest hashes MUST match the tested inputs without unexplained drift. Sanitized evidence SHALL state proof modes/limits; later evidence commits MUST NOT alter tested source. No comparison or performance claim is included.
+Freeze MUST use committed source/config, pinned normal and distinct test artifacts, retained core proofs, relevant tests, basic cleanup/coexistence and independent review. Deployed topology/resources and restored hashes MUST match tested inputs. Evidence SHALL state modes and deferred coverage; DEFERRED cases are neither PASS nor prerequisites. Evidence-only follow-up SHALL NOT change tested source. No comparison or performance claim is included.
 
-#### Scenario: Known-good baseline is recorded
-- **WHEN** all migration checks pass against a committed source and restored normal configuration
-- **THEN** freeze records exact image/binary/component/configuration hashes, manifest normalization, topology/resource settings, evidence and independent review
+#### Scenario: Known-good core baseline is recorded
+- **WHEN** retained core acceptance passes against committed source and restored normal configuration
+- **THEN** freeze records exact image/binary/component/configuration hashes, normalization, topology/resources, evidence, deferred coverage and independent review
 
-#### Scenario: Drift or incomplete proof
-- **WHEN** deployed inputs differ, test overlays are not restored or a required case/layer proof is missing
-- **THEN** freeze fails; a successful button or earlier Compose result cannot substitute for the missing Kubernetes proof
+#### Scenario: Drift or missing core proof
+- **WHEN** deployed inputs differ, an overlay is not restored or a required core security/layer proof is missing
+- **THEN** freeze fails; a successful button, deferred case or earlier Compose result cannot replace that proof
 
 #### Scenario: Future comparison is considered
 - **WHEN** a later proposal disables only outer TLS while retaining sidecars and application security
-- **THEN** it starts from the frozen baseline and separately reviews mesh-principal-dependent policy differences; this change creates no comparison worktree or benchmark mode
+- **THEN** it separately reviews mesh-principal-dependent policies; this change creates no comparison worktree or benchmark mode
 
-### Requirement: KR-07 Complete migration parity
-Acceptance SHALL map all five fixed UI scenarios and JS-01–JS-23, declaring Kubernetes transport/layout changes and JS-22 invalid-run availability separately from unchanged Compose behavior. Original HTTP policy, inner credentials, JWS, shared memory ledger, bounded quotas and unknown-result semantics MUST remain. Every new runtime case MUST have evidence or remain explicitly NOT RUN.
+### Requirement: KR-07 Core migration acceptance
+Kubernetes acceptance SHALL prove five scenarios, exact attestation/authorization/JWS, correlated inner/outer TLS, private role boundaries and basic reproducibility/cleanup/coexistence. Existing HTTP/JWS/ledger/quota/unknown semantics and Compose contracts SHALL remain. Full JS reliability re-proving, issuer integrity/lineage, exhaustive recovery and failure injection are DEFERRED; mixed cases MUST retain core security checks.
 
-#### Scenario: Fixed scenario and security parity
-- **WHEN** the Kubernetes baseline is tested
-- **THEN** both Sync and all three Kafka cases retain their correct outcomes, with fresh negative/lifecycle/guard/retry proof rather than importing Compose passes
+#### Scenario: Fixed scenarios and focused security
+- **WHEN** the Kubernetes core PoC is accepted
+- **THEN** all five outcomes and focused attestation, authorization, JWS and layer positives/negatives have current-source evidence
 
-#### Scenario: A proof is only deterministic or unexecuted
-- **WHEN** an obligation uses controlled clock/transport/bundle fixtures or has not run
-- **THEN** its mode/status is explicit and no infrastructure error or structural validation is recorded as security acceptance
+#### Scenario: Coverage is partial or deferred
+- **WHEN** an obligation is deterministic, partial, unexecuted or outside the narrowed scope
+- **THEN** its mode/status is explicit; infrastructure errors and DEFERRED cases are never recorded as security PASS
 
 ## Traceability and status
 
-All scenarios are proposed and NOT RUN. [KB acceptance](../../acceptance.md),
-[profile](../../profile.md) and [references](../../references.md) define the gates,
-flow/reset/freeze contract and compatibility assumptions. Current implementation
-is [the unchanged baseline](../../../../../docs/kafka-signing-acceptance.md).
+[Review](../../review.md) records original approval and the 13 October narrowing.
+[Acceptance](../../acceptance.md) separates retained core checks from DEFERRED
+reliability subcases. Development readiness/five-scenario evidence is provisional;
+final core acceptance and independent review remain pending. The existing
+[Compose baseline](../../../../../docs/kafka-signing-acceptance.md) is unchanged.

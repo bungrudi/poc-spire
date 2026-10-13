@@ -1,6 +1,6 @@
 # Planning and owner review record
 
-Status: **owner implementation approval recorded; implementation in progress**.
+Status: **owner implementation and narrowed PoC scope approved; core verification pending**.
 Approval date: 13 October 2026, Asia/Jakarta.
 The 12 October planning review below is historical; it did not grant this approval.
 Date: 12 October 2026, Asia/Jakarta.
@@ -32,7 +32,7 @@ Decisions include one owned kind node/enforcing Calico, default Istiod CA,
 independent SPIRE 1.14 built-in process+K8s gate, UID10002 control-only adapters,
 public-bundle projection, disposable guarded reset and exact freeze/proof limits.
 
-## Independent parent drafting review — PASS
+## Historical independent parent drafting review — PASS
 
 The parent orchestrator independently read the complete proposal, short design,
 profile, all seven deltas, tasks, acceptance mapping, references and validation
@@ -89,3 +89,47 @@ benchmarking remain excluded. A material pin, privilege, budget or behavioral
 rescope requires review before dependent execution. Standing commit/push
 permission applies to authorized work on this branch. Independent final review
 is still required: task 7.1 remains pending until the parent actually passes it.
+
+
+## Owner-approved scope narrowing — 13 October 2026
+
+The parent independently verified Rudi's messages in chat
+`01a12b31-9ead-7e92-a024-23860cfe5d8f`, turn
+`01a13221-82be-7c62-90bf-bfaea4040a23`:
+
+> it seem that the implementor is worrying about reliability issues that are beyond our poc scope?
+
+Concern message: `01a1332a-2213-7063-8424-7cd14d9654c5`.
+After the parent's concrete recommendation to use disposable failed runs and
+focus on core security/reproducibility, Rudi approved:
+
+> yes lets keep that implementor on strict leash
+
+Approval message: `01a1332b-54a7-7621-bbe6-cc2b0d872bb1`.
+Date: **13 October 2026, Asia/Jakarta**. This supersedes the earlier requirement
+to re-prove every Kubernetes reliability case; original approval/history and
+[approved-artifacts.json](approved-artifacts.json) remain unchanged historical
+records. It does not waive core security or final independent review.
+
+The parent reviewed the concise scope/WIP checkpoint and approved its narrowed
+delta exactly, then authorized documentation-only Batch A before further code.
+Retained scope: all in-cluster services, five scenarios/shared ledger, exact
+attestation/authorization/JWS negatives, correlated inner/outer TLS, pinned
+normal/test setup, basic owned cleanup, caps/coexistence, relevant tests and
+committed-source independent review. Failed/corrupt run means operator whole-
+cluster stop/recreate. Automatic monitor extensions, issuer integrity/lineage,
+exhaustive same-Pod/crash/outage/cleanup injection and full JS reliability
+re-proving are DEFERRED, never PASS. Existing useful guards and Compose contracts
+remain; no new framework/dependency/controller, benchmark or public cutover.
+
+The approved checkpoint is encoded by the Batch A planning amendment. Its
+normative content revision is recorded below; this records the reviewed scope,
+not an agent-created replacement for the human approval. Source/config must be
+committed before final core tests, and task 7.1 stays pending until independent
+review actually passes the reduced core scope.
+
+Batch A normative content revision: `sha256:c53d6a7c52c9ed17bda7c5ba17bd9662ea44af5c0f8e4d7762fe0cbec67ea3d5`.
+Computed from sorted `path + tab + SHA256(file) + newline` for the same 14
+normative paths in the original manifest; review/implementation audit text is
+excluded. The original manifest is not rewritten. The documentation Git commit
+is reported with this batch for independent review.

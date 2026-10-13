@@ -8,7 +8,7 @@ The owner requests a complete in-cluster migration, a validated application-plus
 Istio mTLS baseline, then a reproducible freeze for a later controlled comparison.
 
 Rudi approved implementation of the published revision on 13 October 2026;
-see [approval and frozen artifact manifest](review.md). This change covers
+see [approval, original manifest and 13 October scope narrowing](review.md). This change covers
 steps 1–3 only, including its owned disposable installation and isolated tests.
 Benchmarking, comparison worktrees and public cutover remain excluded.
 
@@ -33,12 +33,16 @@ Benchmarking, comparison worktrees and public cutover remain excluded.
   never an application SVID/key. Missing/stale trust is infrastructure failure.
 - Keep all five fixed UI scenarios, APIs, integer ledger, quotas, original retry
   IDs/deadlines, receipts and loss/unknown classifications. Use disposable state,
-  no PVC/HA/backup/durable-recovery feature. Destructive Pod/state loss requires
-  an explicit fresh run; never silently recreate or republish an old attempt.
-  Kubernetes invalid-run handling stops both Sync and Kafka UI/adapter dispatch;
-  the existing Compose Sync-survival-after-Kafka-state-loss result remains intact.
-- Require complete migration/parity/security acceptance, actual evidence for
-  each TLS layer, resource/isolation/cleanup checks and independent review.
+  no PVC/HA/backup/durable-recovery feature. On a failed or corrupt Kubernetes
+  run the operator stops and explicitly recreates the whole owned cluster; no
+  silent repair or old-attempt republication is promised. Existing useful guards
+  remain, but automatic integrity monitoring and exhaustive recovery are deferred.
+  Existing Compose contracts, including Sync survival after Kafka state loss,
+  remain unchanged.
+- Require all five scenarios, focused attestation/authorization/JWS negatives,
+  correlated actual evidence for each TLS layer, resource/isolation/basic cleanup
+  and coexistence checks, relevant tests and independent review. Full Kubernetes
+  re-proving of the JS reliability suite is deferred, never counted as PASS.
   Commit final source before testing; freeze exact image/component/configuration,
   manifest and topology hashes with sanitized evidence and known limitations.
 

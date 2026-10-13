@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: KC-11 Kubernetes broker and ingestion parity
-The Kubernetes profile SHALL place its stock broker, scoped bootstrap and existing embedded Money ingestion in-cluster with one broker/partition/member. Broker TLS/hostname/DN ACLs and original-producer JWS MUST remain independent of mesh admission. UI/adapters MUST receive no broker/admin credentials. Shared ledger, context, receipts, ordered acknowledgement and memory-only reset behavior MUST preserve the existing profile.
+Kubernetes SHALL run its stock broker/bootstrap and embedded Money ingestion in-cluster with one broker/partition/member. Broker TLS/hostname/DN ACLs and original-producer JWS MUST remain independent of mesh admission; UI/adapters MUST receive no broker/admin credentials. Shared ledger/context/receipts/ordered acknowledgement semantics remain. Exhaustive crash/ack/rebalance re-proving is DEFERRED; failed/corrupt runs use operator whole-cluster stop/recreate.
 
 #### Scenario: Kubernetes fixed Kafka cases
 - **WHEN** trusted, unidentified/unsigned and tampered records traverse the double-TLS broker path
@@ -11,7 +11,7 @@ The Kubernetes profile SHALL place its stock broker, scoped bootstrap and existi
 
 #### Scenario: Broker or consumer resets
 - **WHEN** a process restarts or destructive broker/Pod state loss occurs
-- **THEN** offsets never restore Money state, valid pending records can apply in a new Money lifetime and destructive loss follows the explicit owned run-reset contract without automatic republication
+- **THEN** no durable Money state or recovery is claimed; the operator stops and recreates a failed/corrupt whole run without automatic republication, and existing Compose reset contracts remain unchanged
 
 #### Scenario: Broker admission or isolation fails
 - **WHEN** a wrong DN/topic/group, hostname or forbidden UI path targets the broker
@@ -19,7 +19,7 @@ The Kubernetes profile SHALL place its stock broker, scoped bootstrap and existi
 
 ## Traceability and proposed coverage
 
-All new scenarios are NOT RUN. Existing KC-01–KC-10/JS-01–JS-23 and
-[Compose proof](../../../../../docs/kafka-signing-acceptance.md) remain intact
-compatibility references. New [KB acceptance](../../acceptance.md) and
-[profile](../../profile.md) require real Kubernetes broker/application/mesh proof.
+Existing KC-01–KC-10/JS-01–JS-23 and [Compose proof](../../../../../docs/kafka-signing-acceptance.md)
+remain unchanged. [Review](../../review.md), [acceptance](../../acceptance.md) and
+[profile](../../profile.md) define narrowed core Kubernetes proof; extended
+reliability re-proving is DEFERRED, not PASS. Final core acceptance is pending.

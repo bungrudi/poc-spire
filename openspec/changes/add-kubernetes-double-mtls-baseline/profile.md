@@ -9,8 +9,12 @@ and the public deployment are unchanged.
 
 ## Scope and proposed runtime
 
-Steps 1–3 are: complete Kubernetes placement; establish full functional/security
-parity with both TLS layers; freeze a reproducible known-good baseline. This
+Steps 1–3 are: complete Kubernetes placement; prove the five scenarios and focused
+core security with both TLS layers; freeze a reproducible known-good PoC baseline.
+The owner's 13 October narrowing in [review](review.md) supersedes exhaustive
+Kubernetes reliability parity. Failed/corrupt run means operator whole-cluster
+stop/recreate. Automatic store-integrity monitoring, exhaustive recovery and
+failure injection are DEFERRED; existing useful guards need not be removed. This
 change does not create the later comparison worktree, disable outer TLS, run a
 benchmark, change connection modes, provide HA/durability or cut over the public
 endpoint. Both eventual variants retain application TLS and Istio sidecars.
@@ -233,54 +237,43 @@ before Pods exist to supply their attestation metadata.
 
 ## Disposable state and reset unit
 
-One run is the owned cluster/namespace UID set, CA trust incarnation, expected
-stateful Pod UID set, stream/topic, initialized caller manifests and browser run
-context. The trusted setup runner records expected Pod UIDs once, exposes a
-read-only run guard and requires init/app startup to match it. Replacement Pods
-in an existing run must not initialize a fresh caller/broker/CA store merely
-because an emptyDir is empty. Applications have no privilege to amend the guard.
-The runner marks a detected destructive state/Pod loss invalid; no automatic
-broker bootstrap/registration broadening/republication is permitted. After that
-invalidity is observed, UI creation/retry dispatch and adapter forwarding are
-stopped for **both Sync and Kafka**, returning `503 run_invalid` with no new
-caller invocation. Existing status/receipt reads may report supported historical
-evidence or unknown/reset; work already submitted is not retroactively undone
-and may still have an unknown outcome. An issuer-only outage with valid caches
-is not this destructive invalidation. Explicit fresh-run reset re-enables work.
+One run owns its cluster, namespaces, temporary trust, stream/topic, caller stores
+and browser context. Keep bounded state and existing useful startup/run guards;
+applications have no authority to amend them. If the run fails or is corrupt,
+the operator MUST stop the whole owned cluster and explicitly recreate a fresh
+run/trust/stream. Do not silently repair state, broaden registrations, recreate
+old attempts or claim continuity. Old outcomes may remain unknown.
 
-This is a **Kubernetes-only JS-22 expected-outcome change**: the existing Compose
-Kafka-state-deletion check deliberately proves Sync can still work. That Compose
-result/contract remains unchanged. Kubernetes instead quarantines the invalid
-run; no continued Sync UI/adapter dispatch is promised, and it must not be scored
-as byte-for-byte availability parity with the old failure-state result.
+Automatic destructive-loss detection, issuer database/key integrity or lineage,
+recovery through every same-Pod/crash-loop variant and exhaustive fault injection
+are DEFERRED. Existing guards are defense in depth, not a recovery guarantee.
+Availability alone does not revoke valid cached credentials; actual missing trust
+or expired credentials still fails closed. Real rotation/outage recovery matrices
+are deferred, while the existing validity rules and focused security tests remain.
 
-| Event | Required behavior |
+| Event | Bounded PoC contract |
 | --- | --- |
-| UI container restart, same Pod/run | In-memory session/job state clears; renew session, recover same key/digests from intact callers and authenticate receipts; no deadline refresh. |
-| Caller or adapter container restart, same Pod | Own local state/socket volumes survive; caller reopens initialized store; adapter reconnects own UDS; no loss of variants/creation/deadline. |
-| Money container restart, even same Pod | Ledger/history/bindings/receipts reset and new instance nonce. Detect reset; no automatic UI republish. A valid pending record can apply anew: demonstrated memory-only limitation. |
-| Caller Pod replacement / deletion/corruption of initialized store | Refuse same-run reinitialization; both Sync/Kafka UI dispatch and adapter forwarding return `503 run_invalid` after detection, with no new caller invocation. Old logical outcome remains unknown/reset. Explicit run-wide fresh start required; Compose Sync-survival behavior is unchanged. |
-| Kafka/SPIRE Server Pod or destructive data/trust loss | Invalidate run; no durable restore/automatic same-run bootstrap. Stop owned dependent activity and explicitly recreate fresh run/trust/topic/stream. |
-| Agent/CSI container restart | Preserve node socket backing; reacquire only under exact PSAT/registration/current trust. If incarnation/trust/expected ownership is lost, invalidate/reset; do not assume continuity. |
-| Full reset | Delete only owned run and credentials; create new cluster/namespaces/nonces/trust, initialize new bounded stores once. Reject stale Kafka browser stream, clear old browser run context and require explicit new logical work. |
+| Failed/corrupt caller, broker, issuer or other run component | Operator stops and explicitly recreates the whole owned run; no same-run recovery promise. |
+| Money lifetime changes | Memory-only balances/history/receipts can reset; offsets do not restore them. No durable or cross-run exactly-once claim. |
+| Explicit fresh start | Remove only owned resources; use new run/trust/stream/context, initialize bounded state once and require explicit new logical work. |
 
-No PVC, backup, durable ledger/outbox/offset transaction or HA requirement. Caller
-state remains 64 descriptors/four variants/16MiB; receipts 4096/180s; history 10000;
-no fresh eviction. ConfigMaps/Secrets and node-local CSI backing exist only in the
-disposable cluster lifetime. Container volume survival is not a durable promise.
-Sync request-ID derivation remains unchanged; manually reused IDs can be new
-operations in a fresh Money lifetime. No cross-run exactly-once claim is made.
+Caller bounds remain 64 descriptors/four variants/16MiB, receipts 4096/180s and
+history 10000, without unsafe eviction. No PVC, backup, durable ledger/outbox,
+HA or new recovery/controller feature is included. Sync ID derivation and existing
+unknown-result semantics stay unchanged. Existing Compose restart contracts and
+its JS-22 Sync-survival result remain unchanged. Exhaustive Kubernetes JS-22
+recovery/automatic-invalidation re-proving is DEFERRED, not an imported PASS.
 
 ## Acceptance, evidence and freeze
 
-All five UI cases and every JS-01–JS-23 obligation must have new Kubernetes proof,
-with declared transport/layout and JS-22 invalid-run availability changes clearly
-mapped. Preserve the separate Compose expectation rather than claiming identical
-failure-state availability across profiles. Baseline Compose proof
-is compatibility reference, never a new K8s pass. [Acceptance](acceptance.md)
-requires actual executable/deployment, mesh-valid/app-invalid and valid-app/
-no-mesh probes, all role/mount/network boundaries, restart/state-loss/unknown
-cases, receipt/idempotency bounds, readiness/bootstrap failure and owned cleanup.
+All five UI cases and the retained core obligations in [acceptance](acceptance.md)
+require final-source proof: exact executable/deployment attestation, independent
+SPIFFE authorization/JWS, positive and negative layer evidence, private controls,
+role/mount/network boundaries, shared ledger/receipt semantics, pinned startup,
+resource caps and basic owned cleanup/public coexistence. Relevant existing
+Go/race/vet/JOSE, Python and shipped-JS checks remain required. Full Kubernetes
+re-proving of JS-01–JS-23 reliability cases is DEFERRED. Mixed rows explicitly
+retain core security checks. Compose evidence is background, never a K8s pass.
 
 Actual TLS evidence requires observed outer peer/authentication/protocol/config
 and inner Go or Kafka handshake/verified identity, correlated by flow/connection,
@@ -297,7 +290,7 @@ Freeze after final source/fixtures/dependencies are committed, then build/pin
 normal app and separately tagged test images. Save exact index/platform/config
 image and binary hashes, tool/component versions, normal rendered manifest/
 configuration and deployment hashes, node/runtime/resource/topology details,
-full parity/security results, clean owned cleanup/coexistence and independent
+focused core results, explicit deferred coverage, basic owned cleanup/coexistence and independent
 review. Manifests before/after final testing must match, except declared temporary
 fixture overlays that are restored and rechecked. Redacted Secret payloads and
 generated run IDs/UIDs require an explicit normalization rule; static artifact
