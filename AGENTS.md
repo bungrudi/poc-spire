@@ -86,7 +86,7 @@ Read in order:
 
 ## Security invariants for future implementation
 
-- Caller-to-money TLS terminates **inside the Go money service**. No identity-terminating sidecar, forwarded identity header, plaintext fallback, or optional client-certificate mode.
+- Compose caller-to-money TLS terminates inside the Go money service. Kubernetes workload HTTP is plaintext inside Istio outer mTLS and authenticates a compact X.509-SVID JWS. No identity-terminating sidecar, forwarded identity header, plaintext fallback outside that approved mesh profile, or optional client-certificate mode.
 - Authenticate real X.509-SVIDs, then authorize exact SPIFFE IDs by route before business logic. Trust-domain membership alone is not transfer permission.
 - Clients verify the money service's exact SPIFFE ID. Use Go SPIFFE sources for rotation and verification; never use an application certificate-verification bypass.
 - Unidentified clients fail TLS, with no money-service HTTP status. An authenticated but unauthorized identity receives `403`. Keep those cases distinct in logs/UI.

@@ -28,7 +28,12 @@ func main() {
 	guardPath := flag.String("run-guard", "", "opt-in read-only run guard")
 	runID := flag.String("run", "", "expected run")
 	reopen := flag.Bool("reopen-control", false, "opt-in owned Kubernetes socket reopening")
+	transportMode := flag.String("transport", "mtls", "mtls or Kubernetes signed-http")
 	flag.Parse()
+	if *transportMode != "mtls" && *transportMode != "signed-http" {
+		fmt.Fprintln(os.Stderr, "invalid caller transport")
+		os.Exit(1)
+	}
 	if *uid != 1000 && *uid != 10002 {
 		fmt.Fprintln(os.Stderr, "unsupported control peer layout")
 		os.Exit(1)
@@ -86,7 +91,11 @@ func main() {
 		info, err := os.Lstat(*path)
 		return err == nil && info.Mode()&os.ModeSocket != 0
 	})
-	if err := control.Serve(ctx, *path, uint32(*uid), caller.Unidentified("/workload/api.sock", *bundlePath, *target), kafkaHandlers...); err != nil {
+	execute := caller.Unidentified("/workload/api.sock", *bundlePath, *target)
+	if *transportMode == "signed-http" {
+		execute = caller.UnidentifiedSigned("/workload/api.sock", *bundlePath, *target)
+	}
+	if err := control.Serve(ctx, *path, uint32(*uid), execute, kafkaHandlers...); err != nil {
 		fmt.Fprintln(os.Stderr, "unidentified control unavailable")
 		os.Exit(1)
 	}

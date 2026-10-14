@@ -37,7 +37,16 @@ type Config struct {
 	Now      func() time.Time
 }
 
+type verifiedSignature struct {
+	id      spiffeid.ID
+	current func(time.Time) bool
+}
+type signatureKey struct{}
+
 func current(r *http.Request, now time.Time) bool {
+	if sig, ok := r.Context().Value(signatureKey{}).(verifiedSignature); ok {
+		return sig.current(now)
+	}
 	if r.TLS == nil || !r.TLS.HandshakeComplete || len(r.TLS.PeerCertificates) == 0 {
 		return false
 	}
@@ -66,7 +75,13 @@ func Handler(cfg Config) http.Handler {
 			fail(403, "credential_not_current")
 			return
 		}
-		peer, err := x509svid.IDFromCert(r.TLS.PeerCertificates[0])
+		var peer spiffeid.ID
+		var err error
+		if sig, ok := r.Context().Value(signatureKey{}).(verifiedSignature); ok {
+			peer = sig.id
+		} else if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
+			peer, err = x509svid.IDFromCert(r.TLS.PeerCertificates[0])
+		}
 		if err != nil || peer != identity.Observer {
 			fail(403, "forbidden")
 			return
@@ -216,6 +231,10 @@ func observe(next http.Handler, role string, audit io.Writer) http.Handler {
 		observation["path"] = route
 		if local, ok := r.Context().Value(http.LocalAddrContextKey).(net.Addr); ok {
 			observation["local"] = local.String()
+		}
+		if sig, ok := r.Context().Value(signatureKey{}).(verifiedSignature); ok {
+			observation["verified_peer"] = sig.id.String()
+			observation["transport"] = "signed-http"
 		}
 		if r.TLS != nil && r.TLS.HandshakeComplete {
 			observation["tls_version"] = tls.VersionName(r.TLS.Version)

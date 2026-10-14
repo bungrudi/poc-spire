@@ -19,6 +19,13 @@ changes are installed and verified at `https://spire.adianto.dev/`.
 
 Checked boxes mean work actually completed. Unchecked boxes are planned work, not tests that passed. Technical decisions live in [RFC 0001](docs/rfcs/0001-process-identity.md); workspace requirements live in [WORKSPACE.md](WORKSPACE.md).
 
+## SVID-signed Kubernetes workload HTTP — 14 October 2026
+
+- [x] Owner approved applying `replace-app-mtls-with-svid-signature` at `9f048254a4a89d1be80c6dcf7df88c822ad2cb01`.
+- [x] Kubernetes workload HTTP signs REST payloads with the current X.509-SVID and does not use application mTLS. Compose direct mTLS stays.
+- [x] Unit tests cover tampered payloads, non-verifying signatures, obsolete signatures, forged chains, route replay, UI denial and a still-valid previous SVID.
+- [ ] Re-run the live Kubernetes/SPIRE mesh checks for the signed-HTTP profile. That observation is unrun.
+
 ## Current public Kubernetes deployment — 13 October 2026
 
 The owner directly authorized merge/push, named public cutover and cleanup.

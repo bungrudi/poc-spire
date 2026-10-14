@@ -111,19 +111,23 @@ The combined UI SHALL keep existing trusted/unidentified scenarios labeled Sync 
 - **THEN** UI rejects before dispatch; a new stream cannot silently retry an old attempt with a refreshed deadline
 
 ### Requirement: UI-08 Authenticated correlated Money outcomes
-Kafka terminal UI evidence MUST come from exact-Money mTLS observer reads matched to retained complete-record digests. Broker ack, balances, logs and claimed producer/request IDs MUST NOT imply success. Invalid-JWS rejection SHALL remain unattributed to a producer. Any applied/replayed authenticated expected result can settle success; rejection requires every potentially submitted variant settled with no effect.
+Kafka terminal UI evidence MUST come from exact-Money observer reads matched to retained digests. Non-mesh reads use Money mTLS. Mesh reads use Money's SVID response signature and no application certificate. Broker acknowledgement, logs and claimed IDs MUST NOT imply success. Invalid-JWS rejection stays unattributed. Rejection requires every potentially submitted variant settled with no effect.
 
 #### Scenario: Authenticated successful receipt
-- **WHEN** Money returns a matching-instance/digest terminal applied/replayed result for the expected trusted producer, request ID and fixed transfer
-- **THEN** the UI shows verified success separately from queued broker/control diagnostics and the outcome-query HTTP status
+- **WHEN** Money returns a matching-instance and digest terminal applied or replayed result for the expected trusted producer, request ID and fixed transfer
+- **THEN** the UI shows verified success separately from queued broker or control diagnostics and the outcome-query HTTP status
 
 #### Scenario: Invalid JWS rejection is correlated by bytes
-- **WHEN** Money returns a terminal signature/missing-JWS rejection matching the exact submitted record digest
+- **WHEN** Money returns a terminal signature or missing-JWS rejection matching the exact submitted record digest
 - **THEN** UI shows Money-verified rejection without trusting its claimed producer or request ID; caller diagnostics remain separately labeled
 
 #### Scenario: Earlier variant is unresolved
-- **WHEN** a newer variant is rejected but an earlier potentially published variant has missing/expired evidence
+- **WHEN** a newer variant is rejected but an earlier potentially published variant has missing or expired evidence
 - **THEN** the logical attempt stays unknown rather than declaring rejection; every retained digest is queried
+
+#### Scenario: Mesh observer read has no application certificate
+- **WHEN** the UI reads a Kafka outcome on the Kubernetes mesh profile
+- **THEN** it accepts the result only from Money's SVID signature and does not present an application client certificate
 
 ### Requirement: UI-09 Bounded recovery without deadline refresh
 Kafka polling SHALL use a 30-second worker budget, bounded one-second/variant polling and existing quotas. UI restart MUST recover initialized caller state and retain browser key/stream, original deadline and all potentially submitted digests. Timeout/404/evidence expiry/reset MUST remain unknown. After deadline or state loss, UI MUST NOT recreate/re-sign a retry or auto-republish under a changed Money instance.

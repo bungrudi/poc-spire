@@ -50,11 +50,21 @@ func (ca *CA) Cert(public any, id spiffeid.ID, now time.Time) (*x509.Certificate
 	return x509.ParseCertificate(der)
 }
 func (ca *CA) SVID(id spiffeid.ID, now time.Time) (*x509svid.SVID, error) {
+	return ca.SVIDBetween(id, now.Add(-time.Minute), now.Add(10*time.Minute))
+}
+func (ca *CA) SVIDBetween(id spiffeid.ID, notBefore, notAfter time.Time) (*x509svid.SVID, error) {
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, err
 	}
-	cert, err := ca.Cert(&key.PublicKey, id, now)
+	ca.serial++
+	uri, _ := url.Parse(id.String())
+	template := &x509.Certificate{SerialNumber: big.NewInt(ca.serial), URIs: []*url.URL{uri}, BasicConstraintsValid: true, KeyUsage: x509.KeyUsageDigitalSignature, NotBefore: notBefore, NotAfter: notAfter}
+	der, err := x509.CreateCertificate(rand.Reader, template, ca.cert, &key.PublicKey, ca.key)
+	if err != nil {
+		return nil, err
+	}
+	cert, err := x509.ParseCertificate(der)
 	if err != nil {
 		return nil, err
 	}

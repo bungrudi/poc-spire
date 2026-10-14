@@ -1,12 +1,14 @@
 # Planning and owner review record
 
-Status: **pending**.
-Approval date: none.
-Approved revision: none.
+Status: **approved**.
+Approval date: 14 October 2026.
+Approved revision: `9f048254a4a89d1be80c6dcf7df88c822ad2cb01`.
 
-This file records review only. It is not approval. An agent-written summary,
-a passing `openspec validate`, or permission to commit and push does not
-approve the behavior change.
+Owner message: “Commit push, then apply new spec”.
+
+This file records that approval. A later commit that implements the approved
+revision is not a new behavioral approval. Compose direct mTLS stays in the
+approved scope.
 
 ## What needs review
 
@@ -21,5 +23,5 @@ still inside its certificate lifetime and 30-second envelope still verifies.
 Compose direct mTLS, Kafka broker TLS, browser HTTPS and UDS controls stay as
 they are.
 
-No runtime code is authorized until Rudi explicitly approves this delta and
-the short plan. A later scope change needs a new review before implementation.
+That delta and short plan are the approved scope. A later scope change needs
+a new review before implementation.

@@ -6,7 +6,7 @@ context: |
   openspec/specs documents current behavior; docs/spec-baseline.md maps evidence,
   limitations and source. RFC 0001 owns architecture/security rationale.
   The public profile assumes the human operator; OIDC/verified-human plans are
-  historical. Preserve direct mandatory Money mTLS, exact SPIFFE-ID permissions,
+  historical. Preserve Compose direct mandatory Money mTLS and Kubernetes SVID-signed workload HTTP inside Istio outer mTLS, exact SPIFFE-ID permissions,
   executable AND deployment attestation, private caller controls and safe retries.
   Every future behavior change needs a spec delta and short design.md reviewed
   and explicitly approved by Rudi before code/apply. An agent-written review,
