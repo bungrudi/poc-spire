@@ -193,6 +193,19 @@ review receipt is in the adoption evidence. Owner baseline acceptance remains
 pending; independent verification and publication do not imply that acceptance.
 
 
+## SVID-signed Kubernetes workload HTTP — 14 October 2026
+
+Approved revision `9f048254a4a89d1be80c6dcf7df88c822ad2cb01` drops application
+mTLS on Kubernetes workload HTTP and signs REST payloads with the current
+X.509-SVID. Current contracts are
+[svid-signed-application-payload](../openspec/specs/svid-signed-application-payload/spec.md)
+and the mesh, Money, caller, UI and lifecycle deltas synced from
+`replace-app-mtls-with-svid-signature`. Unit tests in `internal/httpjws` and
+`internal/money` cover tamper, wrong signature, obsolete signature, forged
+chain, route replay and a still-valid previous SVID. Live Kubernetes/SPIRE
+re-observation is unrun. The 13 October double-mTLS evidence below remains the
+evidence for that earlier profile.
+
 ## Owned Kubernetes/Istio profile — 13 October 2026
 
 [Runtime/runbook](kubernetes-baseline.md) and [core evidence](evidence/kubernetes-core-current.json)

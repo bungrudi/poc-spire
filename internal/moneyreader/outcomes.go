@@ -13,6 +13,7 @@ import (
 
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
+	"poc-spire/internal/httpjws"
 	"poc-spire/internal/identity"
 	"poc-spire/internal/kafkacmd"
 	"poc-spire/internal/ledger"
@@ -22,6 +23,7 @@ type Observer struct {
 	Target string
 	SVID   x509svid.Source
 	Bundle x509bundle.Source
+	Signed bool
 }
 
 func decode(raw []byte, out any) error {
@@ -45,7 +47,13 @@ func (o Observer) get(ctx context.Context, path string) ([]byte, int, error) {
 	}
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
-	client, transport := identity.HTTPClient(identity.ClientTLS(o.SVID, o.Bundle, identity.Money))
+	var client *http.Client
+	var transport *http.Transport
+	if o.Signed {
+		client, transport = httpjws.Client(o.SVID, o.Bundle, identity.Money)
+	} else {
+		client, transport = identity.HTTPClient(identity.ClientTLS(o.SVID, o.Bundle, identity.Money))
+	}
 	defer transport.CloseIdleConnections()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, o.Target+path, nil)
 	if err != nil {

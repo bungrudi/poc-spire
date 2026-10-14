@@ -25,7 +25,12 @@ func main() {
 	run := flag.String("run", "", "expected disposable run")
 	podUID := flag.String("pod-uid", os.Getenv("POC_POD_UID"), "expected current Pod UID")
 	readyPath := flag.String("readiness-file", "", "opt-in native readiness marker")
+	transportMode := flag.String("transport", "mtls", "mtls or signed-http")
 	flag.Parse()
+	if *transportMode != "mtls" && *transportMode != "signed-http" {
+		fmt.Fprintln(os.Stderr, "invalid adapter transport")
+		os.Exit(1)
+	}
 	expected, err := controladapter.ID(*role)
 	if err != nil || *guardPath == "" || *run == "" || *podUID == "" || os.Geteuid() != 10002 || os.Getegid() != 1000 {
 		fmt.Fprintln(os.Stderr, "invalid adapter deployment")
@@ -59,12 +64,20 @@ func main() {
 		m, status, err := kafkacaller.Call(operation, *socket, nil, "readiness")
 		return err == nil && status == 404 && m.Initialized
 	})
-	server := controladapter.Server(source, controladapter.Config{Role: *role, Socket: *socket, RunValid: (runguard.Config{Path: *guardPath, Run: *run, Role: "caller-" + *role, PodUID: *podUID}).Valid}, os.Stdout)
+	cfg := controladapter.Config{Role: *role, Socket: *socket, RunValid: (runguard.Config{Path: *guardPath, Run: *run, Role: "caller-" + *role, PodUID: *podUID}).Valid}
+	server := controladapter.Server(source, cfg, os.Stdout)
+	if *transportMode == "signed-http" {
+		server = controladapter.SignedServer(source, cfg, os.Stdout)
+	}
 	go func() {
 		<-ctx.Done()
 		shutdown, done := context.WithTimeout(context.Background(), 2*time.Second)
 		defer done()
 		server.Shutdown(shutdown)
 	}()
+	if *transportMode == "signed-http" {
+		server.Serve(listener)
+		return
+	}
 	server.ServeTLS(listener, "", "")
 }

@@ -76,6 +76,20 @@ injection are DEFERRED, as are comparison/benchmark/public cutover. No durable
 Money, continuous process integrity or host-compromise protection is added.
 Final docs consistency review passed; owner acceptance remains separate.
 
+## SVID-signed Kubernetes workload HTTP — 14 October 2026
+
+Owner message “Commit push, then apply new spec” approved revision
+`9f048254a4a89d1be80c6dcf7df88c822ad2cb01`. On the Kubernetes profile, workload
+HTTP no longer uses application mTLS. Istio/Envoy keeps outer mTLS, and service
+ports stay named `tcp-*` so Envoy forwards the bytes without authorizing the
+JWS. Each identity-bearing REST body is a compact ES256 JWS signed by the
+sender's current X.509-SVID. Altered bytes and a signature that does not verify
+are HTTP 401. An expired, not-yet-valid, or elapsed 30-second envelope is 403
+`credential_not_current`. A previous SVID still inside its certificate lifetime
+and envelope still verifies. Compose direct Money mTLS, Kafka broker TLS,
+browser HTTPS and same-Pod UDS stay. Unit tests cover the signature checks.
+Live mesh re-observation is unrun.
+
 ## Named public Kubernetes cutover — 13 October 2026
 
 The owner's direct merge/push/cutover/cleanup instruction moves only the named

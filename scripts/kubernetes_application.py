@@ -87,11 +87,12 @@ def app_objects(value,image,stream,work,origin='https://127.0.0.1:18089'):
             if role=='ui':
                 volumes.append({'name':'browser','secret':{'secretName':'browser-pki','defaultMode':0o440}});mount.append({'name':'browser','mountPath':'/browser','readOnly':True})
                 args += ['-mode','demo','-origin',origin,'-listen',':8443','-tls-cert','/browser/browser.pem','-tls-key','/browser/browser.pem',
-                         '-kafka-stream',stream,'-control-transport','mtls','-startup-timeout','180s']
+                         '-kafka-stream',stream,'-control-transport','signed-http','-money','http://money:8443',
+                         '-trusted-control','http://trusted-control:9001','-unidentified-control','http://unidentified-control:9001','-startup-timeout','180s']
             else:
                 volumes.append({'name':'pki','secret':{'secretName':role+'-pki','defaultMode':0o440}});mount.append({'name':'pki','mountPath':'/kafka','readOnly':True})
                 args += ['-kafka-config','/kafka/client.json']
-                if role=='money':args += ['-listen',':8443','-startup-timeout','180s']
+                if role=='money':args += ['-listen',':8443','-startup-timeout','180s','-transport','signed-http']
                 else:
                     volumes += [{'name':'state','emptyDir':{'sizeLimit':'20Mi'}},{'name':'control','emptyDir':{'sizeLimit':'1Mi'}},{'name':'adapter-tmp','emptyDir':{'medium':'Memory','sizeLimit':'16Mi'}}]
                     mount += [{'name':'state','mountPath':'/state'},{'name':'control','mountPath':'/control'}]
@@ -99,14 +100,14 @@ def app_objects(value,image,stream,work,origin='https://127.0.0.1:18089'):
                            'args':['-role',role,'-run',value['run'],'-state','/state/private','-stream',stream],'env':env(value),
                            'securityContext':security(),'resources':resources(),
                            'volumeMounts':[{'name':'guard','mountPath':'/run/guard','readOnly':True},{'name':'state','mountPath':'/state'}]}]
-                    args += ['-operator-uid','10002','-reopen-control']
+                    args += ['-operator-uid','10002','-reopen-control','-transport','signed-http','-money','http://money:8443']
                     if role=='caller-trusted':args += ['-startup-timeout','180s']
                     else:
                         volumes.append({'name':'bundle','configMap':{'name':'spire-bundle'}});mount.append({'name':'bundle','mountPath':'/trust/spire','readOnly':True})
                         args += ['-public-bundle','/trust/spire/bundle.pem']
                     adapter_role=role.removeprefix('caller-')
                     containers.append({'name':'adapter','image':normal,'imagePullPolicy':'Never','command':['/control-adapter'],
-                         'args':['-role',adapter_role,'-run-guard','/run/guard/run.json','-run',value['run'],'-readiness-file','/tmp/readiness.json'],
+                         'args':['-role',adapter_role,'-run-guard','/run/guard/run.json','-run',value['run'],'-readiness-file','/tmp/readiness.json','-transport','signed-http'],
                          'env':env(value),'securityContext':security(10002),'resources':resources('64Mi'),
                          'readinessProbe':{'exec':{'command':['/kubernetes-ready']},'periodSeconds':2,'timeoutSeconds':1},
                          'volumeMounts':[{'name':'workload','mountPath':'/workload','readOnly':True},{'name':'guard','mountPath':'/run/guard','readOnly':True},

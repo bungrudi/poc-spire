@@ -27,7 +27,12 @@ func main() {
 	guardPath := flag.String("run-guard", "", "opt-in read-only run guard")
 	runID := flag.String("run", "", "expected run")
 	reopen := flag.Bool("reopen-control", false, "opt-in owned Kubernetes socket reopening")
+	transportMode := flag.String("transport", "mtls", "mtls or Kubernetes signed-http")
 	flag.Parse()
+	if *transportMode != "mtls" && *transportMode != "signed-http" {
+		fmt.Fprintln(os.Stderr, "invalid caller transport")
+		os.Exit(1)
+	}
 	if *startupTimeout <= 0 || *startupTimeout > 180*time.Second {
 		fmt.Fprintln(os.Stderr, "invalid startup bound")
 		os.Exit(1)
@@ -91,7 +96,11 @@ func main() {
 		info, err := os.Lstat(*path)
 		return err == nil && info.Mode()&os.ModeSocket != 0
 	})
-	if err = control.Serve(ctx, *path, uint32(*uid), caller.Trusted(source, *target), kafkaHandlers...); err != nil {
+	execute := caller.Trusted(source, *target)
+	if *transportMode == "signed-http" {
+		execute = caller.TrustedSigned(source, *target)
+	}
+	if err = control.Serve(ctx, *path, uint32(*uid), execute, kafkaHandlers...); err != nil {
 		source.Close()
 		fmt.Fprintln(os.Stderr, "trusted control unavailable")
 		os.Exit(1)

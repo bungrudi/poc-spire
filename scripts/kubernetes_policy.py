@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact normal application flows, independent inner TLS and loopback browser exception."""
+"""Exact normal application flows. Workload HTTP is plaintext signed payload inside outer ISTIO_MUTUAL; tcp port names keep Envoy from authorizing the JWS. Browser HTTPS stays a loopback exception."""
 import json
 
 import yaml
