@@ -33,14 +33,14 @@ Kafka and other still-encrypted application ports MUST remain opaque TCP through
 - **THEN** STRICT outer policy rejects before Money reads the payload, while separate source evidence proves the probe had a valid signing identity
 
 ### Requirement: MS-04 Observed layer and failure provenance
-Acceptance MUST observe outer peer, protocol and policy together with independent signature verification, correlated per flow. Mesh rejection, signature 401, authenticated 403 and JWS rejection MUST remain distinct. Sidecar presence or policy YAML alone SHALL NOT prove outer mTLS plus a signed payload. Ambiguous client errors MUST remain infrastructure or unknown.
+Acceptance MUST observe outer peer, protocol and policy together with independent signature verification, correlated per flow. Mesh rejection, signature 401, obsolete 403 and unauthorized 403 MUST remain distinct. Sidecar presence or policy YAML alone SHALL NOT prove outer mTLS plus a signed payload. Ambiguous client errors MUST remain infrastructure or unknown.
 
 #### Scenario: Both layers succeed
 - **WHEN** a positive flow is recorded as outer mesh mTLS plus an SVID signature
 - **THEN** correlated sanitized observations establish actual outer authentication and inner current identity and permission
 
 #### Scenario: One layer denies
-- **WHEN** outer authentication fails, a mesh-valid client lacks a valid signature, a valid signer is unauthorized or JWS is invalid
+- **WHEN** outer authentication fails, a mesh-valid client lacks a valid signature, the payload is tampered, the signature does not verify, the signature is obsolete, or a valid signer is unauthorized
 - **THEN** evidence attributes the observed layer and its supported outcome without substituting one failure for another
 
 #### Scenario: Layer cannot be observed

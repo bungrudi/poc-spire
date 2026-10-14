@@ -19,7 +19,7 @@ Eligible Money, trusted caller and UI workloads SHALL obtain SVIDs through updat
 
 #### Scenario: Mesh payload uses the renewed SVID
 - **WHEN** a mesh caller signs a new or retried payload after rotation
-- **THEN** the signature uses the renewed SVID and the caller does not resume an application TLS session
+- **THEN** the new signature uses the renewed SVID, a previous signature still inside its certificate lifetime and envelope remains verifiable, and the caller does not resume an application TLS session
 
 ## Traceability
 

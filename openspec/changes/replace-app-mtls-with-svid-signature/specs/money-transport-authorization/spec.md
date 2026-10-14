@@ -56,7 +56,7 @@ Every non-mesh workload client of Money's HTTP API MUST verify server ID `spiffe
 - **THEN** it accepts the response only when the signature signer is exactly `spiffe://poc.internal/money`
 
 ### Requirement: MT-04 Bounded input and current credential guards
-For POST `/transfer`, after authorization, Money MUST accept one bounded transfer object with no unknown fields or trailing values and a maximum 4096-byte body. It MUST check credential validity before authorization and again after body parsing. Requests crossing expiry MUST NOT mutate the ledger. Non-mesh validity is the TLS peer certificate. Mesh validity is the signing SVID. Kafka keeps its separate limits.
+For POST `/transfer`, after authorization, Money MUST accept one bounded transfer object with no unknown fields or trailing values and a maximum 4096-byte body. It MUST check credential validity before authorization and again after body parsing. Requests crossing expiry MUST NOT mutate the ledger. Non-mesh validity is the TLS peer certificate. Mesh validity is the signing SVID and its 30-second envelope. On mesh, 4096 applies to the decoded JWS payload. Kafka keeps its separate limits.
 
 #### Scenario: Current credential with valid bounded body
 - **WHEN** an authorized request supplies the fixed transfer before credential expiry
@@ -69,6 +69,10 @@ For POST `/transfer`, after authorization, Money MUST accept one bounded transfe
 #### Scenario: Credential expires while reading
 - **WHEN** a non-mesh certificate or mesh signing SVID was valid at receipt but expires before post-parse authorization completes
 - **THEN** Money returns 403 `credential_not_current` without ledger access
+
+#### Scenario: Mesh signature is tampered wrong or obsolete
+- **WHEN** a mesh transfer payload is altered, its signature does not verify, or the verified signature is outside certificate or envelope time
+- **THEN** altered bytes and a non-verifying signature return 401, and an obsolete verified signature returns 403 `credential_not_current`
 
 ## Traceability
 

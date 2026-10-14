@@ -7,8 +7,8 @@
 
 ## 2. Mesh HTTP signature path
 
-- [ ] 2.1 After approval, teach Kubernetes UI, trusted caller and Money to send plaintext HTTP inside the existing Istio tunnel and to sign and verify payloads per SP-01–SP-06. Do not remove Compose direct mTLS.
-- [ ] 2.2 Verify trusted transfer, UI read-only 403, missing-signature 401, forged-chain 401, route replay rejection and same-ID retry. Confirm Envoy does not authorize from the JWS.
+- [ ] 2.1 After approval, teach Kubernetes UI, trusted caller and Money to send plaintext HTTP inside the existing Istio tunnel and to sign and verify REST payloads per SP-01–SP-10. Do not remove Compose direct mTLS.
+- [ ] 2.2 Verify trusted transfer, UI read-only 403, missing-signature 401, forged-chain 401, route replay rejection and same-ID retry. Verify tampered payload bytes return 401, a non-verifying signature returns 401, and an expired, not-yet-valid or elapsed-envelope signature returns 403 `credential_not_current`. Verify a previous SVID still inside its certificate lifetime and envelope is not rejected as obsolete. Confirm Envoy does not authorize from the JWS.
 
 ## 3. Caller and UI outcomes
 

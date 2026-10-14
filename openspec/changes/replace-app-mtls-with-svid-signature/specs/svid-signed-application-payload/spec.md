@@ -8,7 +8,7 @@ payload. Istio/Envoy remains the only TLS layer on that path.
 ## ADDED Requirements
 
 ### Requirement: SP-01 SVID-signed application payload
-On the Kubernetes mesh profile, an identity-bearing application HTTP payload SHALL be one compact ES256 JWS signed by the sender's current X.509-SVID. Peers MUST NOT authenticate that payload with an application certificate.
+On the Kubernetes mesh profile, the body of an identity-bearing REST call SHALL be one compact ES256 JWS signed by the sender's current X.509-SVID. Peers MUST NOT authenticate that call with an application certificate.
 
 #### Scenario: Trusted caller signs a transfer
 - **WHEN** the trusted caller submits its fixed transfer on the mesh profile
@@ -77,11 +77,76 @@ Each new payload MUST be signed with the sender's current SVID. Retry of an unkn
 - **WHEN** the caller retries an unknown transfer result
 - **THEN** it re-signs the same logical request ID with its current SVID and Money deduplicates that ID
 
+### Requirement: SP-07 REST JWS envelope
+The mesh HTTP body SHALL be one compact ES256 JWS whose protected header is exactly `alg`, `typ` and `x5c`. `typ` SHALL be `application/vnd.poc-spire.http-payload.v1+jws`. The payload SHALL be one JSON object with exactly `method`, `path`, `request_id`, `issued_at`, `expires_at` and `body`. The compact form MUST be at most 32768 bytes and the decoded payload at most 4096 bytes.
+
+#### Scenario: Transfer object is embedded
+- **WHEN** the trusted caller signs POST `/transfer`
+- **THEN** `body` is the bounded transfer object, `request_id` equals that object's request ID, and the compact JWS is the HTTP body
+
+#### Scenario: Read has a null body
+- **WHEN** the UI signs GET `/balances` or an enabled Kafka outcome read
+- **THEN** `body` is null and the compact JWS is still the HTTP body
+
+#### Scenario: Wrong wire form
+- **WHEN** the body is detached, uses another `typ`, adds a protected header, or exceeds 32768 compact bytes or 4096 decoded payload bytes
+- **THEN** Money returns 400 and does not verify a substituted form or touch the ledger
+
+### Requirement: SP-08 Tampered REST payload
+The verifier MUST check the signature over the exact received protected-header and payload bytes. Changed bytes without a new valid signature MUST fail. Re-serialized JSON that is not byte-identical MUST NOT verify.
+
+#### Scenario: Payload bytes are altered
+- **WHEN** any embedded payload byte, including the transfer body, changes and the original signature remains
+- **THEN** Money returns 401 and does not read history or change balances
+
+#### Scenario: Protected header bytes are altered
+- **WHEN** a protected-header byte changes without a new valid signature
+- **THEN** verification fails even if the decoded JSON would look equivalent
+
+#### Scenario: Money response bytes are altered
+- **WHEN** a client receives a Money response whose signed bytes differ from the verified input
+- **THEN** the client rejects it and does not report a successful transfer
+
+### Requirement: SP-09 Wrong REST signature
+A signature segment that does not verify the intact signing input under the presented SVID public key MUST be authentication failure. That result MUST stay distinct from a signature that does verify for an unauthorized SPIFFE ID.
+
+#### Scenario: Signature bytes do not verify
+- **WHEN** the protected header and payload are unchanged and the signature segment does not verify
+- **THEN** Money returns 401 with no ledger effect
+
+#### Scenario: Verifying signature from another ID
+- **WHEN** another trusted-domain ID produces a transfer signature that does verify
+- **THEN** Money returns 403 and does not classify that result as a bad signature
+
+### Requirement: SP-10 Obsolete REST signature
+A signature that has already verified against a trusted chain MUST be rejected when the certificate is expired or not yet valid, or when the signed envelope has elapsed. Future skew is five seconds and there is no grace. A previous SVID still inside its certificate lifetime and unelapsed envelope MUST verify.
+
+#### Scenario: Certificate is expired or not yet valid
+- **WHEN** the signing certificate is outside its validity, beyond five seconds of future skew
+- **THEN** Money returns 403 `credential_not_current` and does not treat it as a bad signature
+
+#### Scenario: Envelope has elapsed
+- **WHEN** the signature verifies and the certificate is unexpired, but `expires_at` is not after now or is more than 30 seconds after `issued_at`
+- **THEN** Money returns 403 `credential_not_current` with no ledger effect
+
+#### Scenario: Clock boundary
+- **WHEN** `issued_at` is five seconds ahead with an otherwise current certificate, or six seconds ahead
+- **THEN** the first proceeds to exact-ID authorization and the second returns 403 `credential_not_current`
+
+#### Scenario: Previous SVID is still inside the window
+- **WHEN** a rotated-away SVID is still inside `notBefore` and `notAfter`, and its envelope has not elapsed
+- **THEN** Money verifies that signature and continues to exact-ID authorization
+
+#### Scenario: Bad signature wins over an old certificate
+- **WHEN** the signature segment does not verify and the certificate is also expired
+- **THEN** Money returns 401 rather than `credential_not_current`
+
 ## Traceability
 
 No signed-payload-profile evidence exists yet. Current proof remains the
 double-mTLS rows in
 [money transport](../../../../docs/spec-baseline.md#money-transport-and-authorization)
-and
-[mesh transport](../../../../docs/spec-baseline.md#mesh-transport-security).
-Those passes do not satisfy SP-01–SP-06.
+and the
+[Kubernetes/Istio profile](../../../../docs/spec-baseline.md#owned-kubernetesistio-profile--13-october-2026).
+Those passes do not satisfy SP-01–SP-10. Tamper, wrong-signature and
+obsolete-signature checks are unrun.

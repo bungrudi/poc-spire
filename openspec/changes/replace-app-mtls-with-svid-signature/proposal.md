@@ -17,8 +17,8 @@ plan.
 
 - **BREAKING for the Kubernetes workload HTTP path:** UI, callers and Money
   no longer present or require application client or server certificates.
-  Each identity-bearing request and response is a compact JWS signed by the
-  sender's current X.509-SVID private key.
+  Each identity-bearing REST request and response body is one compact JWS
+  signed by the sender's current X.509-SVID private key.
 - Istio sidecars keep outer mTLS (`STRICT`, `ISTIO_MUTUAL`, TLS 1.3). Envoy
   forwards plaintext application HTTP inside that tunnel. It does not
   terminate an inner TLS session, and mesh identity or forwarded headers
@@ -32,10 +32,20 @@ plan.
   ledger access. That rejection is an application result, not a client-TLS
   failure with no HTTP status.
 - Clients accept a Money response only when Money's own SVID signature
-  names exactly `spiffe://poc.internal/money`.
-- Compose paths that have no mesh keep today's direct Money mTLS. Kafka
-  keeps its existing JWS commands and conventional broker TLS. Browser
-  HTTPS, CSRF and same-Pod UDS controls stay.
+  names exactly `spiffe://poc.internal/money`, and only after the same
+  payload checks.
+- REST verification has three separate negative results. A payload whose
+  signed bytes were altered is 401. A signature that does not verify the
+  intact input is 401. A signature that verifies but is expired, not yet
+  valid, or past its 30-second envelope is 403 `credential_not_current`.
+  A previous SVID that is still inside its certificate lifetime and
+  envelope still verifies: Money has no TLS peer certificate and no
+  newest-key registry.
+- Compose paths that have no mesh keep today's direct Money mTLS. The
+  application-mTLS drop is the Kubernetes workload HTTP layer, where
+  Istio remains the TLS layer. Kafka keeps its existing JWS commands and
+  conventional broker TLS. Browser HTTPS, CSRF and same-Pod UDS controls
+  stay.
 
 ## Capabilities
 

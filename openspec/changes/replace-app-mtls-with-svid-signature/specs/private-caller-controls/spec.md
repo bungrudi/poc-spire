@@ -18,7 +18,7 @@ Non-mesh callers MUST keep direct mTLS transfers with their trusted SVID. Mesh c
 - **THEN** callers publish only their permitted menu cases, while existing POST `/attempt` behavior remains available
 
 ### Requirement: PC-04 Stable retry and distinct outcome provenance
-Sync results SHALL retain submitted IDs and distinct Money, TLS, signature, business and infrastructure outcomes. Mesh signature rejection MUST NOT be labeled as client-certificate TLS failure. Kafka controls SHALL return only bounded publication diagnostics. Lost or malformed responses MUST remain unknown until same-ID recovery. Only authenticated correlated Money receipts SHALL settle Kafka effects.
+Sync results SHALL retain submitted IDs and distinct Money, TLS, signature, freshness, business and infrastructure outcomes. Mesh signature rejection MUST NOT be labeled as client-certificate TLS failure. Kafka controls SHALL return only bounded publication diagnostics. Lost or malformed responses MUST remain unknown until same-ID recovery. Only authenticated correlated Money receipts SHALL settle Kafka effects.
 
 #### Scenario: Stable successful response
 - **WHEN** the caller receives a valid Money result for the submitted request ID
@@ -29,8 +29,12 @@ Sync results SHALL retain submitted IDs and distinct Money, TLS, signature, busi
 - **THEN** it reports `unknown_commit`, preserves the ID and supplies no invented Money success
 
 #### Scenario: Mesh signature rejection is distinct
-- **WHEN** Money returns 401 for a missing or invalid payload signature
+- **WHEN** Money returns 401 for a missing, tampered or non-verifying payload signature
 - **THEN** the caller records signature rejection and does not record a TLS handshake failure or a balance change
+
+#### Scenario: Obsolete mesh signature is distinct
+- **WHEN** Money returns 403 `credential_not_current` for an obsolete payload signature
+- **THEN** the caller records that freshness result and does not record a bad signature or a TLS handshake failure
 
 ### Requirement: PC-07 Exact-identity Kubernetes control adapters
 Each Kubernetes caller Pod SHALL have a separately attested control-only adapter. UI MUST verify the adapter by its SVID-signed response, and the adapter MUST authorize only an exact UI signature before forwarding to its own UID-checked UDS. No application mTLS, generic signing API, application-key lending or transfer identity is permitted. Remote credential expiry and unknown-response guards MUST preserve original attempt semantics.
