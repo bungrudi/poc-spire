@@ -2,6 +2,74 @@
 
 Date: 15 October 2026 (owner timezone Asia/Jakarta).
 
+## Local deployment corrections — later 15 October 2026 checkpoint
+
+The initial source-check/publication sections below predate AWS provisioning.
+The shared EKS SPIRE deployment based on
+`c7cb63c549628acfd0e36897c36859090a673df3` subsequently reached issuer/CSI
+readiness and recorded its five initial application Pods and five workload
+registrations. The platform adapter then exceeded its 1,800-second limit. No
+guard baseline/process/health or complete-bootstrap result existed when inspected.
+These observations do not establish deployment or functional/security acceptance.
+
+Two source defects were investigated and corrected locally:
+
+- The outer deployment's stale target receipt overwrote nested PSAT/CSI resource
+  records when applying telemetry. An isolated full-deployment regression
+  reproduced the loss of exactly three records before the fix. Reloading the
+  persisted receipt before the outer apply preserves all five cluster-resource
+  UIDs. The regression also proves guarded cleanup retains the complete inventory
+  and waits for both namespace removals before cluster-resource removal.
+- Each descriptor/read/probe repeated full remote target validation. A normal
+  observation cycle required 77 kubectl invocations (64 remote requests and 13
+  local configuration reads). Eight verified API reads with an already-issued
+  token in process memory averaged 0.7931 seconds, about 50.8 seconds for 64
+  equivalent sequential requests before CLI/exec overhead. Token caching alone
+  cannot establish the existing startup/freshness bounds at that measured latency.
+  Explicit lifecycle/stage/cycle scopes now reuse checked targets, validate local
+  configuration/kubeconfig/CA inputs on reuse, and retain fresh namespace checks
+  before mutations. Independent guard reads and state probes run concurrently;
+  Kubernetes writes remain serial. A healthy shared observation now needs one
+  full target validation, eight object reads and four state probes.
+
+Validation performed against the local correction:
+
+- `python3 -B -m unittest discover -s scripts -p 'test_*.py'`: 80 passed.
+- `go test ./...`, `go test -race ./...`, `go vet ./...`: passed; Go tests used
+  existing passing cache where reported.
+- Strict project-local OpenSpec validation and `git diff --check`: passed.
+
+New tests cover complete exact-UID inventory, scope cleanup/expiry, context
+propagation into workers, CLI/runtime cache sharing, local file drift, fresh
+mutation checks, concurrent observations, replacement rejection before probes,
+API unavailability, preserving earlier proved loss despite a later API/probe
+failure, and the unchanged five-second probe budget. Existing monotonic
+quarantine and destructive-versus-unavailable tests pass. The 10-second startup
+and 15-second health-freshness bounds remain unchanged; stale health is rejected.
+Initialized runs still cannot be silently retried.
+
+At 11:24 UTC, a read-only comparison found the three unrecorded current resource
+candidates had creation times within the deployment interval and matched all
+expected pinned-manifest fields. The PSAT binding names only the SPIRE server
+service account in the recorded owned namespace. This supports identification,
+not original-UID provenance. It does not authorize receipt reconstruction or
+label-based adoption/deletion. No reliable original creation receipt/audit
+evidence has been recovered. A one-off exact-current-UID cleanup exception needs
+its own concrete owner-reviewed recovery scope; normal removal still requires
+the original receipts.
+
+A bounded search inspected 128 local runtime files, selecting 14 ownership,
+deployment-log and evidence/export candidates including the prior workload
+archive. None contained the three missing UIDs. Terraform declares AWS resources
+and foundation bootstrap, not these component Kubernetes objects; its versioned
+state is not a recorded source of their API-assigned UIDs. Remote S3 state
+versions were not downloaded or inspected.
+
+This work did not publish source, edit cached sources or change live resources,
+authentication settings, credentials, security thresholds or the public demo.
+EKS timing, deployment/verify/export and integrated acceptance of the correction
+remain unrun and belong to the serialized coordinator recovery.
+
 ## Executed source checks
 
 - Python: poc-platform 19 tests; poc-observability-01 23 tests; poc-spire 64 tests — all passed (106 total).

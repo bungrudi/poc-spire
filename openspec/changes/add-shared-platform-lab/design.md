@@ -16,6 +16,40 @@ PoC adapters validate kube-system UID, API endpoint, CA fingerprint and a platfo
 
 Fresh SPIRE runs reset identity and fake ledger state. Export sanitized evidence before removal. Full EKS acceptance requires AWS access and runtime capacity; static validation cannot establish deployment acceptance.
 
+## Ownership receipt correction — 15 October 2026
+
+Nested SPIRE stages use separate target instances and persist the PSAT roles and
+CSI driver they create. Before the outer deployment applies telemetry, reload
+its target from that persisted receipt and repeat the existing explicit target
+checks. Otherwise the outer instance saves its older kubelet-only inventory over
+the nested stages' additions. This corrects implementation of the existing
+single-ownership and bounded-cleanup contract; it does not change resource scope,
+identity checks, guard timing, or the deployed run. An isolated regression must
+exercise the nested stages and prove all five exact cluster-resource UIDs remain
+available to guarded cleanup. Already-lost receipt entries require independent
+original-UID evidence; current labels alone do not authorize reconstruction.
+
+## Validation latency correction — 15 October 2026
+
+Retain full target validation at each lifecycle entry and deployment stage, and
+once at the beginning of every guard observation cycle. Within only that explicit
+scope, reuse the checked target. Before reuse, compare the local configuration,
+dedicated kubeconfig and referenced CA file against the checked inputs; refuse
+drift. No target identity cache survives a command or guard cycle. Before every
+write, retain fresh owned-namespace checks and the existing exact object
+UID/resourceVersion preconditions. Reload persisted inventory at stage boundaries.
+
+Run the guard's independent object reads concurrently, then validate all recorded
+namespace/Pod/owner/guard/bundle identities before concurrently probing the four
+original state incarnations. Propagate the checked scope explicitly into worker
+threads. Reads and state checks may overlap; Kubernetes mutations remain serial.
+Retain the 5-second probe, 10-second observer startup and 15-second verification
+freshness bounds, unavailable-versus-destructive distinction, monotonic invalidity
+and fresh-run requirements. The first monitor cycle performs lifecycle validation
+once, avoiding a duplicate full check before its startup timer can succeed.
+Tests must prove scope expiry, local drift rejection, fresh mutation guards,
+complete concurrent observations and unchanged negative/quarantine behavior.
+
 ## Migration Plan
 
 Add new entry points without invoking them against existing clusters. Validate rendering and negative safety cases, then deploy a disposable lab and run positive, negative, removal-isolation and recreation checks.

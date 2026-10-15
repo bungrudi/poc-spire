@@ -18,3 +18,7 @@
 ## 7. Strict EKS SPIRE connectivity
 - [ ] 7.1 Add namespace-owned infrastructure rules before startup, with kubelet egress bound to the verified selected node address.
 - [ ] 7.2 Validate policy scope and actual startup separately; record the standalone issuer policy-enforcement limitation.
+
+## 8. Ownership receipt correction
+- [x] 8.1 Preserve nested SPIRE/CSI cluster-resource UID records through outer telemetry apply; verify complete guarded-cleanup inventory with an isolated regression and record live recovery limits.
+- [x] 8.2 Bound checked-target reuse to lifecycle/stage/guard-cycle scopes; retain local drift and fresh mutation checks, parallelize independent guard reads/probes, and verify unchanged timing and quarantine contracts with isolated tests.

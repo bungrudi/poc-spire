@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Existing-cluster SPIRE adapter; reuse guarded application and identity implementations."""
 import argparse
+import base64
 import contextlib
+from contextvars import ContextVar, copy_context
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import http.client
 import ipaddress
@@ -23,6 +26,73 @@ from shared_target import Target, immutable, private_json, run
 
 ROOT=Path(__file__).resolve().parents[1]
 OWNER='poc-spire'
+# Runtime helpers import this module by name even when its CLI is __main__.
+if __name__=='__main__':sys.modules.setdefault('shared_cluster',sys.modules[__name__])
+_CHECKED_TARGET=ContextVar('spire_checked_target',default=None)
+
+
+def local_inputs(target):
+    """Fingerprint checked local inputs without invoking the AWS credential plugin."""
+    config=target.path.read_bytes()
+    if json.loads(config)!=target.config:
+        raise RuntimeError('shared configuration changed during checked operation')
+    kubeconfig=Path(target.base[2]);raw=kubeconfig.read_bytes()
+    value=yaml.safe_load(raw)
+    contexts=[c['context'] for c in value.get('contexts',[]) if c['name']==target.target['context']]
+    if len(contexts)!=1:raise RuntimeError('checked kubeconfig context changed')
+    clusters=[c['cluster'] for c in value.get('clusters',[]) if c['name']==contexts[0]['cluster']]
+    if len(clusters)!=1:raise RuntimeError('checked kubeconfig cluster changed')
+    files={target.path:config,kubeconfig:raw}
+    cluster=clusters[0]
+    if cluster.get('server')!=target.target['server'] or cluster.get('insecure-skip-tls-verify'):
+        raise RuntimeError('checked kubeconfig endpoint or TLS policy changed')
+    if 'certificate-authority-data' in cluster:
+        ca_bytes=base64.b64decode(cluster['certificate-authority-data'],validate=True)
+    else:
+        ca=Path(cluster['certificate-authority'])
+        if not ca.is_absolute():ca=kubeconfig.parent/ca
+        ca_bytes=ca.read_bytes();files[ca]=ca_bytes
+    if hashlib.sha256(ca_bytes).hexdigest()!=target.target['ca_sha256']:
+        raise RuntimeError('checked kubeconfig CA changed')
+    return {str(path):hashlib.sha256(body).hexdigest() for path,body in files.items()}
+
+
+@contextlib.contextmanager
+def checked_scope(target=None, *, checked=False):
+    """Reuse one validation only for this lifecycle, stage or observation cycle."""
+    target=target or Target(os.environ['POC_SPIRE_SHARED_CONFIG'],OWNER)
+    before=local_inputs(target)
+    if not checked:target.check()
+    if local_inputs(target)!=before:
+        raise RuntimeError('local target inputs changed during validation')
+    token=_CHECKED_TARGET.set((target,before))
+    try:yield target
+    finally:_CHECKED_TARGET.reset(token)
+
+
+def checked_target(config):
+    scope=_CHECKED_TARGET.get()
+    if scope is None:return Target(config,OWNER).check()
+    target,expected=scope
+    if Path(config).resolve()!=target.path or local_inputs(target)!=expected:
+        raise RuntimeError('local target inputs changed during checked operation')
+    return target
+
+
+def parallel_reads(function, items, *, deferred=False):
+    """Only independent reads/probes; propagate the operation scope to each worker."""
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures=[executor.submit(copy_context().run,function,item) for item in items]
+    # Keep the original validation order: a later unavailable read must not hide
+    # destructive loss already proved by an earlier independent observation.
+    return futures if deferred else (future.result() for future in futures)
+
+
+def check_owned_namespaces(target):
+    for name,uid in (target.receipt or {}).get('namespaces',{}).items():
+        current=target.get('namespace',name)
+        if not current or current['metadata']['uid']!=uid or current['metadata'].get('labels',{}).get('poc-platform/owner')!=OWNER:
+            raise RuntimeError('owned namespace was lost or changed before mutation')
 
 
 def validate(config):
@@ -41,7 +111,7 @@ def descriptor_path(target):return target.runtime/'descriptor.json'
 
 
 def shared_descriptor():
-    target=Target(os.environ['POC_SPIRE_SHARED_CONFIG'],OWNER).check()
+    target=checked_target(os.environ['POC_SPIRE_SHARED_CONFIG'])
     value=json.loads(descriptor_path(target).read_text())
     expected=hashlib.sha256(target.path.read_bytes()).hexdigest()
     if value.get('config_sha256')!=expected or value.get('deployment_mode')!='shared' or value.get('run')!=target.config['spire']['run_id']:
@@ -66,7 +136,7 @@ def normalize(objects, target):
 
 
 def shared_kube(value,*args,timeout=120,data=None):
-    target=Target(value['config'],OWNER).check()
+    target=checked_target(value['config'])
     args=list(args)
     if args and args[0]=='apply':
         i=args.index('-f');source=args[i+1]
@@ -84,6 +154,7 @@ def shared_kube(value,*args,timeout=120,data=None):
                 raise RuntimeError('replace target UID changed')
         if namespace not in (target.receipt or {}).get('namespaces',{}):
             raise RuntimeError('mutation outside owned namespace refused')
+        check_owned_namespaces(target)
     return target.kube(*args,data=data,timeout=timeout)
 
 
@@ -169,11 +240,15 @@ def deploy(target):
     if 'sha256:'+hashlib.sha256(path.read_bytes()).hexdigest()!=pin['sha256']:raise RuntimeError('CSI checksum mismatch')
     target.apply(base)
     import kubernetes_spire,kubernetes_policy,kubernetes_application,kubernetes_finish_bootstrap
-    kubernetes_spire.main()
-    kubernetes_policy.main()
+    for stage in (kubernetes_spire.main,kubernetes_policy.main):
+        with checked_scope(Target(target.path,OWNER)):stage()
+    # Nested stages save their cluster-resource UIDs through separate Targets.
+    # Reload before the outer apply saves its inventory again.
+    target.receipt=json.loads(target.receipt_path.read_text())
+    target.check()
     target.apply(telemetry_objects(target.config))
-    kubernetes_application.main()
-    kubernetes_finish_bootstrap.main()
+    for stage in (kubernetes_application.main,kubernetes_finish_bootstrap.main):
+        with checked_scope(Target(target.path,OWNER)):stage()
     target.receipt=json.loads(target.receipt_path.read_text())
     target.receipt['status']='ready';target.save()
 
@@ -257,7 +332,7 @@ def main():
             Path(args.output).parent.mkdir(parents=True,exist_ok=True)
             Path(args.output).write_text(yaml.safe_dump_all(objects,sort_keys=False))
         print(json.dumps({'policy_objects':len(objects),'identity_and_application_objects':'generated privately during deploy'}));return
-    with target.lock():
+    with target.lock(),checked_scope(target,checked=True):
         if args.action=='deploy':deploy(target)
         elif args.action=='verify':print(json.dumps(verify(target)))
         elif args.action=='export':

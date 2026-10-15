@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Owned setup-runner observation and monotonic quarantine; apps never receive API authority."""
 import argparse
+import contextlib
 import json
 import os
 import signal
@@ -90,8 +91,8 @@ def probe(value, role, pod, stream, running=False, expected_image=None):
             '-n', ns, 'exec', pod['metadata']['name'], '-c', container, '--', helper, '-verify-state',
             '-role', role, '-state', directory, '-run', value['run'], '-stream', stream]
     if value.get('deployment_mode') == 'shared':
-        from shared_target import Target
-        target = Target(value['config'], 'poc-spire').check()
+        from shared_cluster import checked_target
+        target = checked_target(value['config'])
         args = [*target.base, *args[5:]]
     if role == 'kafka' and running:
         args.append('-require-topic')
@@ -223,19 +224,28 @@ def invalidate(value, baseline, reason):
 
 def observe(value, baseline):
     ns, sns = 'poc-' + value['run'], 'spire-' + value['run']
+    read=get
+    shared=value.get('deployment_mode')=='shared'
+    if shared:
+        from shared_cluster import parallel_reads
+        queries=[(ns,'namespace',ns),(sns,'namespace',sns),(ns,'pods',None),(sns,'pod','spire-server')]
+        queries.extend((n,'configmap','run-guard') for n in baseline['guard_uids'])
+        queries.extend((n,'configmap','spire-bundle') for n in baseline['bundle_uids'])
+        snapshots=dict(zip(queries,parallel_reads(lambda q:get(value,*q),queries,deferred=True)))
+        read=lambda value,namespace,kind,name=None:snapshots[(namespace,kind,name)].result()
     for name, uid in ((ns, baseline['namespace_uid']), (sns, baseline['spire_namespace_uid'])):
-        namespace = get(value, name, 'namespace', name)
+        namespace = read(value, name, 'namespace', name)
         if not namespace or namespace['metadata']['uid'] != uid:
             return 'original_namespace_lost_or_replaced'
-    reason, pods = validate_pods(baseline, get(value, ns, 'pods')['items'])
+    reason, pods = validate_pods(baseline, read(value, ns, 'pods')['items'])
     if reason:
         return reason
-    server = get(value, sns, 'pod', 'spire-server')
+    server = read(value, sns, 'pod', 'spire-server')
     if not server or server['metadata']['uid'] != baseline['server_pod_uid']:
         return 'original_issuer_pod_lost_or_replaced'
     snapshot = None
     for namespace, uid in baseline['guard_uids'].items():
-        cm = get(value, namespace, 'configmap', 'run-guard')
+        cm = read(value, namespace, 'configmap', 'run-guard')
         if not cm or cm['metadata']['uid'] != uid:
             return 'original_guard_lost_or_replaced'
         try:
@@ -249,10 +259,10 @@ def observe(value, baseline):
         if namespace == ns:
             snapshot = current
     for namespace, uid in baseline['bundle_uids'].items():
-        bundle = get(value, namespace, 'configmap', 'spire-bundle')
+        bundle = read(value, namespace, 'configmap', 'spire-bundle')
         if not bundle or bundle['metadata']['uid'] != uid:
             return 'original_public_trust_projection_lost_or_replaced'
-    for role in baseline['states']:
+    def check_state(role):
         p = server if role == 'spire-server' else pods[role]
         actual_image = requesting_image(role, p)
         expected_image = baseline['image_ids'][role]
@@ -260,27 +270,43 @@ def observe(value, baseline):
             return 'original_' + role + '_requesting_image_changed'
         result = probe(value, role, p, baseline['stream'], snapshot['phase'] == 'running', expected_image)
         if result is None:
-            continue
+            return None
         if not result['valid'] or result['incarnation'] != baseline['states'][role]:
             return 'initialized_' + role + '_state_lost_corrupt_or_replaced'
+        return None
+    results=parallel_reads(check_state,baseline['states']) if shared else map(check_state,baseline['states'])
+    for reason in results:
+        if reason:return reason
     return None
 
 
-def monitor(value):
-    work = Path(value['work']); baseline = json.loads((work / 'guard-ownership.json').read_text())
-    if baseline['run'] != value['run']:
-        raise RuntimeError('foreign observer baseline')
+def observation_scope(value):
+    if (value and value.get('deployment_mode')=='shared') or (value is None and os.environ.get('POC_SPIRE_SHARED_CONFIG')):
+        from shared_cluster import checked_scope
+        return checked_scope()
+    return contextlib.nullcontext()
+
+
+def monitor(value, expected_run=None):
+    baseline=None
     while True:
-        if runtime.descriptor() != value:
-            return
-        try:
-            marker = work / 'run-invalid.json'
-            reason = json.loads(marker.read_text())['reason'] if marker.exists() else observe(value, baseline)
-            if reason:
-                invalidate(value, baseline, reason)
-            runtime.private_json(work / 'guard-health.json', {'run': value['run'], 'status': 'invalid' if reason else 'observing', 'at': time.time()})
-        except (RuntimeError, OSError, ValueError, KeyError, subprocess.TimeoutExpired):
-            runtime.private_json(work / 'guard-health.json', {'run': value['run'], 'status': 'quarantine-pending' if (work / 'run-invalid.json').exists() else 'observation-unavailable', 'at': time.time()})
+        with observation_scope(value):
+            current=runtime.descriptor()
+            if value is None:
+                value=current
+                if value['run']!=expected_run:raise RuntimeError('refuse foreign observer run')
+            elif current!=value:return
+            if baseline is None:
+                work=Path(value['work']);baseline=json.loads((work/'guard-ownership.json').read_text())
+                if baseline['run']!=value['run']:raise RuntimeError('foreign observer baseline')
+            try:
+                marker = work / 'run-invalid.json'
+                reason = json.loads(marker.read_text())['reason'] if marker.exists() else observe(value, baseline)
+                if reason:
+                    invalidate(value, baseline, reason)
+                runtime.private_json(work / 'guard-health.json', {'run': value['run'], 'status': 'invalid' if reason else 'observing', 'at': time.time()})
+            except (RuntimeError, OSError, ValueError, KeyError, subprocess.TimeoutExpired):
+                runtime.private_json(work / 'guard-health.json', {'run': value['run'], 'status': 'quarantine-pending' if (work / 'run-invalid.json').exists() else 'observation-unavailable', 'at': time.time()})
         time.sleep(2)
 
 
@@ -288,7 +314,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=('start', 'monitor', 'stop'))
     parser.add_argument('--run', required=True)
-    args = parser.parse_args(); value = runtime.descriptor()
-    if value['run'] != args.run:
-        raise RuntimeError('refuse foreign observer run')
-    {'start': initial, 'monitor': monitor, 'stop': stop}[args.action](value)
+    args = parser.parse_args()
+    if args.action=='monitor' and os.environ.get('POC_SPIRE_SHARED_CONFIG'):
+        monitor(None,expected_run=args.run)
+    else:
+        value=runtime.descriptor()
+        if value['run']!=args.run:raise RuntimeError('refuse foreign observer run')
+        {'start': initial, 'monitor': monitor, 'stop': stop}[args.action](value)
