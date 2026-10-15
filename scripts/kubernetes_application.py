@@ -137,6 +137,10 @@ def main():
     pki.generate(pkidir,stream,controller_local=True)
     adminpki=pkidir/'admin-pki';(adminpki/'client.pem').write_text((adminpki/'client.key').read_text()+(adminpki/'client.pem').read_text())
     origin='https://127.0.0.1:18089'
+    if value.get('deployment_mode') == 'shared':
+        from shared_target import Target
+        target = Target(value['config'], 'poc-spire')
+        origin = 'https://127.0.0.1:' + str(target.config['spire'].get('ui_port', 18443))
     if (work/'public-profile.json').exists():
         from kubernetes_public import provisioned_profile
         profile=provisioned_profile()

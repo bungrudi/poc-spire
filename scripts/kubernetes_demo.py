@@ -145,6 +145,9 @@ def preflight():
 
 
 def descriptor():
+    if os.environ.get('POC_SPIRE_SHARED_CONFIG'):
+        from shared_cluster import shared_descriptor
+        return shared_descriptor()
     if ACTIVE.is_symlink() or not ACTIVE.is_file():
         raise RuntimeError('owned descriptor unavailable')
     value = json.loads(ACTIVE.read_text())
@@ -161,6 +164,9 @@ def descriptor():
 
 
 def kube(value, *args, timeout=120, data=None):
+    if value.get('deployment_mode') == 'shared':
+        from shared_cluster import shared_kube
+        return shared_kube(value, *args, timeout=timeout, data=data)
     return execute([TOOLS / 'kubectl', '--kubeconfig', Path(value['work']) / 'kubeconfig',
                     '--context', 'kind-' + value['cluster'], *args], timeout=timeout, data=data)
 

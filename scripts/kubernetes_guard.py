@@ -89,6 +89,10 @@ def probe(value, role, pod, stream, running=False, expected_image=None):
     args = [runtime.TOOLS / 'kubectl', '--kubeconfig', Path(value['work']) / 'kubeconfig', '--context', 'kind-' + value['cluster'],
             '-n', ns, 'exec', pod['metadata']['name'], '-c', container, '--', helper, '-verify-state',
             '-role', role, '-state', directory, '-run', value['run'], '-stream', stream]
+    if value.get('deployment_mode') == 'shared':
+        from shared_target import Target
+        target = Target(value['config'], 'poc-spire').check()
+        args = [*target.base, *args[5:]]
     if role == 'kafka' and running:
         args.append('-require-topic')
     try:

@@ -136,3 +136,10 @@ and excerpts from the Go sender and receiver. Its portable source is in
 Current public deployment: [Kubernetes five-scenario runbook](docs/kubernetes-public.md)
 and [sanitized public evidence](docs/evidence/kubernetes-public-current.json).
 The earlier two-button Compose public/preview runtimes are retired.
+
+## Shared AWS lab
+
+A new explicit existing-cluster profile is available through `scripts/shared_cluster.py`;
+see [the shared-cluster contract and operating guide](docs/shared-cluster.md).
+Its source is implemented; EKS runtime acceptance is pending. Existing standalone/public
+workflows remain available.
