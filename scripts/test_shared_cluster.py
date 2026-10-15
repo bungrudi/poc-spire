@@ -41,6 +41,17 @@ class SharedSPIRETests(unittest.TestCase):
         other=copy.deepcopy(node);other['status']['conditions'][0]['status']='False'
         with self.assertRaises(RuntimeError):shared_cluster.selected_spire_node([other],'test-lab')
 
+    def test_infrastructure_connectivity_is_owned_and_kubelet_is_single_node(self):
+        node={'status':{'addresses':[{'type':'InternalIP','address':'10.80.0.42'}]}}
+        policies=shared_cluster.infrastructure_policies(self.config(),node)
+        self.assertTrue(all(p['metadata']['namespace']=='spire-abcdef123456' for p in policies))
+        self.assertEqual({p['spec']['podSelector']['matchLabels']['poc-role'] for p in policies},{'spire-server','spire-agent'})
+        rule=policies[1]['spec']['egress'][-1]
+        self.assertEqual(rule,{'to':[{'ipBlock':{'cidr':'10.80.0.42/32'}}],'ports':[{'protocol':'TCP','port':10250}]})
+        self.assertEqual(policies[1]['spec']['ingress'],[])
+        for addresses in ([],[{'type':'InternalIP','address':'203.0.113.1'}],[{'type':'InternalIP','address':'::1'}],node['status']['addresses']*2):
+            with self.assertRaises(RuntimeError):shared_cluster.infrastructure_policies(self.config(),{'status':{'addresses':addresses}})
+
     def test_telemetry_does_not_open_application_ports(self):
         objects=shared_cluster.telemetry_objects(self.config())
         ingress=next(o for o in objects if o['metadata']['name']=='observability-scrape')

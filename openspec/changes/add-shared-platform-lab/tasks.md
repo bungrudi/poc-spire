@@ -14,3 +14,7 @@
 ## 6. Free Plan compatibility correction
 - [ ] 6.1 Adapt owned configuration to two eligible 8-GiB Spot workers, preserve the SPIRE single selected node contract and use scoped EKS Pod Identity.
 - [ ] 6.2 Validate ownership, target, compute and credential-boundary checks; record real AWS results separately from integrated runtime acceptance.
+
+## 7. Strict EKS SPIRE connectivity
+- [ ] 7.1 Add namespace-owned infrastructure rules before startup, with kubelet egress bound to the verified selected node address.
+- [ ] 7.2 Validate policy scope and actual startup separately; record the standalone issuer policy-enforcement limitation.

@@ -60,3 +60,14 @@ SPIRE SHALL require exactly one Ready amd64 node labelled with the expected lab 
 #### Scenario: Missing or ambiguous SPIRE worker
 - **WHEN** zero or multiple SPIRE-labelled nodes exist, or the selected node is not Ready
 - **THEN** SPIRE refuses deployment before creating its namespaces
+
+### Requirement: Owned SPIRE infrastructure connectivity
+The shared adapter SHALL install its infrastructure connectivity policies in its owned SPIRE namespace before issuer or agent startup. Agent kubelet egress SHALL be restricted to the selected node InternalIP on TCP 10250. Application ingress rules and kubelet TLS verification SHALL remain unchanged.
+
+#### Scenario: Strict networking startup
+- **WHEN** SPIRE is deployed to the shared EKS cluster
+- **THEN** only its server and agent selectors receive DNS/API connectivity, the agent can reach the server on TCP 8081, and kubelet access is scoped to the selected node
+
+#### Scenario: Unverified node address
+- **WHEN** the selected node lacks a single valid private IPv4 InternalIP
+- **THEN** deployment refuses to broaden kubelet access

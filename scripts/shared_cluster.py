@@ -4,6 +4,7 @@ import argparse
 import contextlib
 import hashlib
 import http.client
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -86,10 +87,31 @@ def shared_kube(value,*args,timeout=120,data=None):
     return target.kube(*args,data=data,timeout=timeout)
 
 
+
+def infrastructure_policies(config, node):
+    addresses=[a['address'] for a in node.get('status',{}).get('addresses',[]) if a['type']=='InternalIP']
+    if len(addresses)!=1:raise RuntimeError('selected SPIRE node requires exactly one InternalIP')
+    try:address=ipaddress.IPv4Address(addresses[0])
+    except ipaddress.AddressValueError:raise RuntimeError('selected SPIRE node requires a private IPv4 InternalIP') from None
+    if address not in ipaddress.IPv4Network('10.80.0.0/16'):raise RuntimeError('selected SPIRE node is outside the lab VPC')
+    ns='spire-'+config['spire']['run_id']
+    dns={'to':[{'namespaceSelector':{'matchLabels':{'kubernetes.io/metadata.name':'kube-system'}},'podSelector':{'matchLabels':{'k8s-app':'kube-dns'}}}],
+         'ports':[{'protocol':'UDP','port':53},{'protocol':'TCP','port':53}]}
+    api={'ports':[{'protocol':'TCP','port':443}]}
+    def policy(name,role,ingress,egress):
+        return {'apiVersion':'networking.k8s.io/v1','kind':'NetworkPolicy','metadata':{'name':name,'namespace':ns},
+                'spec':{'podSelector':{'matchLabels':{'poc-role':role}},'policyTypes':['Ingress','Egress'],'ingress':ingress,'egress':egress}}
+    return [policy('shared-server-connectivity','spire-server',
+                   [{'from':[{'podSelector':{'matchLabels':{'poc-role':'spire-agent'}}}], 'ports':[{'protocol':'TCP','port':8081}]}],[dns,api]),
+            policy('shared-agent-connectivity','spire-agent',[],[dns,api,
+                   {'to':[{'podSelector':{'matchLabels':{'poc-role':'spire-server'}}}], 'ports':[{'protocol':'TCP','port':8081}]},
+                   {'to':[{'ipBlock':{'cidr':str(address)+'/32'}}], 'ports':[{'protocol':'TCP','port':10250}]}])]
+
+
 def base_objects(target,node):
     value=target.config;run_id=value['spire']['run_id'];ns='spire-'+run_id
     name=value['lab_id']+'-spire-kubelet'
-    return [
+    return [*infrastructure_policies(value,target.get('node',node)),
         {'apiVersion':'v1','kind':'ServiceAccount','metadata':{'name':'spire-agent','namespace':ns},'automountServiceAccountToken':False},
         {'apiVersion':'rbac.authorization.k8s.io/v1','kind':'ClusterRole','metadata':{'name':name},
          'rules':[{'apiGroups':[''],'resources':['nodes/pods'],'resourceNames':[node],'verbs':['get']}]},
@@ -131,6 +153,7 @@ def deploy(target):
     for kind,name in [('CSIDriver','csi.spiffe.io'),('ClusterRole',target.config['lab_id']+'-psat'),('ClusterRoleBinding',target.config['lab_id']+'-psat'),
                       ('ClusterRole',target.config['lab_id']+'-spire-kubelet'),('ClusterRoleBinding',target.config['lab_id']+'-spire-kubelet')]:
         if target.get(kind,name):raise RuntimeError('foreign SPIRE cluster resource collision: '+kind+'/'+name)
+    base=base_objects(target,node)
     target.namespaces(['spire-'+run_id,'poc-'+run_id]);work.mkdir(mode=0o700)
     target.kube('label','namespace','poc-'+run_id,'istio-injection=enabled','--overwrite')
     value={'deployment_mode':'shared','run':run_id,'work':str(work),'cluster':target.config['lab_id'],'node':node,
@@ -144,7 +167,7 @@ def deploy(target):
     path=cache/'spiffe-csi-example.yaml'
     if not path.exists():path.write_bytes(urllib.request.urlopen(pin['url'],timeout=30).read())
     if 'sha256:'+hashlib.sha256(path.read_bytes()).hexdigest()!=pin['sha256']:raise RuntimeError('CSI checksum mismatch')
-    target.apply(base_objects(target,node))
+    target.apply(base)
     import kubernetes_spire,kubernetes_policy,kubernetes_application,kubernetes_finish_bootstrap
     kubernetes_spire.main()
     kubernetes_policy.main()
