@@ -19,7 +19,7 @@ import (
 
 func main() {
 	path := flag.String("control", "/control/api.sock", "private trigger socket")
-	target := flag.String("money", "https://money:8443", "fixed private money target")
+	target := flag.String("money", "http://money:8443", "fixed private money target")
 	uid := flag.Uint("operator-uid", 10002, "private control peer UID (1000 local UI or 10002 baseline)")
 	kafkaConfig := flag.String("kafka-config", "", "opt-in isolated Kafka configuration")
 	startupTimeout := flag.Duration("startup-timeout", 15*time.Second, "bounded identity startup wait")
@@ -27,12 +27,7 @@ func main() {
 	guardPath := flag.String("run-guard", "", "opt-in read-only run guard")
 	runID := flag.String("run", "", "expected run")
 	reopen := flag.Bool("reopen-control", false, "opt-in owned Kubernetes socket reopening")
-	transportMode := flag.String("transport", "mtls", "mtls or Kubernetes signed-http")
 	flag.Parse()
-	if *transportMode != "mtls" && *transportMode != "signed-http" {
-		fmt.Fprintln(os.Stderr, "invalid caller transport")
-		os.Exit(1)
-	}
 	if *startupTimeout <= 0 || *startupTimeout > 180*time.Second {
 		fmt.Fprintln(os.Stderr, "invalid startup bound")
 		os.Exit(1)
@@ -97,9 +92,6 @@ func main() {
 		return err == nil && info.Mode()&os.ModeSocket != 0
 	})
 	execute := caller.Trusted(source, *target)
-	if *transportMode == "signed-http" {
-		execute = caller.TrustedSigned(source, *target)
-	}
 	if err = control.Serve(ctx, *path, uint32(*uid), execute, kafkaHandlers...); err != nil {
 		source.Close()
 		fmt.Fprintln(os.Stderr, "trusted control unavailable")

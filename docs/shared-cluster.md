@@ -47,3 +47,12 @@ unrun until tested in the disposable shared environment.
 
 The shared AWS lab is restricted to account `581695527661` and Sydney
 (`ap-southeast-2`). The former Jakarta lab target is rejected.
+# SPIRE mesh prerequisite — 18 October 2026
+
+The platform mesh must use trust domain `poc.internal` and the pinned Istio
+SPIRE SDS integration. The adapter reads the mesh configuration and refuses a
+different trust domain. It mounts the SPIRE CSI socket into each demo proxy and
+sets `WORKLOAD_IDENTITY_SOCKET_FILE=api.sock`; unavailable SDS fails startup.
+It never changes the shared Istio control plane. Proxy grants are separate from
+the Go process signing grants. A platform migration and live verification are
+outside this source change.

@@ -122,9 +122,9 @@ def main():
             raise RuntimeError('UI restart/session renewal changed stable request ID')
         report['tests'].append({'case': 'UI-restart-new-session-same-ID-no-duplicate', 'passed': True})
         unidentified = attempt('unidentified', uuid.uuid4().hex)['caller_evidence']
-        if unidentified['outcome'] != 'tls_rejected' or unidentified['identity_eligibility'] != 'no_matching_identity' or 'money_http_status' in unidentified or not unidentified['server_verified'] or balances() != after:
-            raise RuntimeError('Unidentified path did not prove no-SVID/TLS rejection without mutation')
-        report['tests'].append({'case': 'real-unidentified-no-SVID-TLS-rejection', 'passed': True})
+        if unidentified['outcome'] != 'signature_rejected' or unidentified['identity_eligibility'] != 'no_matching_identity' or unidentified.get('money_http_status') != 401 or not unidentified['server_verified'] or balances() != after:
+            raise RuntimeError('Unidentified path did not prove no-SVID signature rejection without mutation')
+        report['tests'].append({'case': 'real-unidentified-no-SVID-signature-rejection', 'passed': True})
         blocked = run(stack.compose+['exec', '-T', 'untrusted-caller', '/control-client', '-socket', '/trusted-control/api.sock', '-id', 'isolation-test'], env=stack.env, check=False)
         if blocked.returncode == 0 or json.loads(blocked.stdout).get('outcome') != 'control_unreachable':
             raise RuntimeError('Unidentified caller reached trusted control volume')

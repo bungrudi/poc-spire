@@ -27,12 +27,7 @@ func main() {
 	readyPath := flag.String("readiness-file", "", "opt-in private readiness marker")
 	guardPath := flag.String("run-guard", "", "opt-in read-only run guard")
 	runID := flag.String("run", "", "expected Kubernetes run")
-	transportMode := flag.String("transport", "mtls", "mtls or Kubernetes signed-http")
 	flag.Parse()
-	if *transportMode != "mtls" && *transportMode != "signed-http" {
-		fmt.Fprintln(os.Stderr, "invalid money transport")
-		os.Exit(1)
-	}
 	if *startupTimeout <= 0 || *startupTimeout > 180*time.Second {
 		fmt.Fprintln(os.Stderr, "invalid startup bound")
 		os.Exit(1)
@@ -87,25 +82,12 @@ func main() {
 		metadata, enabled := book.KafkaMetadata()
 		return !enabled || metadata.ConsumerReady
 	})
-	var server interface {
-		Shutdown(context.Context) error
-		ServeTLS(net.Listener, string, string) error
-		Serve(net.Listener) error
-	}
-	if *transportMode == "signed-http" {
-		server = money.SignedServer(source, book, os.Stdout)
-	} else {
-		server = money.Server(source, book, os.Stdout)
-	}
+	server := money.Server(source, book, os.Stdout)
 	go func() {
 		<-ctx.Done()
 		shutdown, end := context.WithTimeout(context.Background(), 3*time.Second)
 		defer end()
 		server.Shutdown(shutdown)
 	}()
-	if *transportMode == "signed-http" {
-		server.Serve(listener)
-		return
-	}
-	server.ServeTLS(listener, "", "")
+	server.Serve(listener)
 }

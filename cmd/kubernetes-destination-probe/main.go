@@ -3,14 +3,12 @@ package main
 
 import (
 	"context"
-	"crypto/x509"
 	"encoding/json"
 	"flag"
 	"net"
 	"net/http"
 	"os"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
@@ -19,10 +17,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"poc-spire/internal/identity"
+	"poc-spire/internal/signaturetest"
 )
 
 func main() {
-	target := flag.String("target", "https://money:8443", "owned test destination")
+	target := flag.String("target", "http://money:8443", "owned test destination")
 	bundlePath := flag.String("bundle", "/control/probe-bundle.pem", "authentic public trust")
 	negative := flag.Bool("expect-unreachable", false, "require failed destination verification despite local TCP acceptance")
 	flag.Parse()
@@ -64,33 +63,17 @@ func main() {
 	} else {
 		result["local_tcp_connectivity_only"] = false
 	}
-	config := identity.NoCertificateTLS(bundle, identity.Money)
-	var verified atomic.Bool
-	verify := config.VerifyPeerCertificate
-	config.VerifyPeerCertificate = func(raw [][]byte, chains [][]*x509.Certificate) error {
-		err := verify(raw, chains)
-		if err == nil {
-			verified.Store(true)
-		}
-		return err
-	}
-	client, transport := identity.HTTPClient(config)
-	defer transport.CloseIdleConnections()
-	response, err := client.Do(req)
-	result["destination_verified"] = verified.Load()
-	if response != nil {
-		result["money_http_status"] = response.StatusCode
-		response.Body.Close()
-		return
-	}
+	verified, status, err := signaturetest.Exchange(ctx, nil, bundle, identity.Money, *target, "GET", "/balances", "unsigned", nil, time.Now())
+	result["destination_verified"] = verified != nil && err == nil
+	result["money_http_status"] = status
 	if *negative {
-		ok = result["local_tcp_connectivity_only"] == true && result["destination_verified"] == false
+		ok = result["local_tcp_connectivity_only"] == true && err != nil
 		result["outcome"] = "destination_not_verified"
 		return
 	}
-	ok = result["destination_verified"] == true && err != nil && strings.Contains(err.Error(), "remote error: tls: certificate required")
+	ok = err == nil && status == 401
 	if ok {
-		result["outcome"] = "verified_money_no_certificate_rejected"
+		result["outcome"] = "verified_money_signature_rejected"
 	} else {
 		result["outcome"] = "infrastructure_unknown"
 	}

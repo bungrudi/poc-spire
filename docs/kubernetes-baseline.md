@@ -1,14 +1,22 @@
 # Kubernetes/Istio SPIRE baseline
 
+Current source, 18 October 2026: apps use signed HTTP only. Envoy obtains
+separate `spiffe://poc.internal/ns/<namespace>/sa/<service-account>` SVIDs from
+SPIRE SDS through CSI. The mesh trust domain and policy principals are
+`poc.internal`. Bootstrap registers observed proxy containers before waiting for
+readiness, including the native-sidecar Kafka admin Job. A custom `api.sock`
+SDS socket makes missing SPIRE fail closed. Fresh issuer/rotation acceptance
+remains unrun; older evidence below is not evidence for this source change.
+
 Public supersession, 13 October 2026: the named domain now serves the
 [main-local public Kubernetes profile](kubernetes-public.md). This file retains
 the earlier private-baseline checkpoint and its separately scoped operations.
 
 The approved isolated profile runs all demo services, SPIRE/CSI and Kafka inside
-one owned kind cluster. Ordinary Istio sidecars use the default Istiod CA for
+one owned kind cluster. The earlier checkpoint used the default Istiod CA for
 outer TLS. As of the 14 October 2026 signed-payload approval, Kubernetes
 workload HTTP is plaintext inside that tunnel and carries an X.509-SVID JWS;
-Compose keeps direct Money mTLS. Kafka retains conventional TLS/hostname/DN ACLs. Callers share UID 1000
+Compose now also uses signed HTTP. Kafka retains conventional TLS/hostname/DN ACLs. Callers share UID 1000
 in separate Pods; each UID 10002 adapter has a control-only SVID and its own local
 UDS. Pod mesh identity is shared by caller/adapter and grants no transfer identity.
 

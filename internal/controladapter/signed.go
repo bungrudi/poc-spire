@@ -3,13 +3,11 @@ package controladapter
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"io"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"poc-spire/internal/httpjws"
 	"poc-spire/internal/identity"
 	"poc-spire/internal/kafkacmd"
@@ -36,7 +34,7 @@ func (b *bodyCapture) Write(p []byte) (int, error) {
 	return b.body.Write(p)
 }
 
-func writeSigned(w http.ResponseWriter, r *http.Request, source *workloadapi.X509Source, status int, body []byte, requestID string) {
+func writeSigned(w http.ResponseWriter, r *http.Request, source identity.Material, status int, body []byte, requestID string) {
 	if !kafkacmd.RequestID.MatchString(requestID) {
 		requestID = "unsigned"
 	}
@@ -59,7 +57,7 @@ func writeSigned(w http.ResponseWriter, r *http.Request, source *workloadapi.X50
 	}
 }
 
-func SignedHandler(source *workloadapi.X509Source, cfg Config) http.Handler {
+func SignedHandler(source identity.Material, cfg Config) http.Handler {
 	if cfg.Now == nil {
 		cfg.Now = time.Now
 	}
@@ -77,6 +75,9 @@ func SignedHandler(source *workloadapi.X509Source, cfg Config) http.Handler {
 		verified, fail := httpjws.Verify(string(raw), source, cfg.Now())
 		if fail != nil {
 			requestID := "unsigned"
+			if verified != nil {
+				requestID = verified.RequestID
+			}
 			writeSigned(w, r, source, fail.Status, []byte(`{"error":"`+fail.Reason+`"}`), requestID)
 			return
 		}
@@ -108,7 +109,7 @@ func SignedHandler(source *workloadapi.X509Source, cfg Config) http.Handler {
 	})
 }
 
-func SignedServer(source *workloadapi.X509Source, cfg Config, audit io.Writer) *http.Server {
+func Server(source identity.Material, cfg Config, audit io.Writer) *http.Server {
 	if audit == nil {
 		audit = io.Discard
 	}
@@ -116,8 +117,8 @@ func SignedServer(source *workloadapi.X509Source, cfg Config, audit io.Writer) *
 		cfg.Now = time.Now
 	}
 	server := &http.Server{Handler: observe(SignedHandler(source, cfg), cfg.Role, audit),
-		TLSNextProto: map[string]func(*http.Server, *tls.Conn, http.Handler){}, ReadHeaderTimeout: time.Second,
-		ReadTimeout: 2 * time.Second, WriteTimeout: 12 * time.Second, MaxHeaderBytes: 8192,
+		ReadHeaderTimeout: time.Second,
+		ReadTimeout:       2 * time.Second, WriteTimeout: 12 * time.Second, MaxHeaderBytes: 8192,
 		ErrorLog: log.New(audit, "control_http: ", 0)}
 	server.SetKeepAlivesEnabled(false)
 	return server

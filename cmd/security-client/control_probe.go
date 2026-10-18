@@ -2,21 +2,17 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"errors"
-	"io"
-	"net/http"
 	"os"
-	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
+	"net/url"
 	"poc-spire/internal/identity"
+	"poc-spire/internal/signaturetest"
 )
 
 type controlMaterial interface {
@@ -56,7 +52,7 @@ func fixedControlCase(name, role string) (controlCase, error) {
 	if destination == "unidentified" {
 		host = "unidentified-control"
 	}
-	c.target = "https://" + host + ":9001/attempt/kafka/readiness"
+	c.target = "http://" + host + ":9001/attempt/kafka/readiness"
 	if name == "wrong-id" {
 		c.caller = spiffeid.RequireFromString("spiffe://poc.internal/test/control-client")
 	}
@@ -65,58 +61,41 @@ func fixedControlCase(name, role string) (controlCase, error) {
 
 func probeControl(ctx context.Context, c controlCase, source controlMaterial, public x509bundle.Source) (controlReport, error) {
 	result := controlReport{Case: c.name, Role: c.role, ExpectedServer: c.server.String(), Outcome: "infrastructure_unknown"}
-	var config *tls.Config
-	if c.name == "no-cert" {
-		if public == nil {
-			return result, errors.New("public trust unavailable")
-		}
-		config = identity.NoCertificateTLS(public, c.server)
-	} else {
+	var svid *x509svid.SVID
+	bundle := public
+	if c.name != "no-cert" {
 		if source == nil {
 			return result, errors.New("own fixture source unavailable")
 		}
-		svid, err := source.GetX509SVID()
+		var err error
+		svid, err = source.GetX509SVID()
 		if err != nil || svid == nil || svid.ID != c.caller || !identity.Current(source) {
 			return result, errors.New("own fixture identity unavailable")
 		}
 		result.Caller = svid.ID.String()
-		config = identity.ClientTLS(source, source, c.server)
+		bundle = source
 	}
-	var verified, mismatch atomic.Bool
-	verify := config.VerifyPeerCertificate
-	config.VerifyPeerCertificate = func(raw [][]byte, chains [][]*x509.Certificate) error {
-		err := verify(raw, chains) // The existing SDK verification/authorization always runs unchanged.
-		if err == nil {
-			verified.Store(true)
-		} else if strings.Contains(err.Error(), "unexpected ID ") {
-			mismatch.Store(true)
-		}
-		return err
+	if bundle == nil {
+		return result, errors.New("public trust unavailable")
 	}
-	client, transport := identity.HTTPClient(config)
-	defer transport.CloseIdleConnections()
-	request, err := http.NewRequestWithContext(ctx, "GET", c.target, nil)
+	u, err := url.Parse(c.target)
 	if err != nil {
 		return result, err
 	}
-	response, err := client.Do(request)
-	result.ServerVerified = verified.Load()
-	if response == nil {
-		if c.name == "no-cert" && result.ServerVerified && err != nil && strings.Contains(err.Error(), "remote error: tls: certificate required") {
-			result.Outcome = "no_certificate_rejected"
-			return result, nil
-		}
-		if c.name == "wrong-server" && !result.ServerVerified && mismatch.Load() && err != nil {
+	verified, status, err := signaturetest.Exchange(ctx, svid, bundle, c.server, u.Scheme+"://"+u.Host, "GET", u.Path, "readiness", nil, time.Now())
+	if err != nil {
+		if c.name == "wrong-server" && err.Error() == "server_identity_mismatch" {
 			result.Outcome = "server_identity_mismatch"
 			return result, nil
 		}
-		return result, errors.New("adapter TLS result unproven")
+		return result, err
 	}
-	defer response.Body.Close()
-	result.Status = response.StatusCode
-	body, readErr := io.ReadAll(io.LimitReader(response.Body, 8193))
-	if readErr != nil || len(body) > 8192 {
-		return result, errors.New("bounded adapter response unavailable")
+	result.ServerVerified = true
+	result.Status = status
+	body := verified.Body
+	if c.name == "no-cert" && status == 401 {
+		result.Outcome = "signature_rejected"
+		return result, nil
 	}
 	if c.name == "wrong-id" && result.ServerVerified && result.Status == 403 {
 		var denial struct {

@@ -19,18 +19,6 @@ type Remote struct {
 
 func NewRemote(source *workloadapi.X509Source, role, origin string) (Remote, error) {
 	u, err := url.Parse(origin)
-	if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" || strings.Contains(u.Host, "\\") {
-		return Remote{}, errors.New("exact HTTPS control origin required")
-	}
-	client, transport, err := Client(source, role)
-	if err != nil {
-		return Remote{}, err
-	}
-	return Remote{Client: client, Transport: transport, Origin: origin}, nil
-}
-
-func NewSignedRemote(source *workloadapi.X509Source, role, origin string) (Remote, error) {
-	u, err := url.Parse(origin)
 	if err != nil || u.Scheme != "http" || u.Host == "" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" || strings.Contains(u.Host, "\\") {
 		return Remote{}, errors.New("exact HTTP control origin required")
 	}

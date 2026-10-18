@@ -2,20 +2,17 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/tls"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"io"
 	"math/big"
-	"net/http"
 	"os"
 	"sort"
 	"strings"
@@ -23,6 +20,7 @@ import (
 
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
+	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -30,6 +28,7 @@ import (
 	"poc-spire/internal/control"
 	"poc-spire/internal/identity"
 	"poc-spire/internal/ledger"
+	"poc-spire/internal/signaturetest"
 )
 
 var buildMarker = "v1"
@@ -92,59 +91,27 @@ func sourceStatus(source *workloadapi.X509Source) response {
 	leaf := s.Certificates[0]
 	return response{Result: control.Result{Stage: "workload_api", Outcome: "source_ready"}, Expires: leaf.NotAfter.Unix(), Serial: leaf.SerialNumber.String(), Authority: hex.EncodeToString(leaf.AuthorityKeyId), Bundle: hex.EncodeToString(fingerprint[:]), Roots: len(roots), Build: buildMarker, Authorities: authorities}
 }
-func request(config *tls.Config, target, id string, balances bool) response {
-	result := response{Result: control.Result{RequestID: id, Stage: "connect", Outcome: "infrastructure_failure"}}
-	verify := config.VerifyPeerCertificate
-	failed := false
-	config.VerifyPeerCertificate = func(raw [][]byte, chains [][]*x509.Certificate) error {
-		err := verify(raw, chains)
-		if err != nil {
-			failed = true
-			return err
-		}
-		result.ServerVerified = true
-		leaf, err := x509.ParseCertificate(raw[0])
-		if err == nil {
-			result.ServerAuthority = hex.EncodeToString(leaf.AuthorityKeyId)
-		}
-		return err
-	}
-	client, transport := identity.HTTPClient(config)
-	defer transport.CloseIdleConnections()
+func request(svid *x509svid.SVID, bundle x509bundle.Source, target, id string, balances bool, at time.Time) response {
+	result := response{Result: control.Result{RequestID: id, Stage: "payload_signature", Outcome: "unknown_commit"}}
 	method, path := "POST", "/transfer"
 	body, _ := json.Marshal(ledger.Fixed(id))
 	if balances {
 		method, path, body = "GET", "/balances", nil
 	}
-	req, err := http.NewRequest(method, target+path, bytes.NewReader(body))
+	verified, status, err := signaturetest.Exchange(context.Background(), svid, bundle, identity.Money, target, method, path, id, body, at)
 	if err != nil {
-		return result
-	}
-	req.Header.Set("Content-Type", "application/json")
-	reply, err := client.Do(req)
-	if err != nil {
-		if failed {
-			result.Stage = "server_verification"
+		if strings.Contains(err.Error(), "signature") {
 			result.Outcome = "server_trust_failure"
-		} else if result.ServerVerified && strings.Contains(err.Error(), "remote error: tls:") {
-			result.Stage = "client_authentication"
-			result.Outcome = "tls_rejected"
-		} else if result.ServerVerified {
-			result.Stage = "transfer_response"
-			result.Outcome = "unknown_commit"
 		}
 		return result
 	}
-	defer reply.Body.Close()
+	result.ServerVerified = true
+	result.MoneyStatus = status
+	result.MoneyResult = verified.Body
 	result.Stage = "money_http"
-	result.MoneyStatus = reply.StatusCode
-	data, err := io.ReadAll(io.LimitReader(reply.Body, 8193))
-	if err != nil || len(data) > 8192 || !json.Valid(data) {
-		result.Outcome = "unknown_commit"
-		return result
-	}
-	result.MoneyResult = data
 	result.Outcome = "money_http_response"
+	// Authority is public certificate metadata, never signing material.
+	result.ServerAuthority = verified.Authority
 	return result
 }
 func fresh(socket string) response {
@@ -168,7 +135,7 @@ func fresh(socket string) response {
 	return result
 }
 func run() int {
-	target := flag.String("target", "https://money:8443", "private test target")
+	target := flag.String("target", "http://money:8443", "private test target")
 	expected := flag.String("expected", identity.Trusted.String(), "exact test identity")
 	unidentified := flag.Bool("unidentified", false, "test unregistered process without loading credentials")
 	flag.Parse()
@@ -189,7 +156,7 @@ func run() int {
 			return 1
 		}
 	}
-	var frozen *tls.Certificate
+	var frozen *x509svid.SVID
 	decoder := json.NewDecoder(os.Stdin)
 	encoder := json.NewEncoder(os.Stdout)
 	for {
@@ -205,8 +172,7 @@ func run() int {
 		switch c.Action {
 		case "capture":
 			if source != nil {
-				config := identity.ClientTLS(source, source, identity.Money)
-				certificate, err := config.GetClientCertificate(nil)
+				certificate, err := source.GetX509SVID()
 				if err == nil {
 					frozen = certificate
 					result = sourceStatus(source)
@@ -214,9 +180,11 @@ func run() int {
 			}
 		case "frozen-transfer":
 			if source != nil && frozen != nil {
-				config := identity.ClientTLS(source, source, identity.Money)
-				config.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) { return frozen, nil }
-				result = request(config, *target, c.ID, false)
+				at := time.Now()
+				if !at.Before(frozen.Certificates[0].NotAfter) {
+					at = frozen.Certificates[0].NotAfter.Add(-10 * time.Second)
+				}
+				result = request(frozen, source, *target, c.ID, false, at)
 			}
 		case "fresh":
 			result = fresh("/workload/api.sock")
@@ -236,13 +204,15 @@ func run() int {
 			}
 		case "balances":
 			if source != nil {
-				result = request(identity.ClientTLS(source, source, identity.Money), *target, c.ID, true)
+				svid, _ := source.GetX509SVID()
+				result = request(svid, source, *target, c.ID, true, time.Now())
 			}
 		case "wrong-bundle":
 			if source != nil {
 				bundle, err := unrelatedBundle()
 				if err == nil {
-					result = request(identity.ClientTLS(source, bundle, identity.Money), *target, c.ID, false)
+					svid, _ := source.GetX509SVID()
+					result = request(svid, bundle, *target, c.ID, false, time.Now())
 				}
 			}
 		}

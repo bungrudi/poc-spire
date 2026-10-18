@@ -224,6 +224,8 @@ def deploy(target):
     for kind,name in [('CSIDriver','csi.spiffe.io'),('ClusterRole',target.config['lab_id']+'-psat'),('ClusterRoleBinding',target.config['lab_id']+'-psat'),
                       ('ClusterRole',target.config['lab_id']+'-spire-kubelet'),('ClusterRoleBinding',target.config['lab_id']+'-spire-kubelet')]:
         if target.get(kind,name):raise RuntimeError('foreign SPIRE cluster resource collision: '+kind+'/'+name)
+    from kubernetes_mesh_identity import require_shared_mesh
+    require_shared_mesh(target)
     base=base_objects(target,node)
     target.namespaces(['spire-'+run_id,'poc-'+run_id]);work.mkdir(mode=0o700)
     target.kube('label','namespace','poc-'+run_id,'istio-injection=enabled','--overwrite')
@@ -300,7 +302,7 @@ def verify(target):
         if baseline.exists():initial=json.loads(baseline.read_text())
         else:private_json(baseline,initial)
         cases=[]
-        for scenario,expected in [('trusted','transfer_succeeded'),('unidentified','tls_rejected'),('kafka-trusted','transfer_succeeded'),('kafka-unidentified','money_rejected'),('kafka-tampered','money_rejected')]:
+        for scenario,expected in [('trusted','transfer_succeeded'),('unidentified','signature_rejected'),('kafka-trusted','transfer_succeeded'),('kafka-unidentified','money_rejected'),('kafka-tampered','money_rejected')]:
             keypath=work/('verify-'+scenario+'.json')
             if not keypath.exists():private_json(keypath,{'browser_key':uuid.uuid4().hex})
             evidence,_=browser.attempt(scenario,json.loads(keypath.read_text())['browser_key'])

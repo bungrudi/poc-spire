@@ -73,7 +73,8 @@ data:
     plugins {
       KeyManager "memory" { plugin_data {} }
       NodeAttestor "k8s_psat" { plugin_data { cluster = "@CLUSTER@" token_path = "/run/tokens/psat" } }
-      WorkloadAttestor "unix" { plugin_data { discover_workload_path = true workload_size_limit = 67108864 } }
+      # Hash proxy executables too; an oversized executable fails Unix attestation.
+      WorkloadAttestor "unix" { plugin_data { discover_workload_path = true workload_size_limit = 268435456 } }
       WorkloadAttestor "k8s" { plugin_data {
         kubelet_secure_port = 10250
         kubelet_ca_path = "/run/api/ca.crt"

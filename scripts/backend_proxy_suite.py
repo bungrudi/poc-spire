@@ -23,6 +23,7 @@ class TargetClient(Client):
 
 
 def main():
+    raise RuntimeError('Historical TLS-record fixture retired for signed HTTP. Use backend_suite.py for post-commit response loss and same-ID retry coverage.')
     os.umask(0o077)
     before = retained_fingerprint()
     work = Path(tempfile.mkdtemp(prefix='backend-proxy-', dir=ROOT/'.runtime'))

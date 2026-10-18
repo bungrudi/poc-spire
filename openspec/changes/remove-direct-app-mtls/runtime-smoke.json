@@ -1,0 +1,17 @@
+{
+  "status": "failed",
+  "isolation": "fresh project-local temporary SPIRE issuer; retained trust and live deployments preserved",
+  "checks": [],
+  "balance_diagnostics": {
+    "outcome": "identity_unavailable",
+    "stage": "workload_api",
+    "server_verified": false,
+    "money_http_status": null
+  },
+  "blocked_stage": "initial signed balance read",
+  "failure_type": "RuntimeError",
+  "compose_cleanup_ok": true,
+  "classification": "Blocked at Workload API identity acquisition; no signing or denial acceptance result",
+  "workload_http_acceptance": "NOT OBSERVED",
+  "mesh_issuer_rotation_acceptance": "NOT RUN"
+}

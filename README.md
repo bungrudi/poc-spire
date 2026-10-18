@@ -1,8 +1,16 @@
 # SPIRE / SPIFFE process-identity PoC
 
-**Status: simplified HTTPS UI implemented; real-SPIRE HTTPS browser integration passes. The owner-approved deployment is live at https://spire.adianto.dev/.**
+**Current source: signed-only application HTTP and SPIRE-issued mesh SVIDs.**
+This source change has not been deployed to the existing public demo. See the
+[approved OpenSpec and verification](openspec/changes/remove-direct-app-mtls/).
 
-The Go + Docker Compose demo has a web UI with two buttons. On 11 October 2026 the owner removed OIDC and requested an assumed operator to focus on SPIRE. The page discloses that anyone can trigger fake transfers. See [the current demo and deployment plan](docs/remote-demo.md). Each button triggers a different caller process to attempt the same fake money transfer. The money service authenticates workloads directly using SPIFFE mTLS: the authorized caller succeeds; the unidentified caller fails. No sidecar terminates workload authentication.
+The Go demo assumes a human operator and discloses that anyone can trigger fake
+transfers. Each button triggers a caller process. Money validates the caller's
+public SVID chain against its own SPIRE bundle, verifies the payload signature,
+then authorizes the exact SPIFFE ID. Trusted calls succeed; an unidentified
+caller receives a verified signed `401`. Money signs responses too. Envoy uses
+separate SPIRE-issued SVIDs for mesh mTLS; the Go app has no workload TLS mode.
+Private Compose HTTP carries signatures without transport encryption.
 
 ## Workspace documents
 
@@ -14,14 +22,14 @@ The Go + Docker Compose demo has a web UI with two buttons. On 11 October 2026 t
 | [Design summary](docs/design.md) | Short architecture overview |
 | [Delivery plan](docs/plan.md) | Milestones and sequencing |
 | [AGENTS.md](AGENTS.md) | Rules for future coding agents |
-| [Current feature contracts](openspec/specs/) | Six source-derived OpenSpec capabilities with normal and negative scenarios |
+| [Current feature contracts](openspec/specs/) | Approved OpenSpec capabilities with normal and negative scenarios |
 | [Baseline and traceability](docs/spec-baseline.md) | Source/test/evidence mappings, current versus historical coverage and limits |
 | [OpenSpec workflow](docs/spec-workflow.md) | Pinned local tooling, document authority and owner approval before behavior changes |
 
 ## Isolated Kafka signing extension
 
 The combined learning profile adds three **Async (Kafka)** cases alongside the
-existing **Sync (HTTP/mTLS)** trusted/unidentified scenarios. Money verifies the
+existing **Sync (signed HTTP)** trusted/unidentified scenarios. Money verifies the
 original SPIFFE-backed JWS producer and updates the same fake ledger; the UI
 reads authenticated digest receipts and preserves retry IDs/deadlines.
 Money remains memory-only across restart. This extension is on the isolated
@@ -59,7 +67,7 @@ Node/OpenSpec are not needed to build or run the Go demo.
 ## Recommendations
 
 - Run callers in **separate containers with the same numeric UID**. Require executable-bound attestation as well as deployment selectors; verify this with a wrong-executable test inside the trusted deployment. Container identity alone is not sufficient.
-- Use **strict mTLS**. No certificate means TLS rejection, not an HTTP response. A valid but unauthorized identity gets an HTTP `403` at the money service.
+- Require **SVID payload signatures** on every workload request and response. Missing or invalid signatures get `401`; a valid unauthorized signer gets `403`. Kubernetes additionally requires strict SPIRE-backed mesh mTLS.
 - Browser access uses **HTTPS, secure sessions and CSRF protection**. The human operator is explicitly assumed; SPIRE authenticates the caller processes. OIDC is removed for this owner-requested learning demo.
 
 The first increment adds a Go test fixture, dependency locks, private Compose fixtures, and an ephemeral SPIRE runner. See [measured attestation evidence](docs/attestation-feasibility.md) and [sanitized results](docs/evidence/attestation-latest.json). The measured layout uses equal UID 1000 and an unprivileged native agent; the proposed UID 10001/containerized agent remains unverified.
@@ -92,8 +100,9 @@ all cached credentials expire. It performs explicit re-enrollment only inside it
 own temporary fixture; it cannot recover/reset the retained PoC agent. See
 [extended coverage](docs/backend-extended-acceptance.md) before running it.
 
-Final bounded transport-fault verification: `python3 scripts/backend_proxy_suite.py`.
-This opaque, credential-free proxy runs only inside the internal test network.
+The old TLS-record `backend_proxy_suite.py` is retired for this signed-HTTP
+revision. Its source and dated evidence remain historical. Use `backend_suite.py`
+for post-commit HTTP response loss and authenticated same-ID recovery.
 Read the [final backend status](docs/backend-final-status.md) for the reconciled
 historical T01–T23 coverage and automatic-pruning limit; the current UI profile
 and coverage are in the [baseline index](docs/spec-baseline.md).

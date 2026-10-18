@@ -1,6 +1,6 @@
 # Design summary
 
-**Status: measured UID-1000/native-agent backend verified; simplified HTTPS UI implemented with isolated browser integration passes. The owner-approved deployment is live at https://spire.adianto.dev/. See [current demo](remote-demo.md).** Detailed decisions and test contracts are in [RFC 0001](rfcs/0001-process-identity.md). The current workspace brief is [WORKSPACE.md](../WORKSPACE.md).
+**Current source: SVID-signed workload HTTP, with SPIRE-issued Envoy certificates for Kubernetes mesh mTLS.** This revision has not been rolled out. Detailed decisions and test contracts are in [RFC 0001](rfcs/0001-process-identity.md) and [OpenSpec](../openspec/changes/remove-direct-app-mtls/).
 
 ## Recommendation
 
@@ -18,29 +18,36 @@ Remote browser -- HTTPS + assumed operator session + CSRF --> Go UI
                                      trusted Go caller     unidentified Go caller
                                      same UID, SVID        same UID, no SVID
                                               \                  /
-                                       direct HTTPS to Go money service
-                                           strict SPIFFE mTLS
+                                       signed HTTP to Go Money service
+                                       independent SVID chain/signature checks
                                           exact-ID authorization
                                            in-memory fake ledger
 
 SPIRE server <--> SPIRE agent -- Workload API socket --> Go workloads
-UI -- its own read-only SPIFFE mTLS identity --> money GET /balances
+UI -- its own read-only signed payload --> Money GET /balances
+SPIRE agent -- SDS/CSI --> Envoy proxy -- mesh mTLS --> peer Envoy
 ```
 
-The money service validates the caller in Go. No sidecar, proxy, identity header, source IP, or browser credential substitutes for workload authentication. The caller verifies the money service's exact SPIFFE ID too.
+Money validates the public SVID chain from the JWS `x5c` against its own updating
+SPIRE bundle, verifies the signature with the leaf public key, checks freshness
+and request binding, then authorizes the exact caller ID. It never receives a
+caller private key. Callers verify Money's response signature and correlation.
+The proxy uses a separate namespace/SA SVID and key; it gets no transfer identity.
+Compose uses private signed HTTP without encryption; Kubernetes adds mesh mTLS.
 
 ## Workload authorization and the human assumption
 
 1. **Human assumption:** the owner explicitly removed OIDC on 11 October 2026. Anyone can trigger fake transfers with an assumed-operator session. The UI discloses this; HTTPS/CSRF/session controls remain.
-2. **Workload gate:** money requires a valid X.509-SVID and allows only the trusted caller's exact SPIFFE ID to transfer.
+2. **Workload gate:** Money requires a valid SVID-backed payload signature and allows only the trusted caller's exact SPIFFE ID to transfer. Freshness is rechecked under the ledger lock.
 
 The UI has only read permission on the money API and private access to caller trigger sockets. It never receives the trusted caller's SVID. Callers have no network trigger endpoint; the unidentified caller cannot access the trusted control socket.
 
 ## Visible outcomes
 
-- Trusted: eligible executable gets its SVID, establishes direct mTLS, and moves a fixed fake amount once per logical request.
-- Unidentified: cannot get a matching SVID; an intentional no-client-certificate HTTPS probe demonstrates TLS rejection. The UI shows a TLS failure, not a fabricated money-service HTTP `403`.
-- Valid but unauthorized identity: TLS authenticates it, then the money handler returns `403`; balances do not change. This is a security test, not a third main button.
+- Trusted: eligible executable gets its SVID, signs the payload, and moves a fixed amount once per logical request.
+- Unidentified: cannot get a signing SVID; Money returns a signed `401` and balances remain unchanged.
+- Valid but unauthorized signer: Money returns signed `403`; balances remain unchanged.
+- Lost or unverified response: the outcome stays unknown and a retry keeps the same request ID.
 
 Both callers can reach the money network and Workload API socket. Socket permissions or network isolation alone must not be the reason the negative identity test passes.
 

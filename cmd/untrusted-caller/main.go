@@ -20,7 +20,7 @@ import (
 
 func main() {
 	path := flag.String("control", "/control/api.sock", "private trigger socket")
-	target := flag.String("money", "https://money:8443", "fixed private money target")
+	target := flag.String("money", "http://money:8443", "fixed private money target")
 	uid := flag.Uint("operator-uid", 10002, "private control peer UID (1000 local UI or 10002 baseline)")
 	kafkaConfig := flag.String("kafka-config", "", "opt-in isolated Kafka configuration")
 	bundlePath := flag.String("public-bundle", "/workload/bundle.pem", "authentic public SPIRE trust file")
@@ -28,12 +28,7 @@ func main() {
 	guardPath := flag.String("run-guard", "", "opt-in read-only run guard")
 	runID := flag.String("run", "", "expected run")
 	reopen := flag.Bool("reopen-control", false, "opt-in owned Kubernetes socket reopening")
-	transportMode := flag.String("transport", "mtls", "mtls or Kubernetes signed-http")
 	flag.Parse()
-	if *transportMode != "mtls" && *transportMode != "signed-http" {
-		fmt.Fprintln(os.Stderr, "invalid caller transport")
-		os.Exit(1)
-	}
 	if *uid != 1000 && *uid != 10002 {
 		fmt.Fprintln(os.Stderr, "unsupported control peer layout")
 		os.Exit(1)
@@ -92,9 +87,6 @@ func main() {
 		return err == nil && info.Mode()&os.ModeSocket != 0
 	})
 	execute := caller.Unidentified("/workload/api.sock", *bundlePath, *target)
-	if *transportMode == "signed-http" {
-		execute = caller.UnidentifiedSigned("/workload/api.sock", *bundlePath, *target)
-	}
 	if err := control.Serve(ctx, *path, uint32(*uid), execute, kafkaHandlers...); err != nil {
 		fmt.Fprintln(os.Stderr, "unidentified control unavailable")
 		os.Exit(1)

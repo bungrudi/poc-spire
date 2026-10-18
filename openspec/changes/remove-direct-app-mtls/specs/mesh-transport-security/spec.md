@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: MS-01 Independent outer and inner TLS
-The Kubernetes baseline SHALL use SPIRE-issued X.509-SVIDs for Istio/Envoy outer mTLS through the local Envoy SDS API. Mesh and SPIRE trust domains SHALL be `poc.internal`. Proxy SVIDs SHALL use `spiffe://poc.internal/ns/<namespace>/sa/<service-account>` with keys and registrations separate from application signing SVIDs. Workload HTTP SHALL use only SVID-signed payloads; Kafka retains its separate TLS and original-producer JWS. Mesh identity or forwarded headers MUST NOT authorize business effects.
+The Kubernetes baseline SHALL use SPIRE-issued Envoy SVIDs through local SDS for mesh mTLS in `poc.internal`. Proxy identities, keys and grants MUST remain separate from app signing credentials. Workload HTTP MUST use signed payloads; Kafka retains broker TLS and original-producer JWS. Mesh identity or forwarded headers MUST NOT authorize business effects.
 
 #### Scenario: Application transfer crosses mesh
 - **WHEN** an eligible trusted caller performs its fixed transfer
@@ -15,7 +15,7 @@ The Kubernetes baseline SHALL use SPIRE-issued X.509-SVIDs for Istio/Envoy outer
 
 #### Scenario: Proxy requests credentials
 - **WHEN** Envoy connects through its CSI-mounted SDS socket
-- **THEN** its narrow proxy registration supplies only its mesh SVID, never an application transfer SVID
+- **THEN** its narrow proxy registration supplies only `spiffe://poc.internal/ns/<namespace>/sa/<service-account>` with a separate private key, never an application transfer SVID
 
 ## ADDED Requirements
 

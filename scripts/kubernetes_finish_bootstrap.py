@@ -21,6 +21,10 @@ def main():
     pods=json.loads(runtime.kube(value,'-n',ns,'get','pods','-o','json'))['items']
     byrole={p['metadata']['labels']['poc-role']:p for p in pods}
     if {r:p['metadata']['uid'] for r,p in byrole.items()}!=owned['pods']:raise RuntimeError('initial Pod ownership differs')
+    from kubernetes_mesh_identity import register_proxy, configure
+    # Proxies start first; applications may be held behind proxy readiness.
+    for pod in byrole.values():
+        register_proxy(value, expected, pod['metadata']['name'])
     registrations=[('money','money','spiffe://poc.internal/money','money',1000),('ui','ui','spiffe://poc.internal/ui','ui',1000),
       ('caller-trusted','caller','spiffe://poc.internal/caller/trusted','trusted-caller',1000),
       ('caller-trusted','adapter','spiffe://poc.internal/control/caller/trusted','control-adapter',10002),
@@ -48,7 +52,14 @@ def main():
                          'resources':{'requests':{'cpu':'50m','memory':'64Mi'},'limits':{'cpu':'750m','memory':'256Mi'}},
                          'volumeMounts':[{'name':'config','mountPath':'/config','readOnly':True},{'name':'pki','mountPath':'/pki','readOnly':True},{'name':'tmp','mountPath':'/tmp'}]}],
           'volumes':[{'name':'config','configMap':{'name':'kafka-config'}},{'name':'pki','secret':{'secretName':'kafka-admin-pki','defaultMode':0o440}},{'name':'tmp','emptyDir':{'medium':'Memory','sizeLimit':'16Mi'}}]}}}}
-    runtime.kube(value,'apply','-f','-',data=yaml.safe_dump(job),timeout=60)
+    configure(job['spec']['template'])
+    runtime.apply_csi_workloads(value,'-',data=yaml.safe_dump(job),timeout=60)
+    for _ in range(90):
+        job_pods=json.loads(runtime.kube(value,'-n',ns,'get','pods','-l','job-name=kafka-admin','-o','json'))['items']
+        if len(job_pods)==1:break
+        time.sleep(1)
+    else:raise RuntimeError('admin Job Pod unavailable')
+    register_proxy(value,expected,job_pods[0]['metadata']['name'])
     runtime.kube(value,'-n',ns,'wait','--for=condition=Complete','job/kafka-admin','--timeout=120s',timeout=130)
     runtime.kube(value,'-n',ns,'delete','job','kafka-admin','--wait=true','--timeout=60s',timeout=70)
     runtime.kube(value,'-n',ns,'delete','secret','kafka-admin-pki',timeout=30)

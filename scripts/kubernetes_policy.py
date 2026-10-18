@@ -35,7 +35,7 @@ def policies(value):
             items.append({'apiVersion':'networking.k8s.io/v1','kind':'NetworkPolicy','metadata':meta('out-'+source+'-'+name),
                           'spec':{'podSelector':{'matchLabels':{'poc-role':source}},'policyTypes':['Egress'],
                                   'egress':[{'to':[{'podSelector':selector}],'ports':[{'protocol':'TCP','port':port}]}]}})
-        principals=['cluster.local/ns/'+ns+'/sa/'+source for source in sources]
+        principals=['poc.internal/ns/'+ns+'/sa/'+source for source in sources]
         items.append({'apiVersion':'security.istio.io/v1','kind':'AuthorizationPolicy','metadata':meta('allow-'+name),
                       'spec':{'selector':selector,'rules':[{'from':[{'source':{'principals':principals}}],'to':[{'operation':{'ports':[str(port)]}}]}]}})
         items.append({'apiVersion':'networking.istio.io/v1','kind':'DestinationRule','metadata':meta(name),

@@ -1,5 +1,19 @@
 # Current feature baseline and verification index
 
+## Current source update — 18 October 2026
+
+The approved [remove-direct-app-mtls](../openspec/changes/remove-direct-app-mtls/)
+change makes signed HTTP mandatory in every app profile and gives Envoy separate
+SPIRE-issued mesh SVIDs. Current capability contracts are synced to that change.
+Money's chain/signature/ID checks, guarded atomic transfer, signed observer
+reads and control responses have deterministic coverage. The [verification
+record](../openspec/changes/remove-direct-app-mtls/verification.md) records actual
+commands and the isolated runtime outcome. Historical TLS reports below retain
+their original meaning and do not establish new signature or mesh acceptance.
+The old `backend_proxy_suite.py` TLS-record runner is retired; the signed
+`backend-money` fixture retains post-commit response-loss coverage. Actual mesh
+SDS issuer/rotation and a live rollout remain unrun.
+
 ## Baseline identity and review status
 
 - Baseline source revision: **cc4ea6beef8138e16fb320449b7096b03ca09711**

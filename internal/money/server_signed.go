@@ -2,7 +2,6 @@ package money
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"io"
 	"log"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
-	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"poc-spire/internal/httpjws"
 	"poc-spire/internal/identity"
 	"poc-spire/internal/kafkacmd"
@@ -116,7 +114,7 @@ func (h *signedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.finish(w, r, 403, map[string]string{"error": "credential_not_current"}, verified.RequestID, id)
 		return
 	}
-	result, status := h.ledger.Transfer(id, request)
+	result, status := h.ledger.TransferCurrent(id, request, func() bool { return verified.Current(h.clock()) })
 	h.finish(w, r, status, result, verified.RequestID, id)
 }
 
@@ -150,13 +148,13 @@ func (h *signedHandler) finish(w http.ResponseWriter, r *http.Request, status in
 	w.Write([]byte(compact))
 }
 
-func SignedServer(source *workloadapi.X509Source, book *ledger.Ledger, audit io.Writer) *http.Server {
+func Server(source identity.Material, book *ledger.Ledger, audit io.Writer) *http.Server {
 	if audit == nil {
 		audit = io.Discard
 	}
 	server := &http.Server{Handler: &signedHandler{ledger: book, audit: audit, signer: source, bundle: source},
-		TLSNextProto: map[string]func(*http.Server, *tls.Conn, http.Handler){}, ReadHeaderTimeout: 3 * time.Second,
-		ReadTimeout: 5 * time.Second, WriteTimeout: 8 * time.Second, IdleTimeout: time.Second, MaxHeaderBytes: 8192,
+		ReadHeaderTimeout: 3 * time.Second,
+		ReadTimeout:       5 * time.Second, WriteTimeout: 8 * time.Second, IdleTimeout: time.Second, MaxHeaderBytes: 8192,
 		ErrorLog: log.New(audit, "money_http: ", 0)}
 	server.SetKeepAlivesEnabled(false)
 	return server

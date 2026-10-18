@@ -2,10 +2,8 @@ package moneyreader
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -16,6 +14,7 @@ import (
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"poc-spire/internal/identity"
 	"poc-spire/internal/ledger"
+	"poc-spire/internal/signaturetest"
 	"poc-spire/internal/testpki"
 )
 
@@ -37,17 +36,11 @@ func readerServer(t *testing.T, serverID, clientID spiffeid.ID, reply http.Handl
 			t.Fatal(err)
 		}
 	}
-	server := httptest.NewUnstartedServer(reply)
-	server.Config.ErrorLog = log.New(io.Discard, "", 0)
-	server.TLS = identity.ServerTLS(testpki.Source{SVID: serverSVID}, ca.Bundle())
-	server.TLS.Certificates = []tls.Certificate{{Certificate: [][]byte{serverSVID.Certificates[0].Raw}, PrivateKey: serverSVID.PrivateKey}}
-	server.TLS.NextProtos = []string{"http/1.1"}
-	server.Config.TLSNextProto = map[string]func(*http.Server, *tls.Conn, http.Handler){}
-	server.StartTLS()
+	server := httptest.NewServer(signaturetest.Handler(serverSVID, ca.Bundle(), reply))
 	t.Cleanup(server.Close)
 	return Observer{Target: server.URL, SVID: testpki.Source{SVID: clientSVID}, Bundle: ca.Bundle()}, server
 }
-func TestObserverTLSAuthenticatesMoneyAndNoCertificateNeverReachesHTTP(t *testing.T) {
+func TestObserverVerifiesMoneySignatureAndNoSVIDNeverReachesOperation(t *testing.T) {
 	for _, mode := range []string{"valid", "wrong-server", "no-cert"} {
 		t.Run(mode, func(t *testing.T) {
 			serverID, clientID := identity.Money, identity.Observer
@@ -60,8 +53,8 @@ func TestObserverTLSAuthenticatesMoneyAndNoCertificateNeverReachesHTTP(t *testin
 			calls := 0
 			observer, _ := readerServer(t, serverID, clientID, func(w http.ResponseWriter, r *http.Request) {
 				calls++
-				id, err := x509svid.IDFromCert(r.TLS.PeerCertificates[0])
-				if err != nil || id != identity.Observer {
+				id := signaturetest.Peer(r)
+				if id != identity.Observer {
 					w.WriteHeader(403)
 					return
 				}
@@ -72,7 +65,7 @@ func TestObserverTLSAuthenticatesMoneyAndNoCertificateNeverReachesHTTP(t *testin
 				if err != nil || !m.ConsumerReady || calls != 1 {
 					t.Fatal(m, err, calls)
 				}
-			} else if err == nil || calls != 0 {
+			} else if err == nil || (mode == "no-cert" && calls != 0) {
 				t.Fatal("unverified Money HTTP evidence", mode, calls)
 			}
 		})
@@ -87,7 +80,7 @@ func TestReceiptReadIsBoundedCorrelatedAndSeparatesHTTPStatus(t *testing.T) {
 				clientID = identity.Trusted
 			}
 			observer, _ := readerServer(t, identity.Money, clientID, func(w http.ResponseWriter, r *http.Request) {
-				id, _ := x509svid.IDFromCert(r.TLS.PeerCertificates[0])
+				id := signaturetest.Peer(r)
 				if id != identity.Observer {
 					w.WriteHeader(403)
 					return

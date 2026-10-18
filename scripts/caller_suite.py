@@ -73,8 +73,8 @@ def main():
             raise RuntimeError("Control retry did not preserve transfer ID")
         report["tests"].append({"case":"stable-caller-retry","replay":True})
         code,unidentified=control("/untrusted-control/api.sock",id="unidentified-attempt")
-        if code or unidentified["outcome"]!="tls_rejected" or unidentified["identity_eligibility"]!="no_matching_identity" or "money_http_status" in unidentified or not unidentified["server_verified"]:
-            raise RuntimeError("Unidentified caller did not demonstrate real no-SVID/TLS rejection")
+        if code or unidentified["outcome"]!="signature_rejected" or unidentified["identity_eligibility"]!="no_matching_identity" or unidentified.get("money_http_status")!=401 or not unidentified["server_verified"]:
+            raise RuntimeError("Unidentified caller did not demonstrate verified no-SVID signature rejection")
         if balances()!=after:raise RuntimeError("Unidentified caller changed balances")
         report["tests"].append({"case":"unidentified-caller","result":unidentified,"ledger_unchanged":True})
         code,blocked=control("/trusted-control/api.sock",service="untrusted-caller")

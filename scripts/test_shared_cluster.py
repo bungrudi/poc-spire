@@ -114,6 +114,8 @@ class SharedSPIRETests(unittest.TestCase):
             def kube(instance,*args,data=None,**kwargs):
                 if args[:2]==('get','nodes'):
                     return json.dumps({'items':[node]})
+                if args==('-n','istio-system','get','configmap','istio','-o','json'):
+                    return json.dumps({'data':{'mesh':'trustDomain: poc.internal'}})
                 if args[0] in ('create','apply'):
                     for obj in yaml.safe_load_all(data):store(obj)
                     return ''

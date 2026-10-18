@@ -63,7 +63,7 @@ class CleanupPropagationTests(unittest.TestCase):
             def start(self):pass
             def attempt(self,scenario):
                 if scenario.startswith('kafka-'):return {'status':'done','kafka_evidence':{'outcome':'transfer_succeeded' if scenario=='kafka-trusted' else 'money_rejected','money_queries':[]}},'key'
-                return {'status':'done','caller_evidence':{'outcome':'transfer_succeeded' if scenario=='trusted' else 'tls_rejected'}},'key'
+                return {'status':'done','caller_evidence':{'outcome':'transfer_succeeded' if scenario=='trusted' else 'signature_rejected'}},'key'
             def close(self):return {'owned_cleanup_complete':False,'errors':[{'action':'native-runtime'}],'compose_exit_code':0,'image_exit_code':0,'ephemeral_state_removed':False}
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);(root/'docs/evidence').mkdir(parents=True)

@@ -31,7 +31,7 @@ def main():
                     raise RuntimeError('Invalid record acquired producer attribution')
                 report['checks'][scenario]={'status':value['status'],'outcome':evidence['outcome'],'query_http_statuses':[q['query_http_status'] for q in evidence['money_queries']],'receipt_reasons':[q.get('receipt',{}).get('reason') for q in evidence['money_queries']]}
             else:
-                expected='transfer_succeeded' if scenario=='trusted' else 'tls_rejected'
+                expected='transfer_succeeded' if scenario=='trusted' else 'signature_rejected'
                 if value['status']!='done' or value['caller_evidence']['outcome']!=expected:raise RuntimeError('Unexpected Sync regression')
                 report['checks'][scenario]={'status':value['status'],'outcome':expected}
         report['status']='passed_bounded_smoke'

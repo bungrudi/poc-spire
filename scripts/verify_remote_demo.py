@@ -96,9 +96,9 @@ def main():
             raise RuntimeError('Public browser retry transferred twice')
         report['tests'].append({'case': 'public-real-trusted-transfer-stable-retry', 'passed': True})
         rejected = attempt('unidentified', uuid.uuid4().hex)['caller_evidence']
-        if rejected['outcome'] != 'tls_rejected' or rejected['identity_eligibility'] != 'no_matching_identity' or not rejected['server_verified'] or 'money_http_status' in rejected or balances() != after:
-            raise RuntimeError('Unidentified result was not verified no-SVID/TLS rejection without mutation')
-        report['tests'].append({'case': 'public-real-unidentified-TLS-rejection', 'passed': True})
+        if rejected['outcome'] != 'signature_rejected' or rejected['identity_eligibility'] != 'no_matching_identity' or not rejected['server_verified'] or rejected.get('money_http_status') != 401 or balances() != after:
+            raise RuntimeError('Unidentified result was not verified no-SVID signature rejection without mutation')
+        report['tests'].append({'case': 'public-real-unidentified-signature-rejection', 'passed': True})
         report['final_fake_ledger'] = {'balances': after['balances'], 'version': after['version']}
         if request('POST', '/auth/logout')[0] != 200 or request('GET', '/api/session')[0] != 401:
             raise RuntimeError('Session clearing failed')

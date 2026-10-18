@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install the pinned sidecar mesh/CNI with its independent default Istiod CA."""
+"""Install the pinned sidecar mesh/CNI with SPIRE SDS workload certificates."""
 import hashlib
 import json
 import os
@@ -28,7 +28,7 @@ def operator():
                                     'cni': {'enabled': True, 'k8s': {
                                         'resources': {'requests': {'cpu': '25m', 'memory': '32Mi'},
                                                       'limits': {'cpu': '500m', 'memory': '96Mi'}}}}},
-                     'meshConfig': {'meshMTLS': {'minProtocolVersion': 'TLSV1_3'},
+                     'meshConfig': {'trustDomain': 'poc.internal', 'meshMTLS': {'minProtocolVersion': 'TLSV1_3'},
                                     'accessLogFile': '/dev/stdout', 'accessLogFormat': log_format,
                                     'defaultConfig': {'holdApplicationUntilProxyStarts': True}},
                      'values': {'global': {'proxy': {'image': images['istio/proxyv2:1.31.1'],
@@ -63,7 +63,7 @@ def main():
     pods = json.loads(runtime.kube(value, '-n', 'istio-system', 'get', 'pods', '-o', 'json'))['items']
     observed = [{'pod': p['metadata']['name'], 'images': {c['name']: c['imageID'] for c in p['status'].get('containerStatuses', [])}}
                 for p in pods]
-    result = {'istio_version': '1.31.1', 'mesh_minimum_tls': 'TLSV1_3', 'default_istiod_ca': True,
+    result = {'istio_version': '1.31.1', 'mesh_minimum_tls': 'TLSV1_3', 'default_istiod_ca': False, 'workload_issuer': 'SPIRE SDS', 'trust_domain': 'poc.internal',
               'sidecar_mode': True, 'chained_cni': True, 'operator_sha256': hashlib.sha256(source.read_bytes()).hexdigest(),
               'observed_system_images': observed, 'proxy_sds_and_job_probe': 'NOT RUN'}
     runtime.private_json(work / 'mesh-result.json', result)

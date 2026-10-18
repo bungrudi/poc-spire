@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"sync/atomic"
@@ -15,6 +14,7 @@ import (
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"poc-spire/internal/identity"
+	"poc-spire/internal/signaturetest"
 	"poc-spire/internal/testpki"
 )
 
@@ -50,7 +50,7 @@ func TestFixedControlTargetsAndCasesCannotSelectArbitraryEndpoint(t *testing.T) 
 	}
 }
 
-func TestFixedControlProbeRealTLSPositiveAndNegativeClassifications(t *testing.T) {
+func TestFixedControlProbeSignedPositiveAndNegativeClassifications(t *testing.T) {
 	ca, err := testpki.New(time.Now())
 	if err != nil {
 		t.Fatal(err)
@@ -72,7 +72,7 @@ func TestFixedControlProbeRealTLSPositiveAndNegativeClassifications(t *testing.T
 		if err != nil {
 			t.Fatal(err)
 		}
-		server := &http.Server{TLSConfig: identity.ServerTLS(source, source), ErrorLog: log.New(io.Discard, "", 0), Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := &http.Server{Handler: signaturetest.Handler(source.svid, source.bundle, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method != "GET" || r.URL.Path != "/attempt/kafka/readiness" || r.URL.RawQuery != "" || r.Body == nil {
 				t.Error("probe sent nonfixed operation")
 			}
@@ -80,11 +80,7 @@ func TestFixedControlProbeRealTLSPositiveAndNegativeClassifications(t *testing.T
 			if len(body) != 0 {
 				t.Error("probe sent body")
 			}
-			peer, err := x509svid.IDFromCert(r.TLS.PeerCertificates[0])
-			if err != nil {
-				t.Error(err)
-				return
-			}
+			peer := signaturetest.Peer(r)
 			if peer != identity.Observer {
 				w.WriteHeader(403)
 				json.NewEncoder(w).Encode(map[string]string{"error": "forbidden"})
@@ -93,10 +89,10 @@ func TestFixedControlProbeRealTLSPositiveAndNegativeClassifications(t *testing.T
 			calls.Add(1)
 			w.WriteHeader(404)
 			json.NewEncoder(w).Encode(map[string]any{"initialized": true, "exists": false, "request_id": "readiness"})
-		})}
-		go server.ServeTLS(listener, "", "")
+		}))}
+		go server.Serve(listener)
 		t.Cleanup(func() { server.Close() })
-		return "https://" + listener.Addr().String() + "/attempt/kafka/readiness"
+		return "http://" + listener.Addr().String() + "/attempt/kafka/readiness"
 	}
 	trusted, unidentified := serve("trusted"), serve("unidentified")
 	for _, test := range []struct {
@@ -107,7 +103,7 @@ func TestFixedControlProbeRealTLSPositiveAndNegativeClassifications(t *testing.T
 	}{
 		{"ui", trusted, "permitted_ui_read_verified", ui, nil, 404},
 		{"wrong-id", trusted, "valid_wrong_identity_denied", wrong, nil, 403},
-		{"no-cert", trusted, "no_certificate_rejected", nil, ca.Bundle(), 0},
+		{"no-cert", trusted, "signature_rejected", nil, ca.Bundle(), 401},
 		{"wrong-server", unidentified, "server_identity_mismatch", ui, nil, 0},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -127,8 +123,9 @@ func TestFixedControlProbeRealTLSPositiveAndNegativeClassifications(t *testing.T
 			}
 		})
 	}
-	if calls.Load() != 1 {
-		t.Fatal("negative case reached permitted operation", calls.Load())
+	// The wrong-server read is processed, then rejected by response verification.
+	if calls.Load() != 2 {
+		t.Fatal("unexpected permitted read count", calls.Load())
 	}
 	c, _ := fixedControlCase("ui", "trusted")
 	c.target = trusted
@@ -142,7 +139,7 @@ func TestFixedControlProbeRealTLSPositiveAndNegativeClassifications(t *testing.T
 	c, _ = fixedControlCase("no-cert", "trusted")
 	c.target = trusted
 	result, err := probeControl(context.Background(), c, nil, unrelated.Bundle())
-	if err == nil || result.ServerVerified || result.Outcome == "no_certificate_rejected" {
+	if err == nil || result.ServerVerified || result.Outcome == "signature_rejected" {
 		t.Fatal("bad trust was counted as identity rejection", result, err)
 	}
 }

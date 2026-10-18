@@ -1,5 +1,31 @@
 # RFC 0001: Direct process-attested transfers with SPIRE
 
+## Current architecture — 18 October 2026
+
+The owner approved [signature-only application HTTP and SPIRE mesh SVIDs](../../openspec/changes/remove-direct-app-mtls/review.md).
+All Go workload HTTP uses the existing compact ES256 JWS profile; direct app
+mTLS code and transport switches are removed. The caller attaches its public
+SVID chain in protected `x5c`. Money validates that chain against its own
+updating SPIRE bundle, verifies the signature, checks method/path/request ID and
+time, then authorizes the exact signer. It rechecks time under the ledger lock
+before history or effects. Responses are signed and clients verify exact Money
+identity and request correlation. Private keys never cross workload boundaries.
+
+Envoy consumes a separate SPIRE SVID/key through CSI and SDS. Mesh identity uses
+`spiffe://poc.internal/ns/<namespace>/sa/<service-account>`; it does not grant
+application transfer rights. Narrow observed proxy grants precede readiness,
+including the admin Job. Istiod retains discovery and policy. Compose provides
+private signed HTTP without encryption. Browser HTTPS and Kafka broker TLS stay
+separate; Kafka's original-producer JWS is unchanged.
+
+T02/T06/T07 now require verified signature `401` and no effect for missing or
+untrusted signing identity, rather than TLS rejection. T16 requires real
+post-commit response loss followed by same-ID recovery. T17 covers signing
+rotation/expiry; actual mesh issuer/rotation still needs a disposable runtime
+observation. See the change's verification record for new evidence. No live
+rollout occurred. The earlier architecture and test wording below describe
+historical revisions wherever they conflict with this supersession.
+
 ## Owner supersession — 11 October 2026
 
 The owner requested `spire.adianto.dev` and explicitly removed OIDC, asking to

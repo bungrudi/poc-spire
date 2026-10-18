@@ -1,5 +1,10 @@
 # Public Kubernetes SPIRE demo — 13 October 2026
 
+Source update, 18 October 2026: signature-only apps and SPIRE-issued mesh SVIDs
+are implemented in the repository but have not been deployed to this public
+profile. The observations and revision IDs below remain historical. Use a fresh
+disposable run to observe SDS issuer/rotation before a separately authorized rollout.
+
 [spire.adianto.dev](https://spire.adianto.dev/) now serves the complete five-scenario
 Kubernetes/Istio/SPIRE/Kafka profile from main. The human remains an **assumed demo
 operator**, not authenticated. SPIRE verifies processes, while both TLS layers,

@@ -243,7 +243,7 @@ func TestKafkaBrowserSchemaAndSecurityShareExistingBoundary(t *testing.T) {
 		t.Fatal("rejected browser boundary dispatched")
 	}
 	html := request(a, "GET", "/", nil, cookie, "").Body.String()
-	for _, label := range []string{"Sync (HTTP/mTLS)", "Async (Kafka)", "kafka-trusted", "kafka-unidentified", "kafka-tampered"} {
+	for _, label := range []string{"Sync (signed HTTP)", "Async (Kafka)", "kafka-trusted", "kafka-unidentified", "kafka-tampered"} {
 		if !strings.Contains(html, label) {
 			t.Fatal("missing fixed menu", label)
 		}

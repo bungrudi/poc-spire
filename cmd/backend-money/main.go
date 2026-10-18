@@ -1,11 +1,10 @@
-// backend-money is a test fixture using the real Money handler and SDK TLS.
+// backend-money is a test fixture using the real signed Money handler.
 // It drops one selected successful response after commit; it adds no auth bypass.
 package main
 
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"flag"
 	"io"
 	"net"
@@ -15,6 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"poc-spire/internal/httpjws"
 	"poc-spire/internal/identity"
 	"poc-spire/internal/ledger"
 	"poc-spire/internal/money"
@@ -45,14 +45,14 @@ func run() int {
 	var dropped atomic.Bool
 	server.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" && r.URL.Path == "/transfer" && !dropped.Load() {
-			body, err := io.ReadAll(io.LimitReader(r.Body, 4097))
+			body, err := io.ReadAll(io.LimitReader(r.Body, httpjws.MaxValue+1))
 			if err != nil {
 				return
 			}
 			r.Body.Close()
 			r.Body = io.NopCloser(bytes.NewReader(body))
-			var input ledger.Request
-			if len(body) <= 4096 && json.Unmarshal(body, &input) == nil && input.RequestID == *dropID {
+			input, fail := httpjws.Verify(string(body), source, time.Now())
+			if fail == nil && input.RequestID == *dropID {
 				captured := httptest.NewRecorder()
 				base.ServeHTTP(captured, r)
 				if captured.Code == 200 && dropped.CompareAndSwap(false, true) {
@@ -74,7 +74,7 @@ func run() int {
 		}
 		base.ServeHTTP(w, r)
 	})
-	if err := server.ServeTLS(listener, "", ""); err != nil && err != http.ErrServerClosed {
+	if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
 		return 1
 	}
 	return 0

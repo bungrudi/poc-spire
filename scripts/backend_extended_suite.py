@@ -160,7 +160,7 @@ def main():
             return old not in state.get('bundle_authority_ids',[]) and state.get('bundle_roots')==1 and hashlib.sha256(pem.encode()).hexdigest()==digest(runtime.public/'bundle.pem')
         wait_for(root_removed,'Revoked old root removed from SDK/public bundles',seconds=20)
         frozen_after=v2.ask('frozen-transfer','old-root-after-revoke')
-        if captured['expires_at']<=time.time() or frozen_after['outcome']!='tls_rejected' or not frozen_after['server_verified'] or 'money_http_status' in frozen_after or balances()['money_result']!=before_removal:
+        if captured['expires_at']<=time.time() or frozen_after.get('money_http_status')!=401 or not frozen_after['server_verified'] or balances()['money_result']!=before_removal:
             raise RuntimeError('Still-valid old-root credential survived native root revocation')
         passed('old-root-taint-rotation-and-revocation-propagation',{'active_root_operations_refused':True,
             'captured_credential':captured,'rotated_workload':renewed,'taint_alone_does_not_revoke':True,

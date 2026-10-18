@@ -92,7 +92,7 @@ def app_objects(value,image,stream,work,origin='https://127.0.0.1:18089'):
             else:
                 volumes.append({'name':'pki','secret':{'secretName':role+'-pki','defaultMode':0o440}});mount.append({'name':'pki','mountPath':'/kafka','readOnly':True})
                 args += ['-kafka-config','/kafka/client.json']
-                if role=='money':args += ['-listen',':8443','-startup-timeout','180s','-transport','signed-http']
+                if role=='money':args += ['-listen',':8443','-startup-timeout','180s']
                 else:
                     volumes += [{'name':'state','emptyDir':{'sizeLimit':'20Mi'}},{'name':'control','emptyDir':{'sizeLimit':'1Mi'}},{'name':'adapter-tmp','emptyDir':{'medium':'Memory','sizeLimit':'16Mi'}}]
                     mount += [{'name':'state','mountPath':'/state'},{'name':'control','mountPath':'/control'}]
@@ -100,14 +100,14 @@ def app_objects(value,image,stream,work,origin='https://127.0.0.1:18089'):
                            'args':['-role',role,'-run',value['run'],'-state','/state/private','-stream',stream],'env':env(value),
                            'securityContext':security(),'resources':resources(),
                            'volumeMounts':[{'name':'guard','mountPath':'/run/guard','readOnly':True},{'name':'state','mountPath':'/state'}]}]
-                    args += ['-operator-uid','10002','-reopen-control','-transport','signed-http','-money','http://money:8443']
+                    args += ['-operator-uid','10002','-reopen-control','-money','http://money:8443']
                     if role=='caller-trusted':args += ['-startup-timeout','180s']
                     else:
                         volumes.append({'name':'bundle','configMap':{'name':'spire-bundle'}});mount.append({'name':'bundle','mountPath':'/trust/spire','readOnly':True})
                         args += ['-public-bundle','/trust/spire/bundle.pem']
                     adapter_role=role.removeprefix('caller-')
                     containers.append({'name':'adapter','image':normal,'imagePullPolicy':'Never','command':['/control-adapter'],
-                         'args':['-role',adapter_role,'-run-guard','/run/guard/run.json','-run',value['run'],'-readiness-file','/tmp/readiness.json','-transport','signed-http'],
+                         'args':['-role',adapter_role,'-run-guard','/run/guard/run.json','-run',value['run'],'-readiness-file','/tmp/readiness.json'],
                          'env':env(value),'securityContext':security(10002),'resources':resources('64Mi'),
                          'readinessProbe':{'exec':{'command':['/kubernetes-ready']},'periodSeconds':2,'timeoutSeconds':1},
                          'volumeMounts':[{'name':'workload','mountPath':'/workload','readOnly':True},{'name':'guard','mountPath':'/run/guard','readOnly':True},
@@ -118,9 +118,12 @@ def app_objects(value,image,stream,work,origin='https://127.0.0.1:18089'):
         spec={'serviceAccountName':role,'automountServiceAccountToken':False,'securityContext':{'fsGroup':1000,'seccompProfile':{'type':'RuntimeDefault'}},
               'containers':containers,'volumes':volumes,'terminationGracePeriodSeconds':15}
         if init:spec['initContainers']=init
+        from kubernetes_mesh_identity import configure
+        template={'metadata':{'labels':labels,'annotations':annotations},'spec':spec}
+        configure(template)
         items.append({'apiVersion':'apps/v1','kind':'Deployment','metadata':{'name':role,'namespace':ns},
                       'spec':{'replicas':1,'strategy':{'type':'Recreate'},'selector':{'matchLabels':labels},
-                              'template':{'metadata':{'labels':labels,'annotations':annotations},'spec':spec}}})
+                              'template':template}})
     for name,role,port in [('money','money',8443),('trusted-control','caller-trusted',9001),('unidentified-control','caller-unidentified',9001),('kafka','kafka',9093),('ui','ui',8443)]:
         items.append({'apiVersion':'v1','kind':'Service','metadata':{'name':name,'namespace':ns},'spec':{'publishNotReadyAddresses':True,
                       'selector':{'poc-role':role},'ports':[{'name':'tcp-'+name,'port':port,'targetPort':port}]}})

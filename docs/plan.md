@@ -1,5 +1,13 @@
 # Delivery plan
 
+## Current source change — 18 October 2026
+
+The approved `remove-direct-app-mtls` change uses SVID-signed HTTP in Compose and
+Kubernetes, with separate SPIRE-issued Envoy SVIDs for mesh mTLS. Current contracts
+are in OpenSpec; the older milestones below retain their original observations.
+Implementation and focused checks precede a disposable mesh issuer/rotation run.
+No live cutover is authorized by this source change.
+
 ## Owner scope update — 11 October 2026
 
 The owner requested deployment at `spire.adianto.dev` and then explicitly

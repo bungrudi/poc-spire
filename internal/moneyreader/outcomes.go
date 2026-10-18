@@ -1,5 +1,5 @@
 // Package moneyreader reads outcomes using only the UI's own observer source
-// and the existing exact-Money SPIFFE mTLS verification policy.
+// and exact-Money SVID response-signature verification.
 package moneyreader
 
 import (
@@ -23,7 +23,6 @@ type Observer struct {
 	Target string
 	SVID   x509svid.Source
 	Bundle x509bundle.Source
-	Signed bool
 }
 
 func decode(raw []byte, out any) error {
@@ -47,13 +46,7 @@ func (o Observer) get(ctx context.Context, path string) ([]byte, int, error) {
 	}
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
-	var client *http.Client
-	var transport *http.Transport
-	if o.Signed {
-		client, transport = httpjws.Client(o.SVID, o.Bundle, identity.Money)
-	} else {
-		client, transport = identity.HTTPClient(identity.ClientTLS(o.SVID, o.Bundle, identity.Money))
-	}
+	client, transport := httpjws.Client(o.SVID, o.Bundle, identity.Money)
 	defer transport.CloseIdleConnections()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, o.Target+path, nil)
 	if err != nil {

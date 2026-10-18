@@ -1,5 +1,16 @@
 # Agent instructions
 
+## Owner scope update — 18 October 2026
+
+Rudi approved `remove-direct-app-mtls`, directed committing/pushing the OpenSpec
+before implementation, and authorized the signature-only application plus SPIRE
+mesh design discussed in the current conversation. See the change's `review.md`
+and spec commit `5a3f878`. This supersedes older direct-app-mTLS invariants below.
+All workload HTTP uses SVID-signed payloads in every profile. Envoy alone handles
+Kubernetes mesh mTLS using separate SPIRE-issued namespace/SA SVIDs and keys.
+Money always verifies the independent SPIRE chain, payload signature, exact
+application ID and freshness. No live rollout is included in this change.
+
 ## Owner OpenSpec adoption and workflow approval — 11 October 2026
 
 Rudi directly instructed the parent chat on 11 October 2026: “ok apply
@@ -86,10 +97,10 @@ Read in order:
 
 ## Security invariants for future implementation
 
-- Compose caller-to-money TLS terminates inside the Go money service. Kubernetes workload HTTP is plaintext inside Istio outer mTLS and authenticates a compact X.509-SVID JWS. No identity-terminating sidecar, forwarded identity header, plaintext fallback outside that approved mesh profile, or optional client-certificate mode.
+- Workload HTTP always authenticates a compact X.509-SVID JWS. Compose uses private unpublished signed HTTP; Kubernetes uses SPIRE-backed Istio outer mTLS. No direct application mTLS mode or forwarded-identity authentication is supported. Mesh and application SVIDs/keys remain separate.
 - Authenticate real X.509-SVIDs, then authorize exact SPIFFE IDs by route before business logic. Trust-domain membership alone is not transfer permission.
-- Clients verify the money service's exact SPIFFE ID. Use Go SPIFFE sources for rotation and verification; never use an application certificate-verification bypass.
-- Unidentified clients fail TLS, with no money-service HTTP status. An authenticated but unauthorized identity receives `403`. Keep those cases distinct in logs/UI.
+- Clients verify Money's exact SPIFFE ID in its correlated signed response. Use updating Go SPIFFE sources and independently trusted bundles for verification.
+- Unidentified clients reaching HTTP receive a signed `401` signature rejection. A valid but unauthorized signer receives `403`. Mesh denial has no verified Money response. Keep these outcomes distinct in logs/UI.
 - Same UID, same container, image labels, and binary paths alone are not executable identity. Verify agent-derived executable-digest selectors plus deployment restrictions against a pinned SPIRE release before claiming process attestation.
 - The two callers run in separate containers with the same UID/mapping and can reach both money and the Workload API socket. Include a controlled same-deployment wrong-executable test and a wrong-deployment approved-binary test.
 - Do not invent plugin options or selector syntax. Prefer verified built-in attestors; a custom attestor requires explicit scope approval. Do not silently downgrade to container identity.

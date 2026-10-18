@@ -156,3 +156,10 @@ image. It preserves approved retained `.runtime/identity` state and the protecte
 browser certificate. No credentials or protected runtime logs belong in Git.
 The project location is fixed in the service unit; moving it requires updating
 the unit, Nginx/renewal configuration and protected paths.
+# Source update — 18 October 2026
+
+The repository now uses signed workload HTTP in Compose and Kubernetes, with
+separate SPIRE SVIDs for Envoy mesh mTLS. This source revision has not been
+deployed to the named public demo. No application mTLS option remains. Treat
+the dated runtime observations below as historical; verify a fresh disposable
+profile before a separately authorized cutover.

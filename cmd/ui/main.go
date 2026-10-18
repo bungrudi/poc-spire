@@ -34,26 +34,26 @@ func run() error {
 	origin := flag.String("origin", "http://127.0.0.1:8080", "exact browser origin")
 	address := flag.String("listen", "unix:///state/browser.sock", "local Unix socket or remote HTTPS address")
 	admin := flag.String("admin", "/state/admin.sock", "owner-only local login socket")
-	target := flag.String("money", "https://money:8443", "fixed Money address")
+	target := flag.String("money", "http://money:8443", "fixed Money address")
 	tlsCert := flag.String("tls-cert", "", "provisioned remote browser certificate file")
 	tlsKey := flag.String("tls-key", "", "provisioned remote browser private key file")
 	kafkaStream := flag.String("kafka-stream", "", "opt-in combined demo stream (no broker credentials)")
-	controlMode := flag.String("control-transport", "uds", "uds, mtls, or signed-http")
-	trustedControl := flag.String("trusted-control", "https://trusted-control:9001", "fixed private trusted adapter origin")
-	unidentifiedControl := flag.String("unidentified-control", "https://unidentified-control:9001", "fixed private unidentified adapter origin")
+	controlMode := flag.String("control-transport", "uds", "uds or signed-http")
+	trustedControl := flag.String("trusted-control", "http://trusted-control:9001", "fixed private trusted adapter origin")
+	unidentifiedControl := flag.String("unidentified-control", "http://unidentified-control:9001", "fixed private unidentified adapter origin")
 	guardPath := flag.String("run-guard", "", "Kubernetes read-only run guard")
 	runID := flag.String("run", "", "expected Kubernetes run")
 	podUID := flag.String("pod-uid", os.Getenv("POC_POD_UID"), "expected UI Pod UID")
 	startupTimeout := flag.Duration("startup-timeout", 20*time.Second, "bounded identity startup wait")
 	readyPath := flag.String("readiness-file", "", "opt-in complete native readiness marker")
 	flag.Parse()
-	if *controlMode != "uds" && *controlMode != "mtls" && *controlMode != "signed-http" {
+	if *controlMode != "uds" && *controlMode != "signed-http" {
 		return errors.New("invalid control transport")
 	}
 	if *startupTimeout <= 0 || *startupTimeout > 180*time.Second {
 		return errors.New("invalid startup bound")
 	}
-	if (*controlMode == "mtls" || *controlMode == "signed-http") && (*mode != "demo" || *kafkaStream == "" || *guardPath == "" || *runID == "" || *podUID == "") {
+	if (*controlMode == "signed-http") && (*mode != "demo" || *kafkaStream == "" || *guardPath == "" || *runID == "" || *podUID == "") {
 		return errors.New("Kubernetes control requires explicit guarded full profile")
 	}
 	if *controlMode == "signed-http" && (!strings.HasPrefix(*target, "http://") || !strings.HasPrefix(*trustedControl, "http://") || !strings.HasPrefix(*unidentifiedControl, "http://")) {
@@ -102,15 +102,9 @@ func run() error {
 		return nil
 	}
 	remotes := map[string]controladapter.Remote{}
-	if *controlMode == "mtls" || *controlMode == "signed-http" {
+	if *controlMode == "signed-http" {
 		for role, endpoint := range map[string]string{"trusted": *trustedControl, "unidentified": *unidentifiedControl} {
-			var remote controladapter.Remote
-			var err error
-			if *controlMode == "signed-http" {
-				remote, err = controladapter.NewSignedRemote(source, role, endpoint)
-			} else {
-				remote, err = controladapter.NewRemote(source, role, endpoint)
-			}
+			remote, err := controladapter.NewRemote(source, role, endpoint)
 			if err != nil {
 				return err
 			}
@@ -130,13 +124,7 @@ func run() error {
 			return control.Call(ctx, socket, id)
 		},
 		Balances: func(ctx context.Context) (any, error) {
-			var client *http.Client
-			var transport *http.Transport
-			if *controlMode == "signed-http" {
-				client, transport = httpjws.Client(source, source, identity.Money)
-			} else {
-				client, transport = identity.HTTPClient(identity.ClientTLS(source, source, identity.Money))
-			}
+			client, transport := httpjws.Client(source, source, identity.Money)
 			defer transport.CloseIdleConnections()
 			req, _ := http.NewRequestWithContext(ctx, "GET", *target+"/balances", nil)
 			res, err := client.Do(req)
@@ -156,11 +144,11 @@ func run() error {
 			value["expected_server_id"] = identity.Money.String()
 			return value, nil
 		}}
-	if *controlMode == "mtls" || *controlMode == "signed-http" {
+	if *controlMode == "signed-http" {
 		deps.RunValid = (runguard.Config{Path: *guardPath, Run: *runID, Role: "ui", PodUID: *podUID}).Valid
 	}
 	if *kafkaStream != "" {
-		observer := moneyreader.Observer{Target: *target, SVID: source, Bundle: source, Signed: *controlMode == "signed-http"}
+		observer := moneyreader.Observer{Target: *target, SVID: source, Bundle: source}
 		socketFor := func(scenario string) string {
 			if scenario == "kafka-unidentified" {
 				return "/untrusted-control/api.sock"

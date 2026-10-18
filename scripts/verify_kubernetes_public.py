@@ -73,7 +73,7 @@ def main():
     result = {'source_image_revision': json.loads((work / 'normal-image.json').read_text())['source_revision'],
               'run': value['run'], 'cluster': value['cluster'], 'origin': ORIGIN,
               'initial_balances': initial, 'scenarios': [], 'browser_denials': []}
-    for scenario, expected in [('trusted', 'transfer_succeeded'), ('unidentified', 'tls_rejected'),
+    for scenario, expected in [('trusted', 'transfer_succeeded'), ('unidentified', 'signature_rejected'),
                                ('kafka-trusted', 'transfer_succeeded'), ('kafka-unidentified', 'money_rejected'),
                                ('kafka-tampered', 'money_rejected')]:
         # Each new logical case has its own persisted key; never replace it on retry.

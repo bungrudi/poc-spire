@@ -33,11 +33,11 @@ Existing POST /attempt SHALL accept exactly one request_id matching [A-Za-z0-9_-
 - **THEN** control rejects the peer with 403 or malformed command with 400 before executing
 
 ### Requirement: PC-03 Caller-owned authentication and no-SVID probe
-Non-mesh callers MUST keep direct mTLS transfers with their trusted SVID. Mesh callers MUST sign the Money payload with that SVID and MUST NOT use application mTLS. An unidentified mesh attempt that reaches Money MUST be signature rejection with no ledger effect. Unexpected issuance or HTTP success MUST fail. Kafka controls stay unchanged, and the UI MUST NOT receive producer keys.
+All trusted callers MUST sign the Money payload with their own current SVID and verify Money's correlated signed response. Application mTLS MUST NOT be supported. An unidentified attempt that reaches Money MUST be signature rejection with no ledger effect. Unexpected issuance or HTTP success MUST fail. Kafka controls stay unchanged, and the UI MUST NOT receive producer keys.
 
 #### Scenario: Trusted and unidentified attempts
 - **WHEN** each caller executes its fixed attempt on its profile
-- **THEN** non-mesh trusted succeeds with verified Money TLS evidence and unidentified ends in TLS rejection with no Money HTTP status, while mesh trusted succeeds by signed payload and mesh unidentified ends in signature rejection with no mutation
+- **THEN** trusted succeeds by signed payload with verified Money response evidence, and unidentified ends in HTTP 401 signature rejection with no mutation in both Compose and Kubernetes
 
 #### Scenario: Workload API is broken or unexpectedly issues identity
 - **WHEN** the API is unreachable, reports another failure or issues an identity to the unidentified caller
@@ -48,11 +48,11 @@ Non-mesh callers MUST keep direct mTLS transfers with their trusted SVID. Mesh c
 - **THEN** callers publish only their permitted menu cases, while existing POST `/attempt` behavior remains available
 
 ### Requirement: PC-04 Stable retry and distinct outcome provenance
-Sync results SHALL retain submitted IDs and distinct Money, TLS, signature, freshness, business and infrastructure outcomes. Mesh signature rejection MUST NOT be labeled as client-certificate TLS failure. Kafka controls SHALL return only bounded publication diagnostics. Lost or malformed responses MUST remain unknown until same-ID recovery. Only authenticated correlated Money receipts SHALL settle Kafka effects.
+Sync results SHALL retain submitted IDs and distinct Money, outer-transport, signature, freshness, business and infrastructure outcomes. Signature rejection MUST NOT be labeled as client-certificate TLS failure in any profile. Kafka controls SHALL return only bounded publication diagnostics. Lost or malformed responses MUST remain unknown until same-ID recovery. Only authenticated correlated Money receipts SHALL settle Kafka effects.
 
 #### Scenario: Stable successful response
 - **WHEN** the caller receives a valid Money result for the submitted request ID
-- **THEN** the control response includes that ID, outcome, actual Money status and supported verified-server or result evidence
+- **THEN** the control response includes that ID, outcome, actual Money status and authenticated Money response evidence correlated by exact signer, method, path and request ID
 
 #### Scenario: Response is lost or cannot be correlated
 - **WHEN** control loses a response or receives malformed, oversized or mismatched evidence

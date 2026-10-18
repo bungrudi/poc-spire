@@ -2,14 +2,11 @@ package identity
 
 import (
 	"context"
-	"crypto/tls"
-	"net/http"
 	"strings"
 	"time"
 
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
-	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"google.golang.org/grpc/codes"
@@ -41,35 +38,10 @@ func Source(ctx context.Context, address string) (*workloadapi.X509Source, error
 	}
 }
 
-func hardened(config *tls.Config) *tls.Config {
-	config.MinVersion = tls.VersionTLS13
-	config.SessionTicketsDisabled = true
-	config.ClientSessionCache = nil
-	config.NextProtos = []string{"http/1.1"}
-	return config
-}
-
-func ServerTLS(svid x509svid.Source, bundle x509bundle.Source) *tls.Config {
-	// SDK verification authenticates the SVID; exact route permission is applied
-	// separately in the money handler. No application verification bypass.
-	return hardened(tlsconfig.MTLSServerConfig(svid, bundle,
-		tlsconfig.AuthorizeMemberOf(spiffeid.RequireTrustDomainFromString("poc.internal"))))
-}
-
-func ClientTLS(svid x509svid.Source, bundle x509bundle.Source, server spiffeid.ID) *tls.Config {
-	return hardened(tlsconfig.MTLSClientConfig(svid, bundle, tlsconfig.AuthorizeID(server)))
-}
-
-func NoCertificateTLS(bundle x509bundle.Source, server spiffeid.ID) *tls.Config {
-	return hardened(tlsconfig.TLSClientConfig(bundle, tlsconfig.AuthorizeID(server)))
-}
-
-func HTTPClient(config *tls.Config) (*http.Client, *http.Transport) {
-	transport := &http.Transport{TLSClientConfig: config, DisableKeepAlives: true,
-		ForceAttemptHTTP2: false, TLSHandshakeTimeout: 3 * time.Second,
-		ResponseHeaderTimeout: 5 * time.Second, MaxConnsPerHost: 8}
-	return &http.Client{Transport: transport, Timeout: 8 * time.Second,
-		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, transport
+// Material supplies rotating signing credentials and independently trusted bundles.
+type Material interface {
+	x509svid.Source
+	x509bundle.Source
 }
 
 // Current checks cached source material without equating a disconnected issuer watch with revocation.

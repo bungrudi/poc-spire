@@ -1,5 +1,16 @@
 # Workspace brief
 
+## Current source update — 18 October 2026
+
+The owner approved [signature-only apps and SPIRE mesh credentials](openspec/changes/remove-direct-app-mtls/).
+All workload HTTP uses SVID-signed requests/responses. Money independently checks
+its SPIRE bundle, the supplied public certificate chain, payload signature,
+exact caller ID and freshness before effects. Go has no direct workload mTLS
+mode. Envoy consumes separate SPIRE-issued namespace/SA SVIDs through SDS/CSI.
+Compose HTTP stays private and has no transport encryption. Browser HTTPS,
+Kafka broker TLS and executable/deployment attestation remain required.
+This source update has not been rolled out; dated observations below are historical.
+
 ## Owner scope update — 11 October 2026
 
 The owner requested deployment at `spire.adianto.dev` and then explicitly
@@ -27,7 +38,7 @@ The technical architecture and security rationale are in [RFC 0001](docs/rfcs/00
 | --- | --- |
 | R1 | Go applications, deployed with Docker Compose; no Kubernetes requirement. |
 | R2 | One money service owns a fake, in-memory ledger and a transfer endpoint. |
-| R3 | The money service itself verifies the calling workload's identity; no mTLS-terminating sidecar. |
+| R3 | Money verifies the caller's SVID chain and payload signature itself; mesh mTLS cannot substitute for that process authentication. |
 | R4 | Two caller processes: one SPIRE-identified and authorized, one unidentified. UI buttons trigger the respective processes, not direct browser transfers. |
 | R5 | Identity must distinguish executables running as the same user; UID-only or container-only identity is insufficient. |
 | R6 | The web UI must support remote access, not just localhost. |
@@ -41,8 +52,8 @@ The technical architecture and security rationale are in [RFC 0001](docs/rfcs/00
 | Process topology | Separate unprivileged caller containers, same numeric UID and same UID mapping. This preserves useful isolation; a shared container would introduce same-user memory/credential attacks that executable attestation alone does not solve. |
 | Proof of process attestation | Combine deployment selectors with an executable digest derived from the Workload API peer PID. Include a controlled wrong-executable test in the trusted deployment. Both callers get socket access; access denial alone does not count as the proof. |
 | Scope of 'process identity' | Approved executable in an approved deployment, not a unique PID identity or continuous runtime-integrity guarantee. |
-| TLS failure semantics | Missing/untrusted certificate: reject TLS. Valid SPIFFE identity but unauthorized role: HTTP `403`. |
-| Browser edge | Existing VPS Nginx serves browser HTTPS and verifies re-encrypted HTTPS to Go UI. Money workload TLS still terminates only in Go Money; browser and SPIFFE PKI remain separate. |
+| Authentication outcomes | Missing/invalid signature: HTTP `401`. Current valid signer without permission: `403`. Expired valid signature: `403 credential_not_current`. Unverified responses remain unknown. |
+| Browser edge | Nginx and Go UI retain browser HTTPS. Money uses signed HTTP; Kubernetes mesh TLS terminates in Envoy using a separate SPIRE SVID. Browser PKI remains separate. |
 | Human access | Owner explicitly requested an assumed operator and removed OIDC. Anyone may trigger fake transfers; disclosure, secure sessions and CSRF remain. |
 | Trigger channel | Private, per-caller Unix-domain sockets mounted into the UI and the corresponding caller only. Callers expose no network trigger endpoint. |
 | UI balance reads | A distinct UI SPIFFE identity can read balances but cannot transfer. The UI never borrows the trusted caller's credentials. |

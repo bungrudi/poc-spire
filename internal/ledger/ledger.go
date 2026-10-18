@@ -66,6 +66,17 @@ func (l *Ledger) Transfer(caller string, req Request) (Result, int) {
 	return l.transfer(caller, req)
 }
 
+// TransferCurrent checks the signed credential inside the same lock as history
+// and balances. The local guard performs no I/O. A failed guard records nothing.
+func (l *Ledger) TransferCurrent(caller string, req Request, current func() bool) (Result, int) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if current == nil || !current() {
+		return Result{RequestID: req.RequestID, Error: "credential_not_current"}, 403
+	}
+	return l.transfer(caller, req)
+}
+
 // transfer runs under the shared acceptance lock for either ingress.
 func (l *Ledger) transfer(caller string, req Request) (Result, int) {
 	r := Result{RequestID: req.RequestID, Caller: caller, Amount: req.Amount, Currency: req.Currency, Snapshot: l.snapshot()}

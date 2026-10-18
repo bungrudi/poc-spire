@@ -3,11 +3,9 @@ package controladapter
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -15,8 +13,6 @@ import (
 	"time"
 
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
-	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
-	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"poc-spire/internal/control"
 	"poc-spire/internal/identity"
 	"poc-spire/internal/kafkacaller"
@@ -47,15 +43,7 @@ func current(r *http.Request, now time.Time) bool {
 	if sig, ok := r.Context().Value(signatureKey{}).(verifiedSignature); ok {
 		return sig.current(now)
 	}
-	if r.TLS == nil || !r.TLS.HandshakeComplete || len(r.TLS.PeerCertificates) == 0 {
-		return false
-	}
-	for _, cert := range r.TLS.PeerCertificates {
-		if now.Before(cert.NotBefore) || !now.Before(cert.NotAfter) {
-			return false
-		}
-	}
-	return true
+	return false
 }
 
 func Handler(cfg Config) http.Handler {
@@ -76,13 +64,11 @@ func Handler(cfg Config) http.Handler {
 			return
 		}
 		var peer spiffeid.ID
-		var err error
 		if sig, ok := r.Context().Value(signatureKey{}).(verifiedSignature); ok {
 			peer = sig.id
-		} else if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
-			peer, err = x509svid.IDFromCert(r.TLS.PeerCertificates[0])
+
 		}
-		if err != nil || peer != identity.Observer {
+		if peer != identity.Observer {
 			fail(403, "forbidden")
 			return
 		}
@@ -236,40 +222,8 @@ func observe(next http.Handler, role string, audit io.Writer) http.Handler {
 			observation["verified_peer"] = sig.id.String()
 			observation["transport"] = "signed-http"
 		}
-		if r.TLS != nil && r.TLS.HandshakeComplete {
-			observation["tls_version"] = tls.VersionName(r.TLS.Version)
-			observation["tls_session_resumed"] = r.TLS.DidResume
-			if len(r.TLS.PeerCertificates) > 0 {
-				if peer, err := x509svid.IDFromCert(r.TLS.PeerCertificates[0]); err == nil {
-					observation["verified_peer"] = peer.String()
-				}
-			}
-		}
 		mutex.Lock()
 		defer mutex.Unlock()
 		json.NewEncoder(audit).Encode(observation)
 	})
-}
-
-func Server(source *workloadapi.X509Source, cfg Config, audit io.Writer) *http.Server {
-	if audit == nil {
-		audit = io.Discard
-	}
-	server := &http.Server{Handler: observe(Handler(cfg), cfg.Role, audit), TLSConfig: identity.ServerTLS(source, source),
-		TLSNextProto: map[string]func(*http.Server, *tls.Conn, http.Handler){}, ReadHeaderTimeout: time.Second,
-		ReadTimeout: 2 * time.Second, WriteTimeout: 12 * time.Second, MaxHeaderBytes: 2048,
-		ErrorLog: log.New(audit, "control_tls: ", 0)}
-	server.SetKeepAlivesEnabled(false)
-	return server
-}
-
-func Client(source *workloadapi.X509Source, role string) (*http.Client, *http.Transport, error) {
-	server, err := ID(role)
-	if err != nil {
-		return nil, nil, err
-	}
-	client, transport := identity.HTTPClient(identity.ClientTLS(source, source, server))
-	client.Timeout = 10 * time.Second
-	transport.ResponseHeaderTimeout = 10 * time.Second
-	return client, transport, nil
 }

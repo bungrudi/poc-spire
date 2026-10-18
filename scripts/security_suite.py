@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""M3 direct mTLS/API tests against real SPIRE; no remote edge exposure."""
+"""M3 signed HTTP/API tests against real SPIRE; no remote edge exposure."""
 from concurrent.futures import ThreadPoolExecutor
 import json
 import os
@@ -24,7 +24,7 @@ def main():
     report = {"phase": "M3", "status": "failed", "tests": [], "persistent_identity_state_retained": True}
     runtime = None
     try:
-        print("Building direct-mTLS money service and security instrumentation", flush=True)
+        print("Building signed-HTTP Money service and security instrumentation", flush=True)
         for name in ["money", "security-client"]:
             run(["go", "build", "-trimpath", "-o", str(work / name), "./cmd/" + name], env=env)
             (work / name).chmod(0o555)
@@ -63,7 +63,7 @@ def main():
                  ("self-signed-allowed-uri", "unidentified", ["-mode", "self-signed"]),
                  ("valid-wrong-id", "wrong-id", ["-status", "403"]),
                  ("observer-cannot-transfer", "observer-probe", ["-status", "403"]),
-                 ("wrong-server-identity", "trusted-probe", ["-target", "https://impostor:8443", "-status", "0"])]
+                 ("wrong-server-identity", "trusted-probe", ["-target", "http://impostor:8443", "-status", "0"])]
         for case, service, flags in cases:
             _, value = probe(service, flags)
             after = probe("observer-probe", ["-action", "balances"])[1]["body"]
@@ -89,8 +89,8 @@ def main():
         report["tests"].append({"case":"lost-response-conflict-invalid-input", "ledger_unchanged":True})
         print("Concurrent duplicates, stable retries and conflicts: passed", flush=True)
         _, rotation = probe("trusted-probe", ["-mode","rotation"], timeout=90)
-        report["tests"].append({"case":"rotation-expiry-and-connection-reuse", "result":rotation})
-        print("Real rotation, expired client and attempted session/connection reuse: passed", flush=True)
+        report["tests"].append({"case":"rotation-expiry-and-signed-retry", "result":rotation})
+        print("Real rotation, expired signature and signed retry: passed", flush=True)
         final = probe("observer-probe", ["-action","balances"])[1]["body"]
         if final["version"] != 3:
             raise RuntimeError("Expired credential or reuse unexpectedly mutated the ledger")

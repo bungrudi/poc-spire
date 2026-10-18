@@ -31,11 +31,13 @@ import (
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/cryptosigner"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
+	"poc-spire/internal/httpjws"
 	"poc-spire/internal/identity"
 	"poc-spire/internal/kafkacmd"
 	"poc-spire/internal/kafkaio"
 	"poc-spire/internal/ledger"
 	"poc-spire/internal/moneyreader"
+	"poc-spire/internal/signaturetest"
 )
 
 var command = flag.String("fixture-case", "", "fixed acceptance case; test build only")
@@ -147,35 +149,17 @@ func Run(ctx context.Context, source *workloadapi.X509Source) bool {
 	result := map[string]any{"case": *command}
 	fail := func(reason string) { result["error"] = reason; json.NewEncoder(os.Stdout).Encode(result); os.Exit(1) }
 	if *command == "no-certificate-reader" {
-		config := identity.NoCertificateTLS(source, identity.Money)
-		verified := false
-		verify := config.VerifyPeerCertificate
-		config.VerifyPeerCertificate = func(raw [][]byte, chains [][]*x509.Certificate) error {
-			err := verify(raw, chains)
-			if err == nil {
-				verified = true
-			}
-			return err
+		verified, status, err := signaturetest.Exchange(ctx, nil, source, identity.Money, "http://money:8443", "GET", "/kafka/outcomes", "unsigned", nil, time.Now())
+		if err != nil || verified == nil || status != 401 {
+			fail("unsigned_reader_not_signature_denial")
 		}
-		client, transport := identity.HTTPClient(config)
-		defer transport.CloseIdleConnections()
-		request, _ := http.NewRequestWithContext(ctx, "GET", "https://money:8443/kafka/outcomes", nil)
-		request.Header.Set("X-Spiffe-ID", identity.Observer.String())
-		response, err := client.Do(request)
-		if response != nil {
-			response.Body.Close()
-			fail("no_certificate_obtained_http_response")
-		}
-		if err == nil || !verified || !strings.Contains(err.Error(), "tls: certificate required") {
-			fail("no_certificate_probe_not_tls_denial")
-		}
-		json.NewEncoder(os.Stdout).Encode(map[string]any{"server_verified": true, "money_http_status_present": false, "outcome": "tls_client_rejected"})
+		json.NewEncoder(os.Stdout).Encode(map[string]any{"server_verified": true, "money_http_status": 401, "money_http_status_present": true, "outcome": "signature_rejected"})
 		return true
 	}
 	if *command == "wrong-reader" {
-		client, transport := identity.HTTPClient(identity.ClientTLS(source, source, identity.Money))
+		client, transport := httpjws.Client(source, source, identity.Money)
 		defer transport.CloseIdleConnections()
-		request, _ := http.NewRequestWithContext(ctx, "GET", "https://money:8443/kafka/outcomes", nil)
+		request, _ := http.NewRequestWithContext(ctx, "GET", "http://money:8443/kafka/outcomes", nil)
 		response, err := client.Do(request)
 		if err != nil {
 			fail("wrong_reader_transport_failed")
@@ -188,7 +172,7 @@ func Run(ctx context.Context, source *workloadapi.X509Source) bool {
 		return true
 	}
 	if *command == "metadata" || *command == "receipt" {
-		observer := moneyreader.Observer{Target: "https://money:8443", SVID: source, Bundle: source}
+		observer := moneyreader.Observer{Target: "http://money:8443", SVID: source, Bundle: source}
 		if *command == "metadata" {
 			m, err := observer.Metadata(ctx)
 			if err != nil {

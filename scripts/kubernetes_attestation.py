@@ -34,18 +34,21 @@ def pod(value, image, name, sa, role, command, adapter=False):
                            'volumeMounts': [{'name': 'workload', 'mountPath': '/workload', 'readOnly': True},
                                             {'name': 'control', 'mountPath': '/control'}]})
         volumes.append({'name': 'control', 'emptyDir': {'sizeLimit': '1Mi'}})
-    return {'apiVersion': 'v1', 'kind': 'Pod', 'metadata': {'name': name, 'namespace': 'poc-' + value['run'],
+    result = {'apiVersion': 'v1', 'kind': 'Pod', 'metadata': {'name': name, 'namespace': 'poc-' + value['run'],
              'labels': {'poc-run': value['run'], 'poc-role': role},
              'annotations': {'sidecar.istio.io/nativeSidecar': 'false'}},
             'spec': {'serviceAccountName': sa, 'automountServiceAccountToken': False,
                      'securityContext': {'fsGroup': 1000, 'seccompProfile': {'type': 'RuntimeDefault'}},
                      'containers': containers, 'volumes': volumes}}
+    from kubernetes_mesh_identity import configure
+    configure(result)
+    return result
 
 
 def observed(value, name, container):
     for attempt in range(120):
         item = json.loads(runtime.kube(value, '-n', 'poc-' + value['run'], 'get', 'pod', name, '-o', 'json'))
-        status = next((c for c in item.get('status', {}).get('containerStatuses', []) if c['name'] == container and c.get('imageID')), None)
+        status = next((c for c in item.get('status', {}).get('containerStatuses', []) + item.get('status', {}).get('initContainerStatuses', []) if c['name'] == container and c.get('imageID')), None)
         if status:
             if '@sha256:' not in status['imageID']:
                 raise RuntimeError('actual immutable requesting-container ImageID missing')
@@ -64,6 +67,10 @@ def register(value, parent, sid, item, container, image_id, binary_hash, uid):
     if owners:
         if len(owners)!=1 or not owners[0].get('controller') or owners[0]['kind']!='ReplicaSet':raise RuntimeError('unexpected requesting-Pod owner')
         selectors.append('k8s:pod-owner-uid:'+owners[0]['kind']+':'+owners[0]['uid'])
+    ensure_entry(value, parent, sid, selectors)
+
+
+def ensure_entry(value, parent, sid, selectors):
     entries = json.loads(admin(value, 'entry', 'show', '-socketPath', '/run/spire/admin/api.sock', '-output', 'json')).get('entries', [])
     matching = [entry for entry in entries if sid in spiffe_ids(entry.get('spiffe_id', {}))]
     if matching:
@@ -124,6 +131,9 @@ def main(resume=False):
     parents = [sid for agent in agents for sid in spiffe_ids(agent.get('id', {}))]
     if parents != [expected_parent]:
         raise RuntimeError('actual PSAT parent/node UID mismatch')
+    from kubernetes_mesh_identity import register_proxy
+    for name in ('money', 'trusted', 'wrong-deployment'):
+        register_proxy(value, expected_parent, name)
     for name, container, sid, binary, uid in [
         ('money', 'money', 'spiffe://poc.internal/money', 'money', 1000),
         ('trusted', 'caller', 'spiffe://poc.internal/caller/trusted', 'trusted-caller', 1000),
@@ -133,7 +143,7 @@ def main(resume=False):
     runtime.kube(value, '-n', ns, 'wait', '--for=condition=Ready', 'pod/money', 'pod/trusted', 'pod/wrong-deployment', '--timeout=180s', timeout=190)
     control = json.loads(runtime.kube(value, '-n', ns, 'exec', 'trusted', '-c', 'adapter', '--', '/control-client', '-socket', '/control/api.sock', '-id', 'k8s-early-trusted'))
     if control.get('money_http_status') != 200:
-        raise RuntimeError('actual attested trusted caller did not complete direct Money mTLS')
+        raise RuntimeError('actual attested trusted caller did not complete signed Money HTTP')
     denied = []
     for pod_name, container in [('trusted', 'caller'), ('wrong-deployment', 'caller')]:
         raw = runtime.kube(value, '-n', ns, 'exec', pod_name, '-c', container, '--', '/attestation-ineligible', '-target', 'money:8443', '-expect-denied')
@@ -144,7 +154,7 @@ def main(resume=False):
     adapter = json.loads(runtime.kube(value, '-n', ns, 'exec', 'trusted', '-c', 'adapter', '--', '/security-client', '-status', '403', '-id', 'k8s-early-control-denied'))
     if adapter.get('money_http_status') != 403 or not adapter.get('server_verified'):
         raise RuntimeError('control-only current SVID/Money policy proof missing')
-    result = {'actual_trusted_caller_mtls': control, 'uid10002_control_identity_money403': adapter,
+    result = {'actual_trusted_caller_signed_http': control, 'uid10002_control_identity_money403': adapter,
               'denials': denied, 'parent': expected_parent, 'hold_application_until_proxy_starts': True,
               'final_actual_adapter_binary_and_full_migration': 'NOT RUN',
               'note': 'early development gate; wrong-deployment approved-binary and network-policy/layer evidence still required'}

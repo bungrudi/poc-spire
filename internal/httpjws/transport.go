@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -16,6 +17,8 @@ import (
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"poc-spire/internal/kafkacmd"
 )
+
+var ErrUnknownCommit = errors.New("unknown_commit")
 
 // Client signs each logical request body and accepts a response only when the
 // named server SVID signed that same method, path and request ID.
@@ -66,16 +69,16 @@ func (t *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	outgoing.Header.Set("Content-Type", "application/jose")
 	response, err := t.base.RoundTrip(outgoing)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", ErrUnknownCommit, err)
 	}
 	raw, err := io.ReadAll(io.LimitReader(response.Body, MaxValue+1))
 	response.Body.Close()
 	if err != nil || len(raw) > MaxValue {
-		return nil, errors.New("response_signature_rejected")
+		return nil, fmt.Errorf("%w: response_signature_rejected", ErrUnknownCommit)
 	}
 	verified, fail := Verify(string(raw), t.bundle, time.Now())
 	if fail != nil || verified.Signer != t.server || verified.Method != req.Method || verified.Path != req.URL.Path || verified.RequestID != requestID {
-		return nil, errors.New("response_signature_rejected")
+		return nil, fmt.Errorf("%w: response_signature_rejected", ErrUnknownCommit)
 	}
 	response.Body = io.NopCloser(bytes.NewReader(verified.Body))
 	response.ContentLength = int64(len(verified.Body))

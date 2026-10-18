@@ -120,13 +120,13 @@ def main():
         passed('T18-wrong-bundle-missing-bundle-and-socket',{'unrelated_ca_bundle_roots':1,'wrong_bundle':wrong,'missing_bundle':missing_bundle,'missing_socket':missing_socket,'ledger_unchanged':True})
 
         lost=trusted.ask('transfer','lost-response')
-        if lost['outcome']!='unknown_commit' or not lost['server_verified'] or 'money_http_status' in lost:
+        if lost['outcome']!='unknown_commit' or lost['server_verified'] or 'money_http_status' in lost:
             raise RuntimeError('Dropped committed response did not produce unknown outcome')
         after=balances()['money_result']
         retry=trusted.ask('transfer','lost-response')
         if after['version']!=1 or retry['outcome']!='transfer_succeeded' or not retry['money_result']['replay'] or balances()['money_result']!=after:
             raise RuntimeError('Dropped response retry caused duplicate/missing commit')
-        passed('T16-real-post-commit-connection-drop',{'unknown_outcome':lost,'retry':retry,'ledger_version':1,'drop_point':'Money fixture closes TLS connection after real handler commit before response'})
+        passed('T16-real-post-commit-connection-drop',{'unknown_outcome':lost,'retry':retry,'ledger_version':1,'drop_point':'Money fixture closes HTTP connection after real signed-handler commit before response; no authenticated response was received'})
 
         cached=trusted.ask('status');entry=entries['spiffe://poc.internal/caller/trusted']
         run([runtime.server,'entry','delete','-socketPath',runtime.server_socket,'-entryID',entry]);runtime.created_entries.remove(entry)
@@ -157,13 +157,13 @@ def main():
         # file; if another preparation races this observation, retry the equality.
         wait_for(lambda:hashlib.sha256(run([runtime.server,'bundle','show','-socketPath',runtime.server_socket,'-format','pem'],timeout=3).stdout.encode()).hexdigest()==digest(runtime.public/'bundle.pem'), 'Public bundle catch-up',seconds=8)
         current=trusted.ask('transfer','post-ca-rollover')
-        if current['outcome']!='transfer_succeeded':raise RuntimeError('Fresh TLS transfer failed after CA rollover')
+        if current['outcome']!='transfer_succeeded':raise RuntimeError('Fresh signed transfer failed after CA rollover')
         after=balances()['money_result']
         if after['version']!=2:raise RuntimeError('Rollover/revocation changed ledger unexpectedly')
         no_cert=unidentified.ask('unidentified')
-        if no_cert['outcome']!='tls_rejected' or not no_cert['server_verified'] or 'money_http_status' in no_cert or balances()['money_result']!=after:
+        if no_cert['outcome']!='signature_rejected' or not no_cert['server_verified'] or no_cert.get('money_http_status')!=401 or balances()['money_result']!=after:
             raise RuntimeError('No-cert client could not verify rotated Money then demonstrate client rejection')
-        passed('real-ca-rollover-and-public-bundle-refresh',{'initial_source':first,'rotated':rotation,'money_tls_verified':True,'public_no_cert_probe':no_cert,'atomic_public_file_mode':oct((runtime.public/'bundle.pem').stat().st_mode&0o777),'old_root_pruning_tested':False})
+        passed('real-ca-rollover-and-public-bundle-refresh',{'initial_source':first,'rotated':rotation,'money_signature_verified':True,'public_unsigned_probe':no_cert,'atomic_public_file_mode':oct((runtime.public/'bundle.pem').stat().st_mode&0o777),'old_root_pruning_tested':False})
 
         run(compose+['restart','money'],env=env)
         reset={}
@@ -188,7 +188,7 @@ def main():
         after=balances()['money_result']
         wait_for(lambda:time.time()>before_outage['expires_at']+1,'Caller credential expiry during server outage',seconds=40)
         stale=trusted.ask('transfer','outage-expired')
-        if stale['outcome']!='tls_rejected' or not stale['server_verified'] or 'money_http_status' in stale or balances()['money_result']!=after:
+        if stale['outcome']!='credential_not_current' or stale['server_verified'] or 'money_http_status' in stale or balances()['money_result']!=after:
             raise RuntimeError('Expired source transferred during SPIRE outage')
         if digest(runtime.public/'bundle.pem')!=public_good:raise RuntimeError('Outage replaced the last authenticated public bundle')
         passed('T18-server-outage-valid-cache-then-expiry',{'valid_cached_attempt':during,'expired_attempt':stale,'ledger_unchanged_after_expiry':True,'last_verified_bundle_preserved':True})

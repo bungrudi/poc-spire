@@ -51,7 +51,7 @@ Demo sessions MUST be opaque in-memory sessions with Secure/HttpOnly/SameSite=La
 - **THEN** the UI rejects before dispatching a caller command, with 403 for the boundary or 401 for missing/expired session
 
 ### Requirement: UI-04 Fixed asynchronous attempts and stable retry
-Existing POST /api/attempts SHALL accept only trusted/unidentified caller and browser_key [A-Za-z0-9_-]{32,128}, derive IDs from issuer/subject/key and return 202. Pending/done repeats SHALL reuse attempts; retryable failures SHALL retain IDs. These scenarios SHALL be labeled Sync (HTTP/mTLS). Separate Kafka creation SHALL retain the ID derivation/ownership boundary and original deadline; public ownership remains shared.
+Existing POST /api/attempts SHALL accept only trusted/unidentified caller and browser_key [A-Za-z0-9_-]{32,128}, derive IDs from issuer/subject/key and return 202. Pending/done repeats SHALL reuse attempts; retryable failures SHALL retain IDs. These scenarios SHALL be labeled Sync (signed HTTP). Separate Kafka creation SHALL retain the ID derivation/ownership boundary and original deadline; public ownership remains shared.
 
 #### Scenario: Repeat after UI restart and renewed session
 - **WHEN** a visitor repeats the same key after a UI-only restart while Money continues
@@ -96,11 +96,11 @@ The optional local profile SHALL use a private UI Unix socket behind a literal l
 - **AND** demo mode does not enable the local admin listener
 
 ### Requirement: UI-07 Fixed Sync and Async scenario groups
-The combined UI SHALL keep existing trusted/unidentified scenarios labeled Sync (HTTP/mTLS) and add only kafka-trusted, kafka-unidentified and kafka-tampered labeled Async (Kafka). POST /api/kafka-attempts MUST accept only scenario/browser_key/current stream_id under existing CSRF/origin/session/operator/body limits. Existing browser/private Sync schemas MUST remain unchanged; arbitrary payloads and destinations are forbidden.
+The combined UI SHALL keep existing trusted/unidentified scenarios labeled Sync (signed HTTP) and add only kafka-trusted, kafka-unidentified and kafka-tampered labeled Async (Kafka). POST /api/kafka-attempts MUST accept only scenario/browser_key/current stream_id under existing CSRF/origin/session/operator/body limits. Existing browser/private Sync schemas MUST remain unchanged; arbitrary payloads and destinations are forbidden.
 
 #### Scenario: Existing Sync attempts remain intact
 - **WHEN** an operator chooses either existing Sync scenario
-- **THEN** the same HTTP/mTLS caller path and background attempt/polling UX execute with their original outcomes
+- **THEN** the signed HTTP caller path and existing background attempt/polling UX execute; trusted succeeds and unidentified reports signature rejection without mutation
 
 #### Scenario: Fixed Kafka scenario is selected
 - **WHEN** the configured combined profile accepts one allowed Async scenario and current stream ID
@@ -111,7 +111,7 @@ The combined UI SHALL keep existing trusted/unidentified scenarios labeled Sync 
 - **THEN** UI rejects before dispatch; a new stream cannot silently retry an old attempt with a refreshed deadline
 
 ### Requirement: UI-08 Authenticated correlated Money outcomes
-Kafka terminal UI evidence MUST come from exact-Money observer reads matched to retained digests. Non-mesh reads use Money mTLS. Mesh reads use Money's SVID response signature and no application certificate. Broker acknowledgement, logs and claimed IDs MUST NOT imply success. Invalid-JWS rejection stays unattributed. Rejection requires every potentially submitted variant settled with no effect.
+Kafka terminal UI evidence MUST come from exact-Money observer reads matched to retained digests. All reads use signed HTTP and verify Money's SVID response signature with method/path/request-ID correlation; no application TLS certificate substitutes for that signature. Broker acknowledgement, logs and claimed IDs MUST NOT imply success. Invalid-JWS rejection stays unattributed. Rejection requires every potentially submitted variant settled with no effect.
 
 #### Scenario: Authenticated successful receipt
 - **WHEN** Money returns a matching-instance and digest terminal applied or replayed result for the expected trusted producer, request ID and fixed transfer
@@ -128,6 +128,10 @@ Kafka terminal UI evidence MUST come from exact-Money observer reads matched to 
 #### Scenario: Mesh observer read has no application certificate
 - **WHEN** the UI reads a Kafka outcome on the Kubernetes mesh profile
 - **THEN** it accepts the result only from Money's SVID signature and does not present an application client certificate
+
+#### Scenario: Compose observer authenticates its reads
+- **WHEN** the Compose UI reads balances or an enabled Kafka outcome
+- **THEN** it signs the request with its observer SVID and accepts only Money's current, trusted and correlated response signature; missing, tampered or wrong-ID responses remain unverified
 
 ### Requirement: UI-09 Bounded recovery without deadline refresh
 Kafka polling SHALL use a 30-second worker budget, bounded one-second/variant polling and existing quotas. UI restart MUST recover initialized caller state and retain browser key/stream, original deadline and all potentially submitted digests. Timeout/404/evidence expiry/reset MUST remain unknown. After deadline or state loss, UI MUST NOT recreate/re-sign a retry or auto-republish under a changed Money instance.

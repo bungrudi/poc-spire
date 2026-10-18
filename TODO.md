@@ -1,5 +1,17 @@
 # TODO — SPIRE process-identity PoC
 
+## Current source change — 18 October 2026
+
+- [x] Remove direct application mTLS and use signed requests/responses in every profile.
+- [x] Keep Money's independent chain/signature/ID checks and guard freshness under the ledger lock.
+- [x] Wire SPIRE SDS/CSI into proxies, narrow proxy grants and matching mesh policies.
+- [x] Update deterministic Go/Python checks and current OpenSpec contracts.
+- [ ] Observe actual mesh SVID issuer and rotation in a fresh disposable Kubernetes run.
+- [ ] Deploy the new source; no live cutover is included in this change.
+
+The [change verification](openspec/changes/remove-direct-app-mtls/verification.md)
+separates new checks from the earlier observations below.
+
 ## Owner scope update — 11 October 2026
 
 The owner requested deployment at `spire.adianto.dev` and then explicitly

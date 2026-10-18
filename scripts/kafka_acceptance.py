@@ -207,7 +207,7 @@ class Acceptance:
         for scenario in ['trusted','unidentified','kafka-trusted','kafka-unidentified','kafka-tampered']:
             attempt,key=s.attempt(scenario)
             result=attempt['kafka_evidence'] if scenario.startswith('kafka-') else attempt['caller_evidence']
-            expected='money_rejected' if scenario in ['kafka-unidentified','kafka-tampered'] else 'tls_rejected' if scenario=='unidentified' else 'transfer_succeeded'
+            expected='money_rejected' if scenario in ['kafka-unidentified','kafka-tampered'] else 'signature_rejected' if scenario=='unidentified' else 'transfer_succeeded'
             if attempt['status']!='done' or result['outcome']!=expected:raise RuntimeError('Fixed scenario failed')
             self.pass_case('fixed-'+scenario,{'outcome':expected})
         for service,binary in [('trusted-caller','/ui'),('untrusted-caller','/trusted-caller')]:
