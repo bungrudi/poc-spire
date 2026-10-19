@@ -23,6 +23,14 @@ def policies(value):
             'spec':{'selector':{'matchLabels':{'poc-role':'ui'}},'portLevelMtls':{'8443':{'mode':'DISABLE'}}}},
            {'apiVersion':'security.istio.io/v1','kind':'AuthorizationPolicy','metadata':meta('browser-only'),
             'spec':{'selector':{'matchLabels':{'poc-role':'ui'}},'rules':[{'to':[{'operation':{'ports':['8443']}}]}]}}]
+    if value.get('deployment_mode')=='shared':
+        from shared_cluster import checked_target
+        public=checked_target(value['config']).config['spire']
+        if public.get('ui_origin'):
+            items.append({'apiVersion':'networking.k8s.io/v1','kind':'NetworkPolicy','metadata':meta('browser-alb-ingress'),
+                          'spec':{'podSelector':{'matchLabels':{'poc-role':'ui'}},'policyTypes':['Ingress'],
+                                  'ingress':[{'from':[{'ipBlock':{'cidr':cidr}} for cidr in public['alb_cidrs']],
+                                              'ports':[{'protocol':'TCP','port':8443}]}]}})
     flows=[('money','money',8443,['ui','caller-trusted','caller-unidentified']),
            ('trusted-control','caller-trusted',9001,['ui']),('unidentified-control','caller-unidentified',9001,['ui']),
            ('kafka','kafka',9093,['money','caller-trusted','caller-unidentified','kafka-admin'])]

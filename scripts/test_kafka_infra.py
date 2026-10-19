@@ -12,6 +12,16 @@ from attestation import ROOT,run
 from kafka_demo import verify_compose
 
 class KafkaInfrastructureTests(unittest.TestCase):
+    def test_aws_browser_certificate_matches_assigned_cloudfront_origin(self):
+        with tempfile.TemporaryDirectory() as directory:
+            spec=importlib.util.spec_from_file_location('fixture_pki',ROOT/'infra/kafka-signing/broker-pki.py')
+            module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+            module.generate(directory,'a'*32,browser_dns='d123abc.cloudfront.net')
+            cert=ssl._ssl._test_decode_cert(str(Path(directory)/'browser/client.pem'))
+            self.assertIn(('DNS','d123abc.cloudfront.net'),cert['subjectAltName'])
+            self.assertNotIn(('DNS','localhost'),cert['subjectAltName'])
+            with self.assertRaises(ValueError):module.generate(directory,'a'*32,browser_dns='bad.example.com')
+
     def test_rendered_boundaries_and_temporary_mount_options(self):
         env=os.environ.copy();env.update(POC_PROJECT='poc-kafka-render-test',POC_IMAGE='poc-kafka-render-test:apps',POC_WORK='/tmp/poc-kafka-render-test',POC_SOCKET_DIR='/tmp/poc-kafka-render-test/workload',POC_PORT='18088',POC_ORIGIN='https://127.0.0.1:18088',POC_STREAM='a'*32)
         value=json.loads(run(['docker','compose','-f',str(ROOT/'infra/kafka-signing/compose.yaml'),'--profile','bootstrap','config','--format','json'],env=env).stdout)

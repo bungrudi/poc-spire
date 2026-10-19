@@ -13,11 +13,13 @@ import os
 from pathlib import Path
 import re
 import select
+import socket
 import ssl
 import subprocess
 import sys
 import time
 import urllib.request
+from urllib.parse import urlsplit
 import uuid
 import yaml
 
@@ -105,6 +107,15 @@ def validate(config):
         raise ValueError('exact normal image executable inventory is required')
     if any(not re.fullmatch('[a-f0-9]{64}',s) for s in image['binary_sha256'].values()):raise ValueError('invalid executable digest')
     if not re.fullmatch('[a-f0-9]{40}',image.get('source_revision','')):raise ValueError('pin the image source revision')
+    public=p.get('ui_origin')
+    if public is not None:
+        if not re.fullmatch(r'https://[a-z0-9-]+\.cloudfront\.net',public):raise ValueError('pin assigned CloudFront HTTPS origin')
+        if p.get('ui_node_port')!=30443:raise ValueError('public UI must use reviewed NodePort 30443')
+        cidrs=p.get('alb_cidrs',[])
+        if not isinstance(cidrs,list) or not 1<=len(cidrs)<=3 or any(not isinstance(x,str) or not ipaddress.ip_network(x).is_private for x in cidrs):
+            raise ValueError('pin private ALB subnet CIDRs')
+    elif any(k in p for k in ('ui_node_port','alb_cidrs')):
+        raise ValueError('public UI configuration requires an exact HTTPS origin')
 
 
 def descriptor_path(target):return target.runtime/'descriptor.json'
@@ -278,12 +289,20 @@ def verify(target):
     from verify_kubernetes_public import Browser as BaseBrowser
     owned=json.loads((work/'application-ownership.json').read_text())
     with forwarded(target,value) as port:
+        origin=target.config['spire'].get('ui_origin',f'https://127.0.0.1:{port}')
+        authority=urlsplit(origin).netloc
+        hostname=urlsplit(origin).hostname
+        class LocalRouteConnection(http.client.HTTPSConnection):
+            def connect(self):
+                raw=socket.create_connection(('127.0.0.1',port),self.timeout)
+                self.sock=self._context.wrap_socket(raw,server_hostname=self.host)
         class Browser(BaseBrowser):
             def __init__(self):
-                self.stream=owned['stream'];self.url=f'https://127.0.0.1:{port}';self.cookie=None;self.csrf=None
+                self.stream=owned['stream'];self.url=origin;self.cookie=None;self.csrf=None
                 self.context=ssl.create_default_context(cafile=str(work/'app-pki/browser/ca.pem'))
             def request(self,method,path,body=None,headers=None):
-                c=http.client.HTTPSConnection('127.0.0.1',port,context=self.context,timeout=15);values=dict(headers or {})
+                c=LocalRouteConnection(hostname,port,context=self.context,timeout=15);values=dict(headers or {})
+                values.setdefault('Host',authority)
                 if self.cookie:values['Cookie']=self.cookie
                 if body is not None and not isinstance(body,(str,bytes)):body=json.dumps(body);values['Content-Type']='application/json'
                 if method=='POST':values.setdefault('Origin',self.url);values.setdefault('X-CSRF-Token',self.csrf or '')

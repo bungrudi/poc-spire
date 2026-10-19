@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 
 
@@ -12,7 +13,9 @@ def command(args):
         raise RuntimeError('Temporary certificate generation failed')
 
 
-def generate(work, stream, *, controller_local=False):
+def generate(work, stream, *, controller_local=False, browser_dns=None):
+    if browser_dns is not None and not re.fullmatch(r'[a-z0-9-]+\.cloudfront\.net', browser_dns):
+        raise ValueError('browser DNS must be the assigned CloudFront hostname')
     os.umask(0o077)
     work = Path(work)
     ca = work / 'pki-ca'
@@ -28,7 +31,8 @@ def generate(work, stream, *, controller_local=False):
         issuer=browser_ca if directory=='browser' else ca
         command(['openssl','genpkey','-algorithm','EC','-pkeyopt','ec_paramgen_curve:P-256','-out',str(target/'client.key')])
         command(['openssl','req','-new','-key',str(target/'client.key'),'-out',str(target/'request.csr'),'-subj','/CN='+cn])
-        ext=target/'extensions.conf';ext.write_text('basicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage='+('serverAuth' if directory=='browser' else 'serverAuth,clientAuth' if server else 'clientAuth')+'\n'+(('subjectAltName=DNS:kafka,DNS:localhost,IP:127.0.0.1\n' if controller_local else 'subjectAltName=DNS:kafka\n') if directory=='broker-pki' else 'subjectAltName=IP:127.0.0.1,DNS:localhost\n' if directory=='browser' else ''))
+        browser_san='subjectAltName=DNS:'+browser_dns+'\n' if browser_dns else 'subjectAltName=IP:127.0.0.1,DNS:localhost\n'
+        ext=target/'extensions.conf';ext.write_text('basicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage='+('serverAuth' if directory=='browser' else 'serverAuth,clientAuth' if server else 'clientAuth')+'\n'+(('subjectAltName=DNS:kafka,DNS:localhost,IP:127.0.0.1\n' if controller_local else 'subjectAltName=DNS:kafka\n') if directory=='broker-pki' else browser_san if directory=='browser' else ''))
         command(['openssl','x509','-req','-in',str(target/'request.csr'),'-CA',str(issuer/'ca.pem'),'-CAkey',str(issuer/'ca.key'),'-set_serial',str(index),'-out',str(target/'client.pem'),'-days','1','-extfile',str(ext)])
         (target/'ca.pem').write_bytes((issuer/'ca.pem').read_bytes())
         if directory in {'broker-pki','browser'}:

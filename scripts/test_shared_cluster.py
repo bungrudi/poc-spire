@@ -13,6 +13,8 @@ from unittest.mock import patch
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import shared_cluster
+import kubernetes_policy
+import kubernetes_application
 from shared_target import Target
 from kubernetes_images import components
 import yaml
@@ -24,6 +26,31 @@ class SharedSPIRETests(unittest.TestCase):
             'source_revision':'b'*40,'binary_sha256':{name:'c'*64 for name in components('normal')}}}}
 
     def test_normal_inventory_is_complete(self):shared_cluster.validate(self.config())
+    def test_public_ui_requires_exact_aws_origin_port_and_private_alb_cidrs(self):
+        value=self.config();public=value['spire']
+        public.update(ui_origin='https://d123abc.cloudfront.net',ui_node_port=30443,alb_cidrs=['10.40.0.0/24'])
+        shared_cluster.validate(value)
+        for key,bad in [('ui_origin','http://d123abc.cloudfront.net'),('ui_node_port',30444),('alb_cidrs',['0.0.0.0/0'])]:
+            trial=copy.deepcopy(value);trial['spire'][key]=bad
+            with self.subTest(key=key),self.assertRaises(ValueError):shared_cluster.validate(trial)
+        with patch.object(shared_cluster,'checked_target',return_value=type('Target',(),{'config':value})()):
+            policies=kubernetes_policy.policies({'run':'abcdef123456','deployment_mode':'shared','config':'fixture'})
+        ingress=next(p for p in policies if p['metadata']['name']=='browser-alb-ingress')
+        self.assertEqual(ingress['spec']['ingress'][0]['from'],[{'ipBlock':{'cidr':'10.40.0.0/24'}}])
+        self.assertEqual(ingress['spec']['podSelector']['matchLabels'],{'poc-role':'ui'})
+
+    def test_public_route_exposes_only_ready_ui_nodeport(self):
+        with tempfile.TemporaryDirectory() as directory:
+            spec=importlib.util.spec_from_file_location('fixture_pki',Path(__file__).resolve().parents[1]/'infra/kafka-signing/broker-pki.py')
+            pki=importlib.util.module_from_spec(spec);spec.loader.exec_module(pki)
+            pki.generate(directory,'a'*32,browser_dns='d123abc.cloudfront.net')
+            objects=kubernetes_application.app_objects({'run':'abcdef123456'},self.config()['spire']['image'],'a'*32,Path(directory),
+                origin='https://d123abc.cloudfront.net',ui_node_port=30443)
+        services={o['metadata']['name']:o for o in objects if o['kind']=='Service'}
+        self.assertEqual(services['ui']['spec']['type'],'NodePort')
+        self.assertEqual(services['ui']['spec']['ports'][0]['nodePort'],30443)
+        self.assertFalse(services['ui']['spec']['publishNotReadyAddresses'])
+        self.assertTrue(all(o['spec'].get('type')!='NodePort' for n,o in services.items() if n!='ui'))
     def test_test_binary_cannot_enter_normal_image(self):
         value=self.config();value['spire']['image']['binary_sha256']['security-client']='d'*64
         with self.assertRaisesRegex(ValueError,'inventory'):shared_cluster.validate(value)

@@ -7,6 +7,7 @@ import os
 import time
 import uuid
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import yaml
 import kubernetes_demo as runtime
@@ -33,7 +34,7 @@ def secret(ns,name,directory):
     return {'apiVersion':'v1','kind':'Secret','metadata':{'name':name,'namespace':ns},'type':'Opaque','data':data}
 
 
-def app_objects(value,image,stream,work,origin='https://127.0.0.1:18089'):
+def app_objects(value,image,stream,work,origin='https://127.0.0.1:18089',ui_node_port=None):
     ns='poc-'+value['run'];normal=image['immutable_reference'];pins=json.loads((runtime.ROOT/'infra/kubernetes-baseline/artifacts.json').read_text())
     kafka_image=next(i['immutable_reference'] for i in pins['images'] if i['reference'].startswith('apache/kafka:'))
     items=[]
@@ -125,8 +126,12 @@ def app_objects(value,image,stream,work,origin='https://127.0.0.1:18089'):
                       'spec':{'replicas':1,'strategy':{'type':'Recreate'},'selector':{'matchLabels':labels},
                               'template':template}})
     for name,role,port in [('money','money',8443),('trusted-control','caller-trusted',9001),('unidentified-control','caller-unidentified',9001),('kafka','kafka',9093),('ui','ui',8443)]:
-        items.append({'apiVersion':'v1','kind':'Service','metadata':{'name':name,'namespace':ns},'spec':{'publishNotReadyAddresses':True,
-                      'selector':{'poc-role':role},'ports':[{'name':'tcp-'+name,'port':port,'targetPort':port}]}})
+        service={'apiVersion':'v1','kind':'Service','metadata':{'name':name,'namespace':ns},'spec':{'publishNotReadyAddresses':name!='ui' or ui_node_port is None,
+                 'selector':{'poc-role':role},'ports':[{'name':'tcp-'+name,'port':port,'targetPort':port}]}}
+        if name=='ui' and ui_node_port is not None:
+            service['spec'].update(type='NodePort',externalTrafficPolicy='Local')
+            service['spec']['ports'][0]['nodePort']=ui_node_port
+        items.append(service)
     return items
 
 
@@ -136,14 +141,16 @@ def main():
     if json.loads(runtime.kube(value,'-n',ns,'get','pods','-o','json'))['items']:raise RuntimeError('refuse existing/foreign application Pod adoption')
     runtime.private_json(work/'application-started.json',{'run':value['run'],'phase':'initialization-started'})
     stream=uuid.uuid4().hex;pkidir=work/'app-pki';pkidir.mkdir(mode=0o700)
-    spec=importlib.util.spec_from_file_location('k8s_pki',runtime.ROOT/'infra/kafka-signing/broker-pki.py');pki=importlib.util.module_from_spec(spec);spec.loader.exec_module(pki)
-    pki.generate(pkidir,stream,controller_local=True)
-    adminpki=pkidir/'admin-pki';(adminpki/'client.pem').write_text((adminpki/'client.key').read_text()+(adminpki/'client.pem').read_text())
-    origin='https://127.0.0.1:18089'
+    origin='https://127.0.0.1:18089';ui_node_port=None
     if value.get('deployment_mode') == 'shared':
         from shared_target import Target
         target = Target(value['config'], 'poc-spire')
-        origin = 'https://127.0.0.1:' + str(target.config['spire'].get('ui_port', 18443))
+        settings=target.config['spire']
+        origin = settings.get('ui_origin','https://127.0.0.1:' + str(settings.get('ui_port',18443)))
+        ui_node_port=settings.get('ui_node_port')
+    spec=importlib.util.spec_from_file_location('k8s_pki',runtime.ROOT/'infra/kafka-signing/broker-pki.py');pki=importlib.util.module_from_spec(spec);spec.loader.exec_module(pki)
+    pki.generate(pkidir,stream,controller_local=True,browser_dns=urlsplit(origin).hostname if ui_node_port else None)
+    adminpki=pkidir/'admin-pki';(adminpki/'client.pem').write_text((adminpki/'client.key').read_text()+(adminpki/'client.pem').read_text())
     if (work/'public-profile.json').exists():
         from kubernetes_public import provisioned_profile
         profile=provisioned_profile()
@@ -153,7 +160,7 @@ def main():
         for path in (pkidir/'browser').iterdir():path.unlink()
         (pkidir/'browser/browser.pem').write_bytes(Path(profile['browser_pem']).read_bytes())
         (pkidir/'browser/browser.pem').chmod(0o600)
-    image=json.loads((work/'normal-image.json').read_text());objects=app_objects(value,image,stream,pkidir,origin=origin)
+    image=json.loads((work/'normal-image.json').read_text());objects=app_objects(value,image,stream,pkidir,origin=origin,ui_node_port=ui_node_port)
     private_manifest=work/'application-private.yaml';private_manifest.write_text(yaml.safe_dump_all(objects,sort_keys=False));private_manifest.chmod(0o600)
     runtime.apply_csi_workloads(value,str(private_manifest),timeout=120)
     expected_roles={'money','ui','caller-trusted','caller-unidentified','kafka'}
