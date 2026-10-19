@@ -128,6 +128,8 @@ def file_inventory(source, expected):
                 name = member.name.removeprefix('./').removeprefix('/')
                 if not member.isfile() or name not in expected or name in found:
                     raise ValueError('unexpected image filesystem component')
+                if member.mode & 0o555 != 0o555:
+                    raise ValueError('image executable is inaccessible to the non-root workload UID')
                 found[name] = {'sha256': hashlib.sha256(layer.extractfile(member).read()).hexdigest(),
                                'size': member.size, 'mode': oct(member.mode)}
     if set(found) != set(expected):
@@ -155,7 +157,7 @@ def main(profile="feasibility"):
         name = 'attestation-' + role
         runtime.execute(['go', 'build', '-trimpath', '-ldflags', '-X main.buildRole=' + role,
                          '-o', directory / name, './cmd/attestation-fixture'], env=env, timeout=120)
-    (directory / 'Dockerfile').write_text('FROM scratch\nCOPY ' + ' '.join(names) + ' /\nUSER 1000:1000\nENTRYPOINT ["/money"]\n')
+    (directory / 'Dockerfile').write_text('FROM scratch\nCOPY --chmod=0755 ' + ' '.join(names) + ' /\nUSER 1000:1000\nENTRYPOINT ["/money"]\n')
     (directory / '.dockerignore').write_text('*\n!Dockerfile\n' + ''.join('!' + n + '\n' for n in names))
     tag = 'poc-k8s-'+profile+':' + value['run']
     intent = runtime.image_build_intent(value,profile,tag)

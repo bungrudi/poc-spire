@@ -24,7 +24,7 @@ def main():
         result=__import__('subprocess').run(['go','build','-trimpath','-buildvcs=false','-o',str(directory/name),'./cmd/'+name],
             cwd=ROOT,env={**os.environ,'CGO_ENABLED':'0','GOOS':'linux','GOARCH':'amd64','GOTOOLCHAIN':'local','GOMAXPROCS':'2'},capture_output=True)
         if result.returncode:raise RuntimeError('Go build failed for '+name)
-    (directory/'Dockerfile').write_text('FROM scratch\nCOPY '+' '.join(names)+' /\nUSER 1000:1000\nENTRYPOINT ["/money"]\n')
+    (directory/'Dockerfile').write_text('FROM scratch\nCOPY --chmod=0755 '+' '.join(names)+' /\nUSER 1000:1000\nENTRYPOINT ["/money"]\n')
     (directory/'.dockerignore').write_text('*\n!Dockerfile\n'+''.join('!'+name+'\n' for name in names))
     tag=args.repository+':'+revision
     run(['docker','build','--platform','linux/amd64','--network','none','--label','poc-platform/source='+revision,'-t',tag,directory],timeout=600)
