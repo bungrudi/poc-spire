@@ -80,7 +80,9 @@ func run() error {
 		if _, err := browserCertificate(*tlsCert, *tlsKey, *origin); err != nil {
 			return err
 		}
-		browserTLS = &tls.Config{MinVersion: tls.VersionTLS13, GetCertificate: func(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+		// The lab ALB's HTTP listener uses its TLS 1.2 backend policy. This is
+		// browser TLS only; SPIRE-backed mesh mTLS remains TLS 1.3.
+		browserTLS = &tls.Config{MinVersion: tls.VersionTLS12, GetCertificate: func(*tls.ClientHelloInfo) (*tls.Certificate, error) {
 			return browserCertificate(*tlsCert, *tlsKey, *origin)
 		}}
 	}
