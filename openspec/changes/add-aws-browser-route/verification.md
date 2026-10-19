@@ -1,3 +1,7 @@
-# Source verification
+# Verification
 
-On 19 October 2026 UTC, 87 Python tests, `go test ./...`, strict validation of this OpenSpec change and `git diff --check` passed. Tests covered rejected public-origin/NodePort/CIDR combinations, a CloudFront-matching certificate SAN, UI-only NodePort rendering and scoped UI ingress. AWS route deployment and browser/runtime acceptance remain pending.
+On 19 October 2026 UTC, 87 Python tests, `go test ./...`, strict validation of this OpenSpec change and `git diff --check` passed. Tests covered rejected public-origin/NodePort/CIDR combinations, a CloudFront-matching certificate SAN, UI-only NodePort rendering and scoped UI ingress.
+
+Fresh On-Demand run `4a93b3c28160` used application image/source `703a6630c2a3b635a549553d352147bf513e66c3`. Its UI certificate SAN is `d2729mcm8b1zym.cloudfront.net`; the running UI negotiated TLS 1.2 and 1.3 through a TLS-verified Kubernetes port-forward. The ALB's selected-worker HTTPS/30443 target became healthy, and `https://d2729mcm8b1zym.cloudfront.net/` returned HTTP 200 with a Ready page. The public browser test passed trusted and Kafka-trusted transfers, rejected unidentified and tampered requests, advanced the verified ledger exactly twice, rejected missing-CSRF and wrong-Origin requests, and observed `no-store` and a Secure session cookie.
+
+The operator-side local Host/SNI verifier at revision `fb714b8744c1fc05ef49f17f59e0afb4f789a172` repeated all five outcomes through the forwarded UI, checked ledger conservation and rejected missing CSRF, wrong Origin and wrong Host. The verifier revision follows the immutable app image revision and contains a session-initialization fix. The Money Envoy certificate SAN was `spiffe://poc.internal/ns/poc-4a93b3c28160/sa/money` with a short lifetime. No extended fault-injection suite was run.
