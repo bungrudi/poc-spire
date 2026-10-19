@@ -13,6 +13,11 @@ def configure(template):
     annotations = template['metadata'].setdefault('annotations', {})
     config = json.loads(annotations.get('proxy.istio.io/config', '{}'))
     config.setdefault('proxyMetadata', {})['WORKLOAD_IDENTITY_SOCKET_FILE'] = SOCKET_FILE
+    # The shared mesh holds applications in an Envoy postStart hook by default.
+    # That can deadlock SPIRE's k8s attestor: Envoy waits for SDS while the
+    # kubelet has not yet published Envoy's container ID to its /pods endpoint.
+    # Scope the override to this Pod; readiness still requires a working proxy.
+    config['holdApplicationUntilProxyStarts'] = False
     annotations['proxy.istio.io/config'] = json.dumps(config, separators=(',', ':'))
     volumes = template['spec'].setdefault('volumes', [])
     if any(v['name'] == 'workload-socket' for v in volumes):

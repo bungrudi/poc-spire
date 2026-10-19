@@ -125,6 +125,23 @@ def validate_pods(expected, items):
     return None, {role: matches[0] for role, matches in selected.items()}
 
 
+def wait_for_observer(value, work, child):
+    # A first full observation over the verified SSM EKS route can exceed the
+    # local Kind startup window. Never treat elapsed time as successful health.
+    for _ in range(240 if value.get('deployment_mode') == 'shared' else 40):
+        health = work / 'guard-health.json'
+        if health.exists():
+            state = json.loads(health.read_text())
+            if state.get('status') == 'observing':
+                return
+            if state.get('status') in ('invalid', 'quarantine-pending'):
+                raise RuntimeError('run invalidated during observer startup')
+        if child.poll() is not None:
+            raise RuntimeError('owned observer exited')
+        time.sleep(.25)
+    raise RuntimeError('owned observer readiness unavailable')
+
+
 def initial(value):
     work = Path(value['work'])
     if (work / 'guard-ownership.json').exists() or (work / 'guard-process.json').exists():
@@ -163,18 +180,7 @@ def initial(value):
     if stamp is None:
         raise RuntimeError('owned observer failed to start')
     runtime.private_json(work / 'guard-process.json', {'run': value['run'], 'pid': child.pid, 'start': stamp['start']})
-    for _ in range(40):
-        health = work / 'guard-health.json'
-        if health.exists():
-            state = json.loads(health.read_text())
-            if state.get('status') == 'observing':
-                return
-            if state.get('status') in ('invalid', 'quarantine-pending'):
-                raise RuntimeError('run invalidated during observer startup')
-        if child.poll() is not None:
-            raise RuntimeError('owned observer exited')
-        time.sleep(.25)
-    raise RuntimeError('owned observer readiness unavailable')
+    wait_for_observer(value, work, child)
 
 
 def promote(value):

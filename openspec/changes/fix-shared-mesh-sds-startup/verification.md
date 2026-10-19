@@ -1,0 +1,5 @@
+# Verification
+
+On 19 October 2026 UTC, fresh diagnostic run `30e6e54c01d1` used the prior published image and the TLS-verified EKS/SSM route. SPIRE server, agent and CSI were Ready. The selected worker's Kubernetes API and kubelet `/pods` views matched all 13 running system containers before app creation. After app creation, each of five injected proxies had an executable `pilot-agent wait` post-start hook inherited from the platform mesh setting; the prior Pod annotation contained only the custom SPIRE socket metadata. Ten successive API/kubelet samples initially showed **zero proxy container IDs** among five app Pods. The first IDs appeared only after the hook had waited, while no proxy was Ready. The observed startup order supports the bounded Pod-level hold override without changing shared Istio or weakening attestation.
+
+The fix has passed 16 focused Python tests, 84 full Python tests, strict validation of this OpenSpec change and `git diff --check`. A fresh immutable deployment and runtime signed-payload/mesh acceptance are still pending; this diagnostic run is not an acceptance pass.

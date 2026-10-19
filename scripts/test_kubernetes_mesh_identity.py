@@ -14,8 +14,10 @@ class MeshIdentityTests(unittest.TestCase):
             template = {'metadata': {'annotations': {'sidecar.istio.io/nativeSidecar': native}},
                         'spec': {'containers': [{'name': 'caller', 'volumeMounts': [{'name': 'workload', 'mountPath': '/workload'}]}]}}
             identity.configure(template)
-            metadata = json.loads(template['metadata']['annotations']['proxy.istio.io/config'])['proxyMetadata']
+            config = json.loads(template['metadata']['annotations']['proxy.istio.io/config'])
+            metadata = config['proxyMetadata']
             self.assertEqual(metadata['WORKLOAD_IDENTITY_SOCKET_FILE'], 'api.sock')
+            self.assertIs(config['holdApplicationUntilProxyStarts'], False)
             self.assertEqual(template['spec']['volumes'], [{'name': 'workload-socket', 'csi': {'driver': 'csi.spiffe.io', 'readOnly': True}}])
             self.assertNotIn('workload-socket', str(template['spec']['containers']))
             with self.assertRaisesRegex(RuntimeError, 'conflicting'):

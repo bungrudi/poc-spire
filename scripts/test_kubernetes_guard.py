@@ -10,6 +10,27 @@ import kubernetes_guard as guard
 
 
 class GuardTests(unittest.TestCase):
+    def test_shared_observer_waits_for_real_health_after_local_window(self):
+        with tempfile.TemporaryDirectory() as directory:
+            work=Path(directory)
+            class Child:
+                def poll(self):
+                    return None
+            calls=[]
+            def advance(_):
+                calls.append(1)
+                if len(calls)==48:
+                    (work/'guard-health.json').write_text(json.dumps({'status':'observing'}))
+            with patch.object(guard.time,'sleep',side_effect=advance):
+                guard.wait_for_observer({'deployment_mode':'shared'},work,Child())
+            self.assertEqual(len(calls),48)
+            (work/'guard-health.json').unlink()
+            calls.clear()
+            with patch.object(guard.time,'sleep',side_effect=advance):
+                with self.assertRaisesRegex(RuntimeError,'readiness unavailable'):
+                    guard.wait_for_observer({'deployment_mode':'local'},work,Child())
+            self.assertEqual(len(calls),40)
+
     def fixture(self):
         run='abcdef012345';ns='poc-'+run;sns='spire-'+run
         roles=['money','ui','caller-trusted','caller-unidentified','kafka']
