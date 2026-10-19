@@ -312,7 +312,9 @@ def verify(target):
                     if r.getheader('Set-Cookie'):self.cookie=r.getheader('Set-Cookie').split(';',1)[0]
                     return r.status,raw
                 finally:c.close()
-        browser=Browser();code,session=browser.json('GET','/api/session')
+        browser=Browser();code,page=browser.request('GET','/')
+        if code!=200 or b'data-ready="true"' not in page:raise RuntimeError('guarded browser UI unavailable')
+        code,session=browser.json('GET','/api/session')
         if code!=200 or 'assumed' not in session['auth_profile']:raise RuntimeError('assumed-operator UI unavailable')
         browser.csrf=session['csrf_token']
         baseline=work/'shared-verification-initial.json'
